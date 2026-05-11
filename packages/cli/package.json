@@ -35,10 +35,10 @@
     "citty": "^0.2.2"
   },
   "devDependencies": {
-    "@sigx/vite": "^0.4.1",
+    "@sigx/vite": "^0.4.3",
     "@types/node": "^22.0.0",
     "typescript": "^5.9.3",
-    "vite": "^8.0.3"
+    "vite": "^8.0.12"
   },
   "author": "Andreas Ekdahl",
   "license": "MIT",
