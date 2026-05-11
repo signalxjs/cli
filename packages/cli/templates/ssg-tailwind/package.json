@@ -1,0 +1,24 @@
+{
+    "name": "{{projectName}}",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "ssg dev",
+        "build": "ssg build",
+        "preview": "ssg preview"
+    },
+    "dependencies": {
+        "sigx": "^0.4.1",
+        "@sigx/ssg": "^0.3.2",
+        "@sigx/router": "^0.3.2",
+        "@sigx/server-renderer": "^0.4.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "^0.4.1",
+        "vite": "^8.0.3",
+        "typescript": "^5.9.3",
+        "tailwindcss": "^4.1.0",
+        "@tailwindcss/vite": "^4.2.2"
+    }
+}

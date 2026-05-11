@@ -1,0 +1,47 @@
+{
+  "name": "create-sigx",
+  "version": "0.1.0",
+  "description": "Create a new SignalX project — `npm create sigx@latest my-app`",
+  "type": "module",
+  "bin": {
+    "create-sigx": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "keywords": [
+    "signalx",
+    "sigx",
+    "create",
+    "starter",
+    "template",
+    "scaffold",
+    "cli"
+  ],
+  "author": "Andreas Ekdahl",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/signalxjs/cli.git",
+    "directory": "packages/create-sigx"
+  },
+  "homepage": "https://github.com/signalxjs/cli/tree/main/packages/create-sigx",
+  "bugs": {
+    "url": "https://github.com/signalxjs/cli/issues"
+  },
+  "dependencies": {
+    "@sigx/cli": "workspace:^"
+  },
+  "devDependencies": {
+    "@sigx/vite": "^0.4.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

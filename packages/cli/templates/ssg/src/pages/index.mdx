@@ -1,0 +1,37 @@
+---
+title: Home
+---
+
+import { component } from 'sigx';
+
+export const Counter = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div style="background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; margin-top: 24px;">
+            <p style="font-size: 48px; margin-bottom: 16px;">{state.count}</p>
+            <div style="display: flex; gap: 8px; justify-content: center;">
+                <button
+                    onClick={() => state.count++}
+                    style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer;"
+                >
+                    Increment
+                </button>
+                <button
+                    onClick={() => state.count--}
+                    style="padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;"
+                >
+                    Decrement
+                </button>
+            </div>
+        </div>
+    );
+});
+
+# Welcome to {{projectName}}
+
+This is a **SignalX SSG** site with file-based routing and MDX support.
+
+Edit `src/pages/index.mdx` to get started.
+
+<Counter client:load />

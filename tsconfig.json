@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@sigx/cli": ["./packages/cli/src/index.ts"],
+      "@sigx/cli/plugin": ["./packages/cli/src/plugin.ts"],
+      "@sigx/cli/create": ["./packages/cli/src/commands/create.tsx"]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "packages/*/dist",
+    "packages/*/templates",
+    "packages/cli/templates"
+  ]
+}

@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@source "../../node_modules/@sigx/daisyui/dist/**/*.js";
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark, cupcake, synthwave, cyberpunk, dracula, nord, autumn;
+}

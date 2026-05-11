@@ -1,0 +1,34 @@
+---
+title: Home
+---
+
+import { component } from 'sigx';
+import { Button, Card } from '@sigx/daisyui';
+
+export const Counter = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <Card shadow="lg" class="mt-8">
+            <Card.Body center>
+                <p class="text-6xl font-bold mb-6">{state.count}</p>
+                <Card.Actions justify="center">
+                    <Button variant="primary" size="lg" onClick={() => state.count++}>
+                        Increment
+                    </Button>
+                    <Button variant="error" size="lg" onClick={() => state.count--}>
+                        Decrement
+                    </Button>
+                </Card.Actions>
+            </Card.Body>
+        </Card>
+    );
+});
+
+# Welcome to {{projectName}}
+
+This is a **SignalX SSG** site with file-based routing, MDX support, and DaisyUI components.
+
+Edit `src/pages/index.mdx` to get started.
+
+<Counter client:load />
