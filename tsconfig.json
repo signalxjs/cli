@@ -7,6 +7,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@sigx/terminal",
+    "types": ["node"],
     "paths": {
       "@sigx/cli": ["./packages/cli/src/index.ts"],
       "@sigx/cli/plugin": ["./packages/cli/src/plugin.ts"],
