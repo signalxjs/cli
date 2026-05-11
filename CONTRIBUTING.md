@@ -17,8 +17,8 @@ While SignalX is pre-1.0, the CLI repo often needs to be tested against an unrel
 ```yaml
 # pnpm-workspace.yaml (in this repo, locally — don't commit)
 overrides:
-  "@sigx/runtime-core": "link:../../viewti/lynx/packages/runtime-core"
-  "@sigx/server-renderer": "link:../../viewti/lynx/packages/server-renderer"
+  "@sigx/runtime-core": "link:../../core/packages/runtime-core"
+  "@sigx/server-renderer": "link:../../core/packages/server-renderer"
 ```
 
 Adjust the relative path to match your local layout. After editing, run `pnpm install` to relink.
