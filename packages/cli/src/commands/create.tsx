@@ -46,6 +46,7 @@ const webStylingOptions = [
 const lynxStylingOptions = [
     { value: 'none' as Styling, label: 'None', description: 'No CSS framework' },
     { value: 'tailwind' as Styling, label: 'Tailwind CSS', description: 'Tailwind with Lynx preset' },
+    { value: 'daisyui' as Styling, label: 'Tailwind + Daisy UI', description: 'Lynx + @sigx/lynx-daisyui components' },
 ];
 
 const TEXT_EXTS = new Set([
@@ -132,7 +133,7 @@ function scaffoldProject(opts: {
     const targetDir = resolve(process.cwd(), opts.projectName);
     let templateName: string;
     if (opts.projectType === 'lynx') {
-        templateName = opts.styling === 'tailwind' ? 'lynx-tailwind' : 'lynx';
+        templateName = opts.styling !== 'none' ? `lynx-${opts.styling}` : 'lynx';
     } else {
         templateName = opts.styling !== 'none' ? `${opts.projectType}-${opts.styling}` : opts.projectType;
     }
@@ -344,10 +345,6 @@ function runHeadless(): number {
     }
     if (!validStyling.includes(styling)) {
         console.error(`Error: --styling must be one of ${validStyling.join(', ')}`);
-        return 2;
-    }
-    if (projectType === 'lynx' && styling === 'daisyui') {
-        console.error('Error: --styling=daisyui is not supported for Lynx projects (use none or tailwind)');
         return 2;
     }
 
