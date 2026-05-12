@@ -48,6 +48,23 @@ const lynxStylingOptions = [
     { value: 'tailwind' as Styling, label: 'Tailwind CSS', description: 'Tailwind with Lynx preset' },
 ];
 
+const TEXT_EXTS = new Set([
+    'ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'mts', 'cts',
+    'json', 'json5', 'jsonc',
+    'md', 'mdx', 'txt',
+    'html', 'htm', 'css', 'scss', 'sass', 'less',
+    'yml', 'yaml', 'toml', 'xml', 'svg',
+    'gitignore', 'gitattributes', 'editorconfig', 'npmrc', 'nvmrc', 'env',
+]);
+
+function isTextExtension(filename: string): boolean {
+    // Dotfiles: name after leading dot (.gitignore → "gitignore").
+    const ext = filename.startsWith('.')
+        ? filename.slice(1).toLowerCase()
+        : filename.split('.').pop()?.toLowerCase() ?? '';
+    return TEXT_EXTS.has(ext);
+}
+
 function copyDirectory(src: string, dest: string, projectName: string) {
     if (!existsSync(dest)) {
         mkdirSync(dest, { recursive: true });
@@ -61,10 +78,14 @@ function copyDirectory(src: string, dest: string, projectName: string) {
 
         if (stat.isDirectory()) {
             copyDirectory(srcPath, destPath, projectName);
-        } else {
+        } else if (isTextExtension(entry)) {
             let content = readFileSync(srcPath, 'utf-8');
             content = content.replace(/\{\{projectName\}\}/g, projectName);
             writeFileSync(destPath, content);
+        } else {
+            // Binary asset — copy bytes verbatim. Reading as UTF-8 would corrupt
+            // non-ASCII bytes (e.g. PNG magic 0x89 → U+FFFD).
+            writeFileSync(destPath, readFileSync(srcPath));
         }
     }
 }
