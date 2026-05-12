@@ -1,65 +1,65 @@
 {
-  "name": "@sigx/cli",
-  "version": "0.1.2",
-  "description": "Unified CLI for SignalX — create, dev, build, and run projects",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "bin": {
-    "sigx": "./dist/cli.js"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+    "name": "@sigx/cli",
+    "version": "0.1.3",
+    "description": "Unified CLI for SignalX — create, dev, build, and run projects",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "bin": {
+        "sigx": "./dist/cli.js"
     },
-    "./plugin": {
-      "import": "./dist/plugin.js",
-      "types": "./dist/plugin.d.ts"
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./plugin": {
+            "import": "./dist/plugin.js",
+            "types": "./dist/plugin.d.ts"
+        },
+        "./create": {
+            "import": "./dist/commands/create.js",
+            "types": "./dist/commands/create.d.ts"
+        }
     },
-    "./create": {
-      "import": "./dist/commands/create.js",
-      "types": "./dist/commands/create.d.ts"
+    "files": [
+        "dist",
+        "templates"
+    ],
+    "scripts": {
+        "build": "vite build && node scripts/generate-types.js && node scripts/copy-templates.js",
+        "dev": "vite build --watch"
+    },
+    "dependencies": {
+        "@sigx/terminal": "^0.4.1",
+        "citty": "^0.2.2"
+    },
+    "devDependencies": {
+        "@sigx/vite": "^0.4.3",
+        "@types/node": "^22.0.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    },
+    "author": "Andreas Ekdahl",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/signalxjs/cli.git",
+        "directory": "packages/cli"
+    },
+    "homepage": "https://github.com/signalxjs/cli/tree/main/packages/cli",
+    "bugs": {
+        "url": "https://github.com/signalxjs/cli/issues"
+    },
+    "keywords": [
+        "signalx",
+        "sigx",
+        "cli",
+        "scaffold",
+        "create",
+        "plugin"
+    ],
+    "publishConfig": {
+        "access": "public"
     }
-  },
-  "files": [
-    "dist",
-    "templates"
-  ],
-  "scripts": {
-    "build": "vite build && node scripts/generate-types.js && node scripts/copy-templates.js",
-    "dev": "vite build --watch"
-  },
-  "dependencies": {
-    "@sigx/terminal": "^0.4.1",
-    "citty": "^0.2.2"
-  },
-  "devDependencies": {
-    "@sigx/vite": "^0.4.3",
-    "@types/node": "^22.0.0",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.12"
-  },
-  "author": "Andreas Ekdahl",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/signalxjs/cli.git",
-    "directory": "packages/cli"
-  },
-  "homepage": "https://github.com/signalxjs/cli/tree/main/packages/cli",
-  "bugs": {
-    "url": "https://github.com/signalxjs/cli/issues"
-  },
-  "keywords": [
-    "signalx",
-    "sigx",
-    "cli",
-    "scaffold",
-    "create",
-    "plugin"
-  ],
-  "publishConfig": {
-    "access": "public"
-  }
 }
