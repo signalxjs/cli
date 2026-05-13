@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-05-13
+
 ### Fixed
 
 - Belt-and-braces follow-up to the 0.2.3 wizard refactor: the Exit-Enter re-run bug still reproduced for some users, suggesting the previous step's focusable component is not always being torn down by the runtime reconciler when `state.step` changes. Each submit handler (`handleNameSubmit`, `handleTypeSubmit`, `handleStylingSubmit`, `createProject`) now no-ops if `state.step` has already moved past its own step, so any lingering submit event from a stale focusable is dropped instead of re-running `scaffoldProject` (which then errored with `Directory already exists`) or rewinding the wizard.
