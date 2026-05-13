@@ -9,11 +9,11 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "sigx": "^0.4.1",
-        "@sigx/daisyui": "^0.3.2"
+        "sigx": "latest",
+        "@sigx/daisyui": "latest"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.4.1",
+        "@sigx/vite": "latest",
         "vite": "^8.0.3",
         "typescript": "^5.9.3",
         "tailwindcss": "^4.1.0",
