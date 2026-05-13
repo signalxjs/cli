@@ -1,7 +1,7 @@
 {
-    "name": "create-sigx",
-    "version": "0.2.1",
-    "description": "Create a new SignalX project — `npm create sigx@latest my-app`",
+    "name": "@sigx/create",
+    "version": "0.0.2",
+    "description": "Create a new SignalX project — `npm create @sigx@latest my-app`",
     "type": "module",
     "bin": {
         "create-sigx": "./dist/index.js"
@@ -27,9 +27,9 @@
     "repository": {
         "type": "git",
         "url": "git+https://github.com/signalxjs/cli.git",
-        "directory": "packages/create-sigx"
+        "directory": "packages/create"
     },
-    "homepage": "https://github.com/signalxjs/cli/tree/main/packages/create-sigx",
+    "homepage": "https://github.com/signalxjs/cli/tree/main/packages/create",
     "bugs": {
         "url": "https://github.com/signalxjs/cli/issues"
     },

@@ -1,6 +1,6 @@
 import { defineLibConfig } from '@sigx/vite/lib';
 
-// create-sigx CLI scaffolder — thin shim into @sigx/cli
+// @sigx/create CLI scaffolder — thin shim into @sigx/cli
 export default defineLibConfig({
     entry: 'src/index.ts',
     external: [

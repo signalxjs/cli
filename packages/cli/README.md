@@ -8,7 +8,7 @@ npm i -D @sigx/cli
 npx sigx <command>
 ```
 
-After scaffolding with `npm create sigx@latest`, the generated project depends on `@sigx/cli` directly. The `sigx` binary is the entry point for everything: scaffolding, dev servers, builds, previews, and platform-specific commands provided by plugins.
+After scaffolding with `npm create @sigx@latest`, the generated project depends on `@sigx/cli` directly. The `sigx` binary is the entry point for everything: scaffolding, dev servers, builds, previews, and platform-specific commands provided by plugins.
 
 ## Commands
 

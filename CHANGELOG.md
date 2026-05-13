@@ -4,9 +4,13 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed the canonical scaffolder package from `create-sigx` (unscoped) to `@sigx/create` (scoped). npm Support confirmed the unscoped `create-sigx` name is permanently blocked by their anti-typosquatting / restricted-name filter for unscoped publishes, with no whitelisting path. Pivoting to a scoped name under the already-owned `@sigx` org both bypasses that filter and matches the rest of the package set. User-facing command becomes `npm create @sigx@latest my-app` (also `pnpm create @sigx`, `yarn create @sigx`, `bunx create @sigx`); npm's `init`/`create` command resolves `@scope` → `@scope/create` automatically. The package was never successfully published under the old name, so no installs break.
+
 ### Fixed
 
-- `@sigx/cli` 0.1.2 / `create-sigx` 0.1.1 — `sigx create` was reading every template file as UTF-8 before applying `{{projectName}}` substitution, which corrupted binary template assets (PNG icons in the `lynx` template — the `0x89` magic byte became the UTF-8 replacement bytes `0xEF 0xBF 0xBD`, and `sharp` rejected the resulting file as "unsupported image format"). Text files still get `{{projectName}}` substitution; binaries are now byte-copied.
+- `@sigx/cli` / `@sigx/create` — `sigx create` was reading every template file as UTF-8 before applying `{{projectName}}` substitution, which corrupted binary template assets (PNG icons in the `lynx` template — the `0x89` magic byte became the UTF-8 replacement bytes `0xEF 0xBF 0xBD`, and `sharp` rejected the resulting file as "unsupported image format"). Text files still get `{{projectName}}` substitution; binaries are now byte-copied.
 - `lynx` and `lynx-tailwind` templates — `package.json` referenced the obsolete `@sigx/runtime-lynx[-main]` names (orphaned tarballs from the `signalxjs/core` era) instead of the canonical `@sigx/lynx-runtime[-main]`. Also added the native module deps the template's `sigx.lynx.config.ts` already references (`@sigx/lynx-storage`, `-clipboard`, `-haptics`, `-device-info`, `-network`) and the `@sigx/lynx-dev-client` debug dep that the iOS `App.swift` template uses for `SigxDevClient` / `DevTemplateProvider`. Without these, `pnpm install` warned and the iOS Swift build failed with "cannot find SigxDevClient in scope".
 - `scripts/publish.js` — was overwritten by a copy of `signalxjs/core`'s `publish.js` and still had the hardcoded `PACKAGES` list pointing at paths that don't exist in this repo (`packages/reactivity`, `packages/sigx`, …). The CI release step would silently log "package.json not found" and ship zero tarballs. Replaced with the workspace-enumerating script from `signalxjs/lynx` (`pnpm publish -r` for ordering + `workspace:^` rewriting). Added matching `verify:pack` script referenced by `release.yml`.
 
