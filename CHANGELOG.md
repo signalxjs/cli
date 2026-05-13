@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-05-13
+
+### Fixed
+
+- `sigx create` wizard — final fix for the duplicated Select on the Done step and "Directory already exists" error. The previous `0.2.6` release added two defensive layers (terminal `untrack` + reactivity re-entrancy guard) but the wizard still reproduced because the actual root cause was a renderer bug: `@sigx/runtime-core`'s `patch()` dropped a child component's `cleanup` closure on same-type parent re-renders, so `onUnmounted` silently stopped firing and the previous step's focusable was never unregistered. Fixed in [signalxjs/core#22](https://github.com/signalxjs/core/pull/22), shipped here by bumping `@sigx/terminal` to `^0.4.4` (which depends on `@sigx/runtime-core@0.4.7`) and `@sigx/vite` to `^0.4.7`.
+
+### Changed
+
+- Bump `@sigx/terminal` peer to `^0.4.4` and `@sigx/vite` to `^0.4.7` across the workspace.
+
 ## [0.2.6] - 2026-05-13
 
 ### Fixed

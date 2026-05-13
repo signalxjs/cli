@@ -1,6 +1,6 @@
 {
     "name": "@sigx/cli",
-    "version": "0.2.6",
+    "version": "0.2.7",
     "description": "Unified CLI for SignalX — create, dev, build, and run projects",
     "type": "module",
     "main": "./dist/index.js",
@@ -31,11 +31,11 @@
         "dev": "vite build --watch"
     },
     "dependencies": {
-        "@sigx/terminal": "^0.4.3",
+        "@sigx/terminal": "^0.4.4",
         "citty": "^0.2.2"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.4.6",
+        "@sigx/vite": "^0.4.7",
         "@types/node": "^22.0.0",
         "typescript": "^5.9.3",
         "vite": "^8.0.12"
