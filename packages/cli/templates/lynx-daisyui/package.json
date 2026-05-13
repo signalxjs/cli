@@ -21,6 +21,7 @@
         "@sigx/lynx-haptics": "^0.1.0",
         "@sigx/lynx-device-info": "^0.1.0",
         "@sigx/lynx-network": "^0.1.0",
+        "@sigx/lynx-websocket": "^0.1.0",
         "@sigx/lynx-daisyui": "^0.1.0"
     },
     "devDependencies": {

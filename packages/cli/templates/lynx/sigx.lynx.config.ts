@@ -28,6 +28,7 @@ export default defineLynxConfig({
         '@sigx/lynx-haptics',
         '@sigx/lynx-device-info',
         '@sigx/lynx-network',
+        '@sigx/lynx-websocket',
     ],
     android: {
         applicationId: 'com.example.{{projectName}}',
