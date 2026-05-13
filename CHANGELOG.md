@@ -12,7 +12,7 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ### Changed
 
-- Bump `@sigx/terminal` peer to `^0.4.4` and `@sigx/vite` to `^0.4.7` across the workspace.
+- Bump `@sigx/terminal` to `^0.4.4` and `@sigx/vite` to `^0.4.7` across the workspace.
 
 ## [0.2.6] - 2026-05-13
 
