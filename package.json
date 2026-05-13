@@ -2,7 +2,7 @@
   "name": "sigx-cli-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "SignalX CLI — unified `sigx` binary, `create-sigx` scaffolder, and web project templates",
+  "description": "SignalX CLI — unified `sigx` binary, `@sigx/create` scaffolder, and web project templates",
   "type": "module",
   "workspaces": [
     "packages/*"
@@ -13,8 +13,8 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "typecheck": "tsgo --noEmit",
-    "lint": "oxlint packages/cli/src packages/create-sigx/src",
-    "lint:fix": "oxlint --fix packages/cli/src packages/create-sigx/src",
+    "lint": "oxlint packages/cli/src packages/create/src",
+    "lint:fix": "oxlint --fix packages/cli/src packages/create/src",
     "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules pnpm-lock.yaml",
     "publish:dry": "node scripts/publish.js --dry-run",
     "publish:all": "node scripts/publish.js",
