@@ -313,7 +313,13 @@ const CreateSigx = component(() => {
         error: '',
     });
 
+    // Defense in depth: gate each handler on the current step. If a
+    // previous step's focusable lingers across a transition (reconciler
+    // edge case observed in the TUI runtime) and its onSubmit fires on a
+    // later Enter press, the guard makes it a no-op instead of re-running
+    // the scaffolder or rewinding the wizard.
     const createProject = () => {
+        if (state.step !== 'styling') return;
         state.step = 'creating';
         state.progress = 30;
         const result = scaffoldProject({
@@ -330,16 +336,19 @@ const CreateSigx = component(() => {
     };
 
     const handleNameSubmit = () => {
+        if (state.step !== 'name') return;
         if (state.projectName.trim()) {
             state.step = 'type';
         }
     };
 
     const handleTypeSubmit = () => {
+        if (state.step !== 'type') return;
         state.step = 'styling';
     };
 
     const handleStylingSubmit = () => {
+        if (state.step !== 'styling') return;
         createProject();
     };
 
