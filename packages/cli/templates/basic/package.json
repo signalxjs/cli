@@ -9,10 +9,10 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "sigx": "^0.4.1"
+        "sigx": "latest"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.4.1",
+        "@sigx/vite": "latest",
         "vite": "^8.0.3",
         "typescript": "^5.9.3"
     }

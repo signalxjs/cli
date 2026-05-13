@@ -33,8 +33,8 @@ importers:
   packages/cli:
     dependencies:
       '@sigx/terminal':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.4.2
+        version: 0.4.2
       citty:
         specifier: ^0.2.2
         version: 0.2.2
@@ -339,16 +339,8 @@ packages:
   '@rolldown/pluginutils@1.0.0':
     resolution: {integrity: sha512-aKs/3GSWyV0mrhNmt/96/Z3yczC3yvrzYATCiCXQebBsGyYzjNdUphRVLeJQ67ySKVXRfMxt2lm12pmXvbPFQQ==}
 
-  '@sigx/reactivity@0.4.1':
-    resolution: {integrity: sha512-p4/GDONCJwFKoaAf/nccvpNJ+7rfafjrbfQ+yc0xnziKLFmQTFyD1dPdnLr+pC9HwiBmIRhZzqL5sEKbHQwj3Q==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-
   '@sigx/reactivity@0.4.3':
     resolution: {integrity: sha512-S6nCZuwRGsPSvGrLXLxRSJzVFIPdWAIbSu4gKAglNxuq5V3A2aH9SdHE/wSqz0lTzA4qrIRR2wSbi3bnOMjKOg==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-
-  '@sigx/runtime-core@0.4.1':
-    resolution: {integrity: sha512-gakdVKwb2c2OUj9I8lEaJaIVLD19L4tWLVioWPhuC/pmOjV8Cv5Balvvb2lz2HlRn/Onj2voYeRpzkZg5glOIw==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
   '@sigx/runtime-core@0.4.3':
@@ -359,11 +351,11 @@ packages:
     resolution: {integrity: sha512-1G5PC5xSdNgdiUjNKnm1mIg6+QYmt1S9nQIkR2ON0vz+rsvAGeysTEwM3PCUe98HHBpqrkIk/9iqH2VRUd5BCA==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
-  '@sigx/runtime-terminal@0.4.1':
-    resolution: {integrity: sha512-5o5v5hNbUOdKvJYLg0sBxz6PQXYi3OSKDRzUcHKO6RhIPzbVD5VgYaWW2fsuxYpBPdWRBbMs1qwZBHGKhVSKlA==}
+  '@sigx/runtime-terminal@0.4.2':
+    resolution: {integrity: sha512-MRYrtSbAqTPi3UiAaaQOd00v2PZiNVaiw4+xr9bvi5h0Ox0alzh9QXQFrQ6q91aivSx7b+dDAlNTUS5dDtEFAg==}
 
-  '@sigx/terminal@0.4.1':
-    resolution: {integrity: sha512-IpROUnb9g3FjA47ODpMH7cEB52KRPCF0IfrG8RkNckGpzwkRpTPWbM5U5hJmCHARThabafDS27XEriGH9xlDRA==}
+  '@sigx/terminal@0.4.2':
+    resolution: {integrity: sha512-WkES5fRTJ6mvSHaOBSXituIKbBmptn4WkS04MyITLV3tPN6cm8fKgWJuhfOVeWnXSMwveQPCnJ5XDeFH1Ddrrw==}
 
   '@sigx/vite@0.4.3':
     resolution: {integrity: sha512-rce7KVn9PQCdfBm0zC4zMvwPdGfjWN5J7Y5ZGA3/72iD2i63cFYIAmm5i808vLKsNFTC9T9SLDOYTT/8lnESQQ==}
@@ -963,13 +955,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0': {}
 
-  '@sigx/reactivity@0.4.1': {}
-
   '@sigx/reactivity@0.4.3': {}
-
-  '@sigx/runtime-core@0.4.1':
-    dependencies:
-      '@sigx/reactivity': 0.4.1
 
   '@sigx/runtime-core@0.4.3':
     dependencies:
@@ -980,16 +966,16 @@ snapshots:
       '@sigx/reactivity': 0.4.3
       '@sigx/runtime-core': 0.4.3
 
-  '@sigx/runtime-terminal@0.4.1':
+  '@sigx/runtime-terminal@0.4.2':
     dependencies:
-      '@sigx/reactivity': 0.4.1
-      '@sigx/runtime-core': 0.4.1
+      '@sigx/reactivity': 0.4.3
+      '@sigx/runtime-core': 0.4.3
 
-  '@sigx/terminal@0.4.1':
+  '@sigx/terminal@0.4.2':
     dependencies:
-      '@sigx/reactivity': 0.4.1
-      '@sigx/runtime-core': 0.4.1
-      '@sigx/runtime-terminal': 0.4.1
+      '@sigx/reactivity': 0.4.3
+      '@sigx/runtime-core': 0.4.3
+      '@sigx/runtime-terminal': 0.4.2
 
   '@sigx/vite@0.4.3(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))':
     dependencies:

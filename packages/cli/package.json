@@ -31,7 +31,7 @@
         "dev": "vite build --watch"
     },
     "dependencies": {
-        "@sigx/terminal": "^0.4.1",
+        "@sigx/terminal": "^0.4.2",
         "citty": "^0.2.2"
     },
     "devDependencies": {

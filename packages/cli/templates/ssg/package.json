@@ -9,13 +9,13 @@
         "preview": "ssg preview"
     },
     "dependencies": {
-        "sigx": "^0.4.1",
-        "@sigx/ssg": "^0.3.2",
-        "@sigx/router": "^0.3.2",
-        "@sigx/server-renderer": "^0.4.1"
+        "sigx": "latest",
+        "@sigx/ssg": "latest",
+        "@sigx/router": "latest",
+        "@sigx/server-renderer": "latest"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.4.1",
+        "@sigx/vite": "latest",
         "vite": "^8.0.3",
         "typescript": "^5.9.3"
     }
