@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-05-13
+
 ### Changed
 
 - Renamed the canonical scaffolder package from `create-sigx` (unscoped) to `@sigx/create` (scoped). npm Support confirmed the unscoped `create-sigx` name is permanently blocked by their anti-typosquatting / restricted-name filter for unscoped publishes, with no whitelisting path. Pivoting to a scoped name under the already-owned `@sigx` org both bypasses that filter and matches the rest of the package set. User-facing command becomes `npm create @sigx@latest my-app` (also `pnpm create @sigx`, `yarn create @sigx`, `bunx create @sigx`); npm's `init`/`create` command resolves `@scope` → `@scope/create` automatically. The package was never successfully published under the old name, so no installs break.
