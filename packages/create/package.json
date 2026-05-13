@@ -1,6 +1,6 @@
 {
     "name": "@sigx/create",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "Create a new SignalX project — `npm create @sigx@latest my-app`",
     "type": "module",
     "bin": {
@@ -37,7 +37,7 @@
         "@sigx/cli": "workspace:^"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.4.6",
+        "@sigx/vite": "^0.4.7",
         "typescript": "^5.9.3",
         "vite": "^8.0.12"
     },
