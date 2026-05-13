@@ -4,6 +4,8 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-05-13
+
 ### Fixed
 
 - `lynx-daisyui` template — `App.tsx` used the wrong event prop names on the DaisyUI components (`bindpress` on `<Button>`, `bindchange` on `<Toggle>`). The DaisyUI wrappers expose Vue-style props derived from their `Define.Event<…>` declarations, so the correct names are `onPress` and `onChange`. With the old props the buttons did nothing — the counter was inert. Native lynx primitives like `<view>` still use `bindtap` (those are unchanged in the plain `lynx` and `lynx-tailwind` templates).
