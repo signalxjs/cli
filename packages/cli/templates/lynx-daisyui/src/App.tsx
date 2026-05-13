@@ -48,21 +48,21 @@ const App = component(() => {
                                 variant="error"
                                 outline
                                 size="sm"
-                                bindpress={() => count.value > 0 && count.value--}
+                                onPress={() => count.value > 0 && count.value--}
                             >
                                 −
                             </Button>
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                bindpress={() => (count.value = 0)}
+                                onPress={() => (count.value = 0)}
                             >
                                 Reset
                             </Button>
                             <Button
                                 variant="primary"
                                 size="sm"
-                                bindpress={() => count.value++}
+                                onPress={() => count.value++}
                             >
                                 +
                             </Button>
@@ -73,7 +73,7 @@ const App = component(() => {
                             <Toggle
                                 checked={autoIncrement.value}
                                 color="success"
-                                bindchange={(next: boolean) => {
+                                onChange={(next: boolean) => {
                                     autoIncrement.value = next;
                                     syncTimer();
                                 }}
