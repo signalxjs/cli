@@ -33,15 +33,15 @@ importers:
   packages/cli:
     dependencies:
       '@sigx/terminal':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^0.4.3
+        version: 0.4.3
       citty:
         specifier: ^0.2.2
         version: 0.2.2
     devDependencies:
       '@sigx/vite':
-        specifier: ^0.4.3
-        version: 0.4.3(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))
+        specifier: ^0.4.6
+        version: 0.4.6(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.18
@@ -59,8 +59,8 @@ importers:
         version: link:../cli
     devDependencies:
       '@sigx/vite':
-        specifier: ^0.4.3
-        version: 0.4.3(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))
+        specifier: ^0.4.6
+        version: 0.4.6(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -343,22 +343,30 @@ packages:
     resolution: {integrity: sha512-S6nCZuwRGsPSvGrLXLxRSJzVFIPdWAIbSu4gKAglNxuq5V3A2aH9SdHE/wSqz0lTzA4qrIRR2wSbi3bnOMjKOg==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
+  '@sigx/reactivity@0.4.6':
+    resolution: {integrity: sha512-w+LQhHoJzgC3Hax8YP1N+LAHsTWPTDaURnOp5kiqvXGbWimC0AGc/tQ1t6oIaaby/CqAxsadhmpDCYN33dtxLA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+
   '@sigx/runtime-core@0.4.3':
     resolution: {integrity: sha512-KVvlFFMzhl0xFhE4p1Liy0R2LPebDS3ckWk8I6kplbw/t6kb4Jsr0k19Hy7IoWhfZ84yD1EhvAHDyXvIU1wmOQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+
+  '@sigx/runtime-core@0.4.6':
+    resolution: {integrity: sha512-x71FhtsvS/Bfp81X3ImKFQUpT7GPnGO5pGt2oAJwqswXopVXDnMaUDVJebawOjLpHPOD1QlepQYml4INLbIXkQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
   '@sigx/runtime-dom@0.4.3':
     resolution: {integrity: sha512-1G5PC5xSdNgdiUjNKnm1mIg6+QYmt1S9nQIkR2ON0vz+rsvAGeysTEwM3PCUe98HHBpqrkIk/9iqH2VRUd5BCA==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
-  '@sigx/runtime-terminal@0.4.2':
-    resolution: {integrity: sha512-MRYrtSbAqTPi3UiAaaQOd00v2PZiNVaiw4+xr9bvi5h0Ox0alzh9QXQFrQ6q91aivSx7b+dDAlNTUS5dDtEFAg==}
+  '@sigx/runtime-terminal@0.4.3':
+    resolution: {integrity: sha512-6VUBIJuvg33IPSfMEIxtTRdgvl9FEE4T1h8twGwFM0F/h4enh7pgKZP+d1aYV9GCCOwc+tm4CZS0fSK/BFlX3w==}
 
-  '@sigx/terminal@0.4.2':
-    resolution: {integrity: sha512-WkES5fRTJ6mvSHaOBSXituIKbBmptn4WkS04MyITLV3tPN6cm8fKgWJuhfOVeWnXSMwveQPCnJ5XDeFH1Ddrrw==}
+  '@sigx/terminal@0.4.3':
+    resolution: {integrity: sha512-hxX8Bikcw61wu+nXWMsfKtUMZ0UJAFAAC6n5DVr6GMY0eCXRdEfnDloc7j+f22obd2EkIvr8O2AXpmboPWpM/w==}
 
-  '@sigx/vite@0.4.3':
-    resolution: {integrity: sha512-rce7KVn9PQCdfBm0zC4zMvwPdGfjWN5J7Y5ZGA3/72iD2i63cFYIAmm5i808vLKsNFTC9T9SLDOYTT/8lnESQQ==}
+  '@sigx/vite@0.4.6':
+    resolution: {integrity: sha512-McmWio9sxfrrQDYr6KUdAJfHeaOsAiXhlWVQI9qxMp4l9esE48k4u8dNPyNVerkAfu9zn7ZH1LpSVscUgpRJtw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       sigx: '*'
@@ -957,27 +965,33 @@ snapshots:
 
   '@sigx/reactivity@0.4.3': {}
 
+  '@sigx/reactivity@0.4.6': {}
+
   '@sigx/runtime-core@0.4.3':
     dependencies:
       '@sigx/reactivity': 0.4.3
+
+  '@sigx/runtime-core@0.4.6':
+    dependencies:
+      '@sigx/reactivity': 0.4.6
 
   '@sigx/runtime-dom@0.4.3':
     dependencies:
       '@sigx/reactivity': 0.4.3
       '@sigx/runtime-core': 0.4.3
 
-  '@sigx/runtime-terminal@0.4.2':
+  '@sigx/runtime-terminal@0.4.3':
     dependencies:
-      '@sigx/reactivity': 0.4.3
-      '@sigx/runtime-core': 0.4.3
+      '@sigx/reactivity': 0.4.6
+      '@sigx/runtime-core': 0.4.6
 
-  '@sigx/terminal@0.4.2':
+  '@sigx/terminal@0.4.3':
     dependencies:
-      '@sigx/reactivity': 0.4.3
-      '@sigx/runtime-core': 0.4.3
-      '@sigx/runtime-terminal': 0.4.2
+      '@sigx/reactivity': 0.4.6
+      '@sigx/runtime-core': 0.4.6
+      '@sigx/runtime-terminal': 0.4.3
 
-  '@sigx/vite@0.4.3(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))':
+  '@sigx/vite@0.4.6(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))':
     dependencies:
       sigx: 0.4.1
       vite: 8.0.12(@types/node@22.19.18)
