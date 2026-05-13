@@ -4,6 +4,16 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-05-13
+
+### Fixed
+
+- `sigx create` wizard regression — picks up the upstream fixes for the duplicated Done-screen + "Directory already exists" bug. `@sigx/terminal` floor bumped from `^0.4.2` to `^0.4.3`, which transitively brings in `@sigx/runtime-terminal@0.4.3` (focus helpers now wrap their `focusState` read/write blocks in `untrack(...)` so they cannot leak `focusState.activeId` as a dep of the caller's effect) and `@sigx/reactivity@0.4.6` (runtime-level `running` guard in `runEffect` so an effect cannot re-enter itself synchronously). See [signalxjs/terminal#8](https://github.com/signalxjs/terminal/pull/8) and [signalxjs/core#18](https://github.com/signalxjs/core/pull/18). The defensive `state.step !== <expected>` guards from 0.2.4 are kept in place as belt-and-braces.
+
+### Changed
+
+- `@sigx/vite` bumped from `^0.4.3` to `^0.4.6` across the workspace to keep all `@sigx/*` deps on the same 0.4.6 train.
+
 ## [0.2.5] - 2026-05-13
 
 ### Fixed

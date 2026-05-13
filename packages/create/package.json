@@ -1,6 +1,6 @@
 {
     "name": "@sigx/create",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "Create a new SignalX project — `npm create @sigx@latest my-app`",
     "type": "module",
     "bin": {
