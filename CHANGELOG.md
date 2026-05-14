@@ -14,6 +14,7 @@ All notable changes to this repository are documented here. Per-package changelo
 ### Changed
 
 - SSG templates pick up [`@sigx/ssg@0.4.8`](https://github.com/signalxjs/ssg/releases/tag/v0.4.8), which moves `@mdx-js/rollup` from `devDependencies` to `dependencies`, so consumers no longer have to install it explicitly.
+- `@sigx/create` bumped to `0.0.9` — version bump only, kept in sync with `@sigx/cli` so `npm create @sigx@latest` ships the template fixes above.
 
 ## [0.2.7] - 2026-05-13
 
