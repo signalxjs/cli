@@ -4,6 +4,17 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.2.8] - 2026-05-14
+
+### Fixed
+
+- **Templates: `basic-daisyui` & `ssr-daisyui`** — replaced the non-existent top-level `Stat` import from `@sigx/daisyui` with the correct `Stats.Item` compound API (`Stats.Item` with `Stats.Title`/`Stats.Value`/`Stats.Desc` children). Fixes the `Uncaught SyntaxError: ... does not provide an export named 'Stat'` runtime error when running `pnpm dev` on a freshly scaffolded daisyui project.
+- **Templates: `ssg`, `ssg-tailwind`, `ssg-daisyui`** — `dev`/`build`/`preview` scripts now call `sigx` (the unified CLI) instead of a non-existent `ssg` bin. `@sigx/cli` is added as a devDependency so the scripts resolve. Fixes `ssg: command not found` on a freshly scaffolded SSG project.
+
+### Changed
+
+- SSG templates pick up [`@sigx/ssg@0.4.8`](https://github.com/signalxjs/ssg/releases/tag/v0.4.8), which moves `@mdx-js/rollup` from `devDependencies` to `dependencies`, so consumers no longer have to install it explicitly.
+
 ## [0.2.7] - 2026-05-13
 
 ### Fixed
