@@ -1,5 +1,5 @@
 import { component, effect } from 'sigx';
-import { Button, Card, Badge, Toggle, Stats, Stat, Hero } from '@sigx/daisyui';
+import { Button, Card, Badge, Toggle, Stats, Hero } from '@sigx/daisyui';
 
 export const Home = component(({ signal }) => {
     const state = signal({
@@ -52,9 +52,21 @@ export const Home = component(({ signal }) => {
             {/* Stats — all reactive */}
             <div class="px-6 -mt-8 relative z-10 flex justify-center">
                 <Stats class="w-full max-w-3xl bg-base-100">
-                    <Stat title="Counter" value={state.count} description="Reactive signal" />
-                    <Stat title="Doubled" value={state.count * 2} description="Computed value" />
-                    <Stat title="Uptime" value={formatTime(state.elapsed)} description="Live timer" />
+                    <Stats.Item>
+                        <Stats.Title>Counter</Stats.Title>
+                        <Stats.Value>{state.count}</Stats.Value>
+                        <Stats.Desc>Reactive signal</Stats.Desc>
+                    </Stats.Item>
+                    <Stats.Item>
+                        <Stats.Title>Doubled</Stats.Title>
+                        <Stats.Value>{state.count * 2}</Stats.Value>
+                        <Stats.Desc>Computed value</Stats.Desc>
+                    </Stats.Item>
+                    <Stats.Item>
+                        <Stats.Title>Uptime</Stats.Title>
+                        <Stats.Value>{formatTime(state.elapsed)}</Stats.Value>
+                        <Stats.Desc>Live timer</Stats.Desc>
+                    </Stats.Item>
                 </Stats>
             </div>
 
