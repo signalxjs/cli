@@ -4,9 +4,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "ssg dev",
-        "build": "ssg build",
-        "preview": "ssg preview"
+        "dev": "sigx dev",
+        "build": "sigx build",
+        "preview": "sigx preview"
     },
     "dependencies": {
         "sigx": "latest",
@@ -15,7 +15,9 @@
         "@sigx/server-renderer": "latest"
     },
     "devDependencies": {
+        "@sigx/cli": "latest",
         "@sigx/vite": "latest",
+        "@mdx-js/rollup": "^3.1.0",
         "vite": "^8.0.3",
         "typescript": "^5.9.3",
         "tailwindcss": "^4.1.0",
