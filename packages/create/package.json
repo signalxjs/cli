@@ -29,7 +29,7 @@
         "url": "git+https://github.com/signalxjs/cli.git",
         "directory": "packages/create"
     },
-    "homepage": "https://github.com/signalxjs/cli/tree/main/packages/create",
+    "homepage": "https://sigx.dev/cli/",
     "bugs": {
         "url": "https://github.com/signalxjs/cli/issues"
     },

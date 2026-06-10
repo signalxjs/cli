@@ -1,6 +1,10 @@
 # SignalX CLI
 
-The official command-line tools for [SignalX](https://github.com/signalxjs/core).
+The official command-line tools for [SignalX](https://sigx.dev/core/).
+
+## 📚 Documentation
+
+Full guides, command reference and live examples → **<https://sigx.dev/cli/>**
 
 ## Quick start
 
