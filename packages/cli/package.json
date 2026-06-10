@@ -47,7 +47,7 @@
         "url": "git+https://github.com/signalxjs/cli.git",
         "directory": "packages/cli"
     },
-    "homepage": "https://github.com/signalxjs/cli/tree/main/packages/cli",
+    "homepage": "https://sigx.dev/cli/",
     "bugs": {
         "url": "https://github.com/signalxjs/cli/issues"
     },
