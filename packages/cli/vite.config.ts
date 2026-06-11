@@ -5,7 +5,9 @@ export default defineLibConfig({
         'cli': 'src/cli.ts',
         'index': 'src/index.ts',
         'plugin': 'src/plugin.ts',
-        'commands/create': 'src/commands/create.tsx',
+        'commands/create': 'src/commands/create.ts',
+        'commands/scaffold': 'src/commands/scaffold.ts',
+        'shell/index': 'src/shell/index.ts',
     },
     external: [
         // Node built-ins

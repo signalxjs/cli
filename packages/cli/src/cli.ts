@@ -22,18 +22,20 @@ import { fileURLToPath } from 'node:url';
 import { discoverPlugins } from './discover.js';
 import { infoCommand } from './commands/info.js';
 import { createLogger } from './utils/logger.js';
-import type { PluginCommand } from './plugin.js';
+import type { PluginCommand, SigxPlugin } from './plugin.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 const logger = createLogger();
 
-function wrapPluginCommand(cmd: PluginCommand) {
+function wrapPluginCommand(cmd: PluginCommand, plugins: SigxPlugin[]) {
     return defineCommand({
         meta: { description: cmd.description },
         args: cmd.args as any,
         async run({ args }) {
-            await cmd.run({ cwd: process.cwd(), args, logger });
+            // `plugins` lets a shell-hosting command (e.g. lynx dev) merge
+            // peer plugins' TUI contributions via runShell({ plugins }).
+            await cmd.run({ cwd: process.cwd(), args, logger, plugins });
         },
     });
 }
@@ -63,7 +65,7 @@ async function main() {
                 // Command conflict — last plugin wins, but warn
                 logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
             }
-            subCommands[name] = wrapPluginCommand(cmd);
+            subCommands[name] = wrapPluginCommand(cmd, plugins);
         }
     }
 
