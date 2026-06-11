@@ -20,6 +20,10 @@
         "./create": {
             "import": "./dist/commands/create.js",
             "types": "./dist/commands/create.d.ts"
+        },
+        "./shell": {
+            "import": "./dist/shell/index.js",
+            "types": "./dist/shell/index.d.ts"
         }
     },
     "files": [
@@ -31,7 +35,7 @@
         "dev": "vite build --watch"
     },
     "dependencies": {
-        "@sigx/terminal": "^0.4.4",
+        "@sigx/terminal": "^0.5.0",
         "citty": "^0.2.2"
     },
     "devDependencies": {
