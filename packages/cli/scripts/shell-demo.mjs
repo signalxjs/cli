@@ -37,6 +37,7 @@ const fakeLynxPlugin = {
 let store; // set once the shell is up
 
 const shell = await runShell({
+    mode: process.argv.includes('--inline') ? 'inline' : 'fullscreen',
     title: 'sigx dev',
     version: 'v0.3.0 (demo)',
     plugins: [fakeLynxPlugin],
