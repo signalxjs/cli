@@ -1,21 +1,28 @@
 /** @jsxImportSource @sigx/terminal */
 /**
- * The persistent dev-shell runtime — the Claude-Code-shaped app frame that
- * plugin commands (e.g. lynx `dev`) host their dashboards in:
+ * The persistent dev-shell runtime plugin commands host their dashboards in.
  *
- * - header (logo/title) printed ONCE into native scrollback
- * - transcript via `shell.say` (permanent lines above the live region)
- * - tab strip + active tab body (host + peer-plugin contributions)
- * - status line, growing `/`-command input with intellisense, key hints
- * - single-key shortcuts while the input is empty; 1–9 switch tabs
- * - Esc pops pushed views; Ctrl+C runs onExit cleanup before exiting
+ * Two layouts:
  *
- * In non-TTY environments nothing mounts: callers get a plain handle whose
- * `say` writes lines and whose store streams through — one code path.
+ * - `mode: 'fullscreen'` (dashboards — k9s/showcase shape): alt-screen app
+ *   with a title bar, segmented tab strip, full-height tab body, and a
+ *   pinned status/hints line. `/` summons a command-palette overlay with
+ *   intellisense. `say()` streams into the log store (visible live in a
+ *   Logs tab) AND queues into the normal terminal buffer, so quitting
+ *   leaves a post-mortem trail in real scrollback.
+ *
+ * - `mode: 'inline'` (default — transcript shape): header printed once into
+ *   scrollback, permanent transcript via `say`, tabs + bottom-anchored
+ *   `/`-command input. The conversation IS the terminal scrollback.
+ *
+ * Both: plugin-contributed tabs/commands/shortcuts/status (mergeShellConfig),
+ * single-key shortcuts, 1–9 tab switching, Esc-pop views, and Ctrl+C that
+ * runs onExit cleanup BEFORE exiting. In non-TTY environments nothing
+ * mounts — callers get a plain streaming handle with the same shape.
  */
 import {
     defineApp, component, signal, onMounted, onUnmounted, terminalMount, exitTerminal,
-    TextArea, SuggestionList, Tabs, Divider, KeyHints, Text, Col, Spacer, Row,
+    TextArea, SuggestionList, Tabs, Divider, KeyHints, Text, Col, Spacer, Box,
     renderPixelArt, createViewStack, onKey, isEsc, printStatic, paintToken,
     getTerminalSize, layoutText, createLogStore,
 } from '@sigx/terminal';
@@ -34,6 +41,7 @@ export async function runShell(
         config,
         collectTuiContributions(config.plugins ?? []),
     );
+    const fullscreen = merged.mode === 'fullscreen';
 
     const interactive = opts.interactive ?? (!!process.stdout.isTTY && !!process.stdin.isTTY);
     if (!interactive) {
@@ -47,6 +55,14 @@ export async function runShell(
     const views = createViewStack<string>('shell');
 
     const say = (text = '') => {
+        if (fullscreen) {
+            // Live: into the log store (a Logs tab shows it immediately).
+            // Permanent: printStatic queues fullscreen statics and flushes
+            // them into the normal buffer on exit — the post-mortem trail.
+            store.push(text + '\n');
+            printStatic(text);
+            return;
+        }
         // ORDER MATTERS: bump the counter first — the signal write re-renders
         // synchronously, so printStatic's immediate repaint uses the shrunk
         // filler and the bottom anchor never overflows the viewport.
@@ -109,39 +125,61 @@ export async function runShell(
 
     const ShellApp = component(() => {
         const input = signal({ value: '' });
+        // Fullscreen: the command input is a summoned palette, not permanent
+        // chrome. `/` opens it; Esc / submit closes it.
+        const palette = signal({ open: false });
         const offs: Array<() => void> = [];
+
+        const inputActive = () => (fullscreen ? palette.open : input.value !== '');
+
+        const closePalette = () => {
+            palette.open = false;
+            input.value = '';
+        };
 
         const submit = (text: string) => {
             const trimmed = text.trim();
             input.value = '';
+            if (fullscreen) palette.open = false;
             if (!trimmed) return;
             if (trimmed.startsWith('/')) {
                 void runCommand(trimmed.split(/\s/)[0]);
                 return;
             }
-            say(paintToken(`type / for commands (Esc to dismiss)`, 'dim'));
+            say(paintToken(`type / for commands`, 'dim'));
         };
 
         onMounted(() => {
-            // Header — once, into scrollback.
-            if (merged.logo) say(renderPixelArt(merged.logo.rows, merged.logo.palette).join('\n'));
-            say(`${paintToken(merged.title, 'accent')}${merged.version ? ` ${paintToken(merged.version, 'dim')}` : ''}`);
-            say('');
+            if (!fullscreen) {
+                // Header — once, into scrollback. (Fullscreen renders the
+                // title bar inside the frame instead.)
+                if (merged.logo) say(renderPixelArt(merged.logo.rows, merged.logo.palette).join('\n'));
+                say(`${paintToken(merged.title, 'accent')}${merged.version ? ` ${paintToken(merged.version, 'dim')}` : ''}`);
+                say('');
+            }
 
-            // Esc pops pushed views.
+            // Esc: close the palette first; then pop pushed views.
             offs.push(onKey((key) => {
-                if (isEsc(key) && views.depth() > 1) {
+                if (!isEsc(key)) return;
+                if (fullscreen && palette.open) {
+                    closePalette();
+                    return true;
+                }
+                if (views.depth() > 1) {
                     views.pop();
                     return true;
                 }
             }, { layer: 'view' }));
 
-            // Single-key shortcuts + 1–9 tab switching. Overlay layer so they
-            // run BEFORE the TextArea (which consumes printables) — but only
-            // while the input is empty, so once you've started typing (`/re…`)
-            // every key falls through to the editor.
+            // `/` summons the palette (fullscreen); single-key shortcuts +
+            // 1–9 tab switching. Overlay layer so they run BEFORE the
+            // TextArea — inactive whenever the input owns the keyboard.
             offs.push(onKey((key) => {
-                if (input.value !== '') return;
+                if (inputActive()) return;
+                if (fullscreen && key === '/') {
+                    palette.open = true;
+                    return true;
+                }
                 const digit = key.length === 1 ? key.charCodeAt(0) - 48 : 0;
                 if (digit >= 1 && digit <= Math.min(9, merged.tabs.length)) {
                     tab.active = merged.tabs[digit - 1].id;
@@ -166,52 +204,102 @@ export async function runShell(
         });
         onUnmounted(() => { for (const off of offs) off(); });
 
-        return () => {
+        const suggestionsFor = (value: string) => (value.startsWith('/')
+            ? allCommands()
+                .filter((c) => c.name.startsWith(value.trim().split(/\s/)[0]))
+                .map((c) => ({ value: c.name, label: c.name, description: c.description }))
+            : []);
+
+        const statusLine = () => {
+            const items = [...(merged.status?.() ?? []), ...status.items];
+            if (items.length === 0) return null;
+            return (
+                <box>
+                    {items.flatMap((s, i) => [
+                        ...(i > 0 ? [<Text color="dim"> · </Text>] : []),
+                        <Text color="dim">{s.label} </Text>,
+                        <Text color={s.tone ?? 'fg'}>{s.value}</Text>,
+                    ])}
+                </box>
+            );
+        };
+
+        const resolveTab = () => {
+            const viewId = views.current();
+            return viewId !== 'shell'
+                ? merged.tabs.find((t) => t.id === viewId)
+                : merged.tabs.find((t) => t.id === tab.active);
+        };
+
+        const hintList = () => [
+            ...(merged.shortcuts ?? []).map((s) => ({ key: s.key, label: s.label })),
+            { key: '/', label: 'commands' },
+            { key: '^C', label: 'quit' },
+        ];
+
+        // ── Fullscreen (showcase shape): title bar, tab strip, full-height
+        //    body, status + hints; `/` palette overlays the bottom.
+        const renderFullscreen = () => {
+            const { columns: cols } = getTerminalSize();
+            const activeTab = resolveTab();
+            const suggestions = suggestionsFor(input.value);
+            return (
+                <Col>
+                    <Box border="thick" borderColor="accent" padX={1}>
+                        <Text color="accent" bold>{merged.title}</Text>
+                        {merged.version ? <Text color="dim">{`  ${merged.version}`}</Text> : null}
+                    </Box>
+                    {merged.tabs.length > 1 && (
+                        <Tabs
+                            options={merged.tabs.map((t) => ({ value: t.id, label: t.label }))}
+                            model={() => tab.active}
+                            onChange={(id: string) => { tab.active = id; }}
+                        />
+                    )}
+                    {activeTab ? (activeTab.render() as never) : null}
+                    <Spacer size={1} />
+                    {palette.open ? (
+                        <Col>
+                            <Divider width={Math.min(cols, 120)} label="command" />
+                            <TextArea
+                                autofocus
+                                model={() => input.value}
+                                placeholder="/command"
+                                maxRows={2}
+                                onSubmit={submit}
+                            />
+                            {suggestions.length > 0 && <SuggestionList
+                                items={suggestions}
+                                onAccept={(name: string) => { closePalette(); void runCommand(name); }}
+                                onDismiss={closePalette}
+                            />}
+                        </Col>
+                    ) : (
+                        <Col>
+                            {statusLine()}
+                            <KeyHints hints={hintList()} />
+                        </Col>
+                    )}
+                </Col>
+            );
+        };
+
+        // ── Inline (transcript shape): bottom-anchored input + tabs.
+        const renderInline = () => {
             const { columns: cols, rows } = getTerminalSize();
             const innerWidth = Math.max(4, Math.max(20, cols - 4) - 2);
             const inputRows = Math.min(MAX_INPUT_ROWS, layoutText(input.value, innerWidth).rows.length);
-            const suggestions = input.value.startsWith('/')
-                ? allCommands()
-                    .filter((c) => c.name.startsWith(input.value.trim().split(/\s/)[0]))
-                    .map((c) => ({ value: c.name, label: c.name, description: c.description }))
-                : [];
-
-            const statusItems = [
-                ...(merged.status?.() ?? []),
-                ...status.items,
-            ];
-
-            // A pushed view renders the matching tab's body alone (modal-ish,
-            // Esc pops back); the root view renders the full dashboard frame.
+            const suggestions = suggestionsFor(input.value);
             const viewId = views.current();
-            const activeTab = viewId !== 'shell'
-                ? merged.tabs.find((t) => t.id === viewId)
-                : merged.tabs.find((t) => t.id === tab.active);
+            const activeTab = resolveTab();
 
-            const hints = [
-                ...(merged.shortcuts ?? []).map((s) => ({ key: s.key, label: s.label })),
-                { key: '/', label: 'commands' },
-                { key: '^C', label: 'quit' },
-            ];
-
-            // Bottom anchor: chrome = status + tabs strip + body is variable,
-            // so anchor only the input block; the dashboard naturally sits at
-            // the top after the header.
             const chrome = 1 /* divider */ + inputRows + suggestions.length + 1 /* hints */;
             const bodyLines = 1 /* status */ + 1 /* tabs */ + 16 /* nominal body */;
             const filler = Math.max(0, rows - transcript.lines - bodyLines - chrome - 1);
 
             return (
                 <Col>
-                    {statusItems.length > 0 && (
-                        <box>
-                            {statusItems.flatMap((s, i) => [
-                                ...(i > 0 ? [<Text color="dim"> · </Text>] : []),
-                                <Text color="dim">{s.label} </Text>,
-                                <Text color={s.tone ?? 'fg'}>{s.value}</Text>,
-                            ])}
-                        </box>
-                    )}
+                    {statusLine()}
                     {viewId === 'shell' && merged.tabs.length > 1 && (
                         <Tabs
                             options={merged.tabs.map((t) => ({ value: t.id, label: t.label }))}
@@ -234,14 +322,18 @@ export async function runShell(
                         onAccept={(name: string) => { input.value = ''; void runCommand(name); }}
                         onDismiss={() => { input.value = ''; }}
                     />}
-                    <KeyHints hints={hints} />
+                    <KeyHints hints={hintList()} />
                 </Col>
             );
         };
+
+        return () => (fullscreen ? renderFullscreen() : renderInline());
     }, { name: 'ShellApp' });
 
     defineApp(<ShellApp />).mount(
-        { mode: 'inline', clearConsole: true, exitOnCtrlC: false },
+        fullscreen
+            ? { mode: 'fullscreen', exitOnCtrlC: false }
+            : { mode: 'inline', clearConsole: true, exitOnCtrlC: false },
         terminalMount,
     );
 
