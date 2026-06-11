@@ -132,6 +132,78 @@ describe('runShell', () => {
         shell = null; // already exited
     });
 
+    it('fullscreen: alt-screen frame with title bar, tabs, and key hints', async () => {
+        const cap = captureOutput();
+        shell = await runShell(config({ mode: 'fullscreen' }), { interactive: true });
+        await settle();
+        const raw = cap.chunks.join('');
+        expect(raw).toContain('\x1b[?1049h'); // alt screen entered
+        const out = stripAnsi(cap.output());
+        expect(out).toContain('sigx dev');
+        expect(out).toContain('Home');
+        expect(out).toContain('home body');
+        expect(out).toContain('commands'); // key hints visible (no permanent input)
+    });
+
+    it('fullscreen: / opens the palette, runs a command, Esc closes it', async () => {
+        const ran: string[] = [];
+        const cap = captureOutput();
+        shell = await runShell(config({
+            mode: 'fullscreen',
+            commands: [{ name: '/reload', description: 'reload bundle', run: () => { ran.push('reload'); } }],
+        }), { interactive: true });
+        await settle();
+
+        await press('/');
+        let frame = stripAnsi(cap.chunks[cap.chunks.length - 1] ?? '');
+        expect(frame).toContain('command'); // palette divider label
+
+        await settle(); // past the TextArea's 50ms post-mount key cooldown
+        await type('/rel');
+        frame = stripAnsi(cap.chunks[cap.chunks.length - 1] ?? '');
+        expect(frame).toContain('reload bundle'); // intellisense
+        await press('\r'); // accept
+        await settle();
+        expect(ran).toEqual(['reload']);
+
+        // Palette closed again — shortcuts/hints visible, digit switches tabs.
+        await press('2');
+        frame = stripAnsi(cap.chunks[cap.chunks.length - 1] ?? '');
+        expect(frame).toContain('logs body');
+    });
+
+    it('fullscreen: shortcuts fire while the palette is closed, not while open', async () => {
+        const fired: string[] = [];
+        shell = await runShell(config({
+            mode: 'fullscreen',
+            shortcuts: [{ key: 'r', label: 'reload', run: () => { fired.push('r'); } }],
+        }), { interactive: true });
+        await settle();
+
+        await press('r');
+        expect(fired).toEqual(['r']);
+
+        await press('/'); // open palette
+        await settle(); // past the TextArea key cooldown
+        await press('r'); // types into the palette input
+        expect(fired).toEqual(['r']);
+        await press(ESC); // close
+        await press('r');
+        expect(fired).toEqual(['r', 'r']);
+    });
+
+    it('fullscreen: say() lands in the log store (live) for the Logs tab', async () => {
+        captureOutput();
+        shell = await runShell(config({ mode: 'fullscreen' }), { interactive: true });
+        await settle();
+        const seen: string[] = [];
+        const store = shell.store as unknown as { tail: (n: number) => string[] };
+        shell.say('build finished');
+        await settle();
+        seen.push(...store.tail(5));
+        expect(seen.join('\n')).toContain('build finished');
+    });
+
     it('non-TTY: plain handle, no ANSI frames, onReady still runs', async () => {
         const ready = vi.fn();
         const logSpy = vi.spyOn(console, 'log').mockImplementation(() => { });

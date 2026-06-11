@@ -19,6 +19,14 @@ export type {
 
 /** Host configuration for `runShell`. */
 export interface ShellConfig {
+    /**
+     * Layout. `'fullscreen'` (dashboards): alt-screen app — title bar, tab
+     * strip, full-height tab body, pinned status/hints, `/` command palette;
+     * `say()` streams into the log store live and flushes a post-mortem
+     * trail into normal scrollback on exit. `'inline'` (default): transcript
+     * shape — scrollback history + bottom-anchored command input.
+     */
+    mode?: 'inline' | 'fullscreen';
     /** Shown in the header line (and as the root view title). */
     title: string;
     /** Dim version string next to the title. */

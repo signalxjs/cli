@@ -101,6 +101,9 @@ const shellDts = `\
 import type { SigxPlugin, ShellTab, SlashCommand, Shortcut, StatusItem, ShellHandle, TuiContribution, Logger } from '../plugin.js';
 export type { ShellTab, SlashCommand, Shortcut, StatusItem, ShellHandle, TuiContribution } from '../plugin.js';
 export interface ShellConfig {
+    /** 'fullscreen': alt-screen dashboard (title bar, tabs, palette);
+     *  'inline' (default): transcript shape with bottom-anchored input. */
+    mode?: 'inline' | 'fullscreen';
     title: string;
     version?: string;
     logo?: { rows: string[]; palette: Record<string, string> };
