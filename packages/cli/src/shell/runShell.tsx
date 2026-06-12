@@ -74,6 +74,7 @@ export async function runShell(
         printStatic(text);
     };
 
+    const exitSubs: Array<() => void | Promise<void>> = [];
     let exiting = false;
     const shell: ShellHandle = {
         isInteractive: true,
@@ -85,12 +86,19 @@ export async function runShell(
         },
         pushView: (id) => views.push(id),
         popView: () => views.pop(),
+        onExit: (cb) => {
+            exitSubs.push(cb);
+            return () => {
+                const i = exitSubs.indexOf(cb);
+                if (i >= 0) exitSubs.splice(i, 1);
+            };
+        },
         exit: (code = 0) => {
             if (exiting) return;
             exiting = true;
             void (async () => {
                 try {
-                    await merged.onExit?.();
+                    await runTeardown(merged, exitSubs);
                 } finally {
                     exitTerminal();
                     process.exit(code);
@@ -98,6 +106,7 @@ export async function runShell(
             })();
         },
     };
+    wireSignals(shell);
 
     const builtins: SlashCommand[] = [
         {
@@ -361,13 +370,51 @@ export async function runShell(
         terminalMount,
     );
 
+    await runSetups(merged, shell);
     await merged.onReady?.(shell);
     return shell;
+}
+
+/** Host onExit first, then subscriber teardowns most-recent-first; failures
+ *  in one never block the rest. */
+async function runTeardown(merged: ShellConfig, subs: Array<() => void | Promise<void>>): Promise<void> {
+    try {
+        await merged.onExit?.();
+    } catch { /* teardown is best-effort */ }
+    for (const cb of [...subs].reverse()) {
+        try {
+            await cb();
+        } catch { /* teardown is best-effort */ }
+    }
+}
+
+/** Run contributed `setup` lifecycles; returned functions become teardowns. */
+async function runSetups(merged: ShellConfig, shell: ShellHandle): Promise<void> {
+    for (const plugin of merged.plugins ?? []) {
+        const setup = plugin.tui?.setup;
+        if (!setup) continue;
+        try {
+            const teardown = await setup(shell);
+            if (typeof teardown === 'function') shell.onExit(teardown);
+        } catch (err) {
+            shell.say(`plugin ${plugin.name} setup failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+}
+
+/** External signals (kill, CI cancel, closed terminal) must run teardown
+ *  too — Ctrl+C only covers the raw-mode keypress path. */
+function wireSignals(shell: ShellHandle): void {
+    process.once('SIGTERM', () => shell.exit(143));
+    process.once('SIGHUP', () => shell.exit(129));
+    process.once('SIGINT', () => shell.exit(130));
 }
 
 /** Non-TTY fallback: no mount, plain streaming — same handle shape. */
 function plainShell(merged: ShellConfig): ShellHandle {
     const store = createLogStore({ passthrough: true });
+    const exitSubs: Array<() => void | Promise<void>> = [];
+    let exiting = false;
     const shell: ShellHandle = {
         isInteractive: false,
         say: (text = '') => { console.log(text); },
@@ -376,16 +423,29 @@ function plainShell(merged: ShellConfig): ShellHandle {
         switchTab: () => { },
         pushView: () => { },
         popView: () => { },
+        onExit: (cb) => {
+            exitSubs.push(cb);
+            return () => {
+                const i = exitSubs.indexOf(cb);
+                if (i >= 0) exitSubs.splice(i, 1);
+            };
+        },
         exit: (code = 0) => {
+            if (exiting) return;
+            exiting = true;
             void (async () => {
                 try {
-                    await merged.onExit?.();
+                    await runTeardown(merged, exitSubs);
                 } finally {
                     process.exit(code);
                 }
             })();
         },
     };
-    void merged.onReady?.(shell);
+    wireSignals(shell);
+    void (async () => {
+        await runSetups(merged, shell);
+        await merged.onReady?.(shell);
+    })();
     return shell;
 }

@@ -67,6 +67,9 @@ export interface ShellHandle {
     switchTab: (id: string) => void;
     pushView: (id: string) => void;
     popView: () => void;
+    /** Register teardown (runs on exit()/Ctrl+C/SIGTERM/SIGHUP/SIGINT,
+     *  after the host's onExit, most-recent-first). Returns unsubscribe. */
+    onExit: (cb: () => void | Promise<void>) => () => void;
     exit: (code?: number) => void;
 }
 export interface TuiContribution {
@@ -74,6 +77,9 @@ export interface TuiContribution {
     commands?: SlashCommand[];
     shortcuts?: Shortcut[];
     status?: () => StatusItem[];
+    /** Called once when the hosting shell comes up; a returned function is
+     *  registered as teardown. Start servers/watchers here. */
+    setup?: (shell: ShellHandle) => void | (() => void | Promise<void>) | Promise<void | (() => void | Promise<void>)>;
 }
 export interface SigxPlugin {
     name: string;
