@@ -44,6 +44,6 @@ npm dist-tag add @sigx/cli@<previous-version> latest
 npm dist-tag add @sigx/create@<previous-version> latest
 ```
 
-After the workflow finishes, smoke-test: `npm create @sigx@latest my-app` — verify the scaffolder runs and the generated project boots. Then update `CHANGELOG.md`.
+After the workflow finishes, smoke-test: `npm create @sigx@latest my-app` — verify the scaffolder runs and the generated project boots. (`CHANGELOG.md` entries are part of the pre-release checklist above.)
 
 The publish script still supports `--tag beta` (`pnpm publish:beta`) if a release ever needs a pre-release channel. Pre-release identifiers (`0.1.0-rc.1`) are reserved for breaking changes that deserve broader review.
