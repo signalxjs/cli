@@ -35,14 +35,14 @@ function wrapPluginCommand(cmd: PluginCommand, plugins: SigxPlugin[]) {
         async run({ args }) {
             // `plugins` lets a shell-hosting command (e.g. lynx dev) merge
             // peer plugins' TUI contributions via runShell({ plugins }).
-            await cmd.run({ cwd: process.cwd(), args, logger, plugins });
+            await cmd.run({ cwd: process.cwd(), args, logger, plugins, cliVersion: pkg.version });
         },
     });
 }
 
 async function main() {
     const cwd = process.cwd();
-    const plugins = await discoverPlugins(cwd);
+    const plugins = await discoverPlugins(cwd, { cliVersion: pkg.version, logger });
 
     // Build subcommand map: core + plugin commands
     const subCommands: Record<string, ReturnType<typeof defineCommand>> = {
