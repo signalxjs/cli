@@ -22,9 +22,9 @@
  */
 import {
     defineApp, component, signal, onMounted, onUnmounted, terminalMount, exitTerminal,
-    TextArea, SuggestionList, Tabs, Divider, KeyHints, Text, Col, Spacer, Box,
+    TextArea, SuggestionList, Tabs, Divider, KeyHints, Text, Col, Spacer, Box, StatusBar,
     renderPixelArt, createViewStack, onKey, isEsc, printStatic, paintToken,
-    getTerminalSize, layoutText, createLogStore,
+    getTerminalSize, layoutText, createLogStore, setTheme, listThemes,
 } from '@sigx/terminal';
 import type { ShellHandle, SlashCommand, StatusItem } from '../plugin.js';
 import type { ShellConfig } from './types.js';
@@ -47,6 +47,10 @@ export async function runShell(
     if (!interactive) {
         return plainShell(merged);
     }
+
+    // Design theme (the themed canvas paints the whole alt-screen from it).
+    const theme = merged.theme ?? 'obsidian';
+    if (listThemes().includes(theme)) setTheme(theme);
 
     const store = createLogStore();
     const status = signal({ items: [] as StatusItem[] });
@@ -237,26 +241,49 @@ export async function runShell(
             { key: '^C', label: 'quit' },
         ];
 
-        // ── Fullscreen (showcase shape): title bar, tab strip, full-height
-        //    body, status + hints; `/` palette overlays the bottom.
+        // ── Fullscreen — the showcase recipe verbatim: bordered title bar,
+        //    segmented filled tab strip, labeled rounded panel (drop shadow)
+        //    around the body, chip-style StatusBar; `/` palette swaps in
+        //    over the bottom chrome.
         const renderFullscreen = () => {
             const { columns: cols } = getTerminalSize();
             const activeTab = resolveTab();
             const suggestions = suggestionsFor(input.value);
+
+            // Segmented strip — filled chips, the showcase look (NOT the
+            // bordered Tabs widget).
+            const strip = merged.tabs.map((t, i) => {
+                const on = t.id === tab.active;
+                return (
+                    <Text bg={on ? 'accent' : 'accentSoft'} color={on ? 'accentText' : 'dim'}>
+                        {' '}{String(i + 1)} {t.label}{' '}
+                    </Text>
+                );
+            });
+
+            const statusItems = [...(merged.status?.() ?? []), ...status.items];
+            const barItems = [
+                // Status reads as chips too: value chip + dim label.
+                ...statusItems.map((s) => ({ key: s.value, label: s.label })),
+                ...(merged.shortcuts ?? []).map((s) => ({ key: s.key, label: s.label })),
+                ...(merged.tabs.length > 1 ? [{ key: `1-${merged.tabs.length}`, label: 'tabs' }] : []),
+                { key: '/', label: 'commands' },
+                { key: '^C', label: 'quit' },
+            ];
+
             return (
                 <Col>
                     <Box border="thick" borderColor="accent" padX={1}>
                         <Text color="accent" bold>{merged.title}</Text>
                         {merged.version ? <Text color="dim">{`  ${merged.version}`}</Text> : null}
                     </Box>
-                    {merged.tabs.length > 1 && (
-                        <Tabs
-                            options={merged.tabs.map((t) => ({ value: t.id, label: t.label }))}
-                            model={() => tab.active}
-                            onChange={(id: string) => { tab.active = id; }}
-                        />
-                    )}
-                    {activeTab ? (activeTab.render() as never) : null}
+                    {merged.tabs.length > 1 && <box>{strip}</box>}
+                    <Spacer size={1} />
+                    {activeTab ? (
+                        <Box border="rounded" borderColor="line" label={activeTab.label} labelColor="accent" padX={1} dropShadow={true}>
+                            {activeTab.render() as never}
+                        </Box>
+                    ) : null}
                     <Spacer size={1} />
                     {palette.open ? (
                         <Col>
@@ -275,10 +302,7 @@ export async function runShell(
                             />}
                         </Col>
                     ) : (
-                        <Col>
-                            {statusLine()}
-                            <KeyHints hints={hintList()} />
-                        </Col>
+                        <StatusBar items={barItems} />
                     )}
                 </Col>
             );

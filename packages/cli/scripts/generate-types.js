@@ -104,6 +104,8 @@ export interface ShellConfig {
     /** 'fullscreen': alt-screen dashboard (title bar, tabs, palette);
      *  'inline' (default): transcript shape with bottom-anchored input. */
     mode?: 'inline' | 'fullscreen';
+    /** Design theme (themed canvas in fullscreen). Default 'obsidian'. */
+    theme?: string;
     title: string;
     version?: string;
     logo?: { rows: string[]; palette: Record<string, string> };
