@@ -1,4 +1,4 @@
-import { defineCommand } from 'citty';
+import { command } from '@sigx/args';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
@@ -11,12 +11,9 @@ function getVersion(cmd: string): string | null {
     }
 }
 
-export const infoCommand = defineCommand({
-    meta: {
-        name: 'info',
-        description: 'Print environment and project info',
-    },
-    run() {
+export const infoCommand = command('info')
+    .describe('Print environment and project info')
+    .run(() => {
         const cwd = process.cwd();
 
         console.log('\n  \x1b[1msigx environment info\x1b[0m\n');
@@ -135,5 +132,4 @@ export const infoCommand = defineCommand({
         }
 
         console.log('');
-    },
-});
+    });

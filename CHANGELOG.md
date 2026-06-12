@@ -4,6 +4,11 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING (plugin contract): citty replaced with [`@sigx/args`](https://github.com/signalxjs/terminal/tree/main/packages/args)** (#51). `PluginCommand.args` is now a record of fluent `a.*` builders (re-exported from `@sigx/cli/plugin`): `args: { port: a.number().alias('p').default(8788), open: a.boolean() }` — typed numbers/enums/positionals/rest instead of citty's string|boolean-only defs. Behavioral deltas: unknown flags now error with a clear message (citty silently accepted them); bare positionals bind only to declared `a.positional()`/`a.rest()` args (`ctx.args._` is now the verbatim post-`--` tokens, not loose positionals); `--help` output comes from @sigx/args' help catalog. Plugins must update their schemas and set `"sigx-cli": { "requires": ">=0.4.0" }`.
+- `sigx create` declares real parsed args (positional `name`, `--type`, `--styling`, `--yes/-y`) with enum validation at parse time; `runCreate(opts?)` accepts pre-parsed options while the bare `@sigx/create` shim path still self-parses `process.argv`.
+
 ## [0.2.8] - 2026-05-14
 
 ### Fixed
