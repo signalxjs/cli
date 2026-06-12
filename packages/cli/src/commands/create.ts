@@ -50,8 +50,8 @@ function parseArgvFallback(): CreateOptions {
 }
 
 function runHeadless(opts: CreateOptions): number {
-    const validTypes: ProjectType[] = ['basic', 'ssr', 'ssg', 'lynx'];
-    const validStyling: Styling[] = ['none', 'tailwind', 'daisyui'];
+    const validTypes = projectTypeOptions.map((o) => o.value);
+    const validStyling = [...new Set([...webStylingOptions, ...lynxStylingOptions].map((o) => o.value))];
 
     const projectName = opts.name || 'my-sigx-app';
     const projectType: ProjectType = opts.type ?? 'basic';

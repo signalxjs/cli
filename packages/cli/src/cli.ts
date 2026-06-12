@@ -65,12 +65,9 @@ async function main() {
     // Register plugin commands
     for (const plugin of plugins) {
         for (const [name, cmd] of Object.entries(plugin.commands)) {
-            if (subCommands[name]) {
-                // Command conflict — last plugin wins, but warn
-                logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
-            }
+            let wrapped: AnyCommand;
             try {
-                subCommands[name] = wrapPluginCommand(name, cmd, plugins);
+                wrapped = wrapPluginCommand(name, cmd, plugins);
             } catch (err) {
                 // A bad schema in one plugin must not take down the whole CLI.
                 if (err instanceof DefinitionError) {
@@ -79,6 +76,11 @@ async function main() {
                 }
                 throw err;
             }
+            if (subCommands[name]) {
+                // Command conflict — last plugin wins, but warn
+                logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
+            }
+            subCommands[name] = wrapped;
         }
     }
 
