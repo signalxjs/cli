@@ -27,7 +27,8 @@ export function render(url: string, template: string, opts: RenderOpts): RenderR
 
     // Streaming document: head + shell flush immediately (async content as
     // placeholders), data streams in afterwards. `shell` settles before the
-    // first byte — the server uses it to pick the status code.
+    // first byte — the server awaits it so a failed render can still become
+    // a proper 500 response instead of a broken 200.
     const { stream, shell } = renderDocumentToNodeStream(app, { template });
     return { kind: 'stream', stream, shell };
 }
