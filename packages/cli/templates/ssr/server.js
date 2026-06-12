@@ -37,6 +37,14 @@ async function handle(req, res, render, template) {
         return;
     }
     res.status(200).set({ 'Content-Type': 'text/html' });
+    // Headers are sent once streaming starts: a mid-stream failure can only
+    // end the response, and a client disconnect tears the render down so it
+    // doesn't keep working (or emit an unhandled 'error') after the fact.
+    result.stream.on('error', (err) => {
+        console.error('[ssr] stream error:', err);
+        res.end();
+    });
+    res.on('close', () => result.stream.destroy());
     result.stream.pipe(res);
 }
 
