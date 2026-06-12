@@ -96,4 +96,7 @@ async function createServer() {
     });
 }
 
-createServer();
+createServer().catch((err) => {
+    console.error('[ssr] failed to start server:', err);
+    process.exit(1);
+});
