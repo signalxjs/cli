@@ -2,13 +2,15 @@
  * @sigx/cli public API
  *
  * Re-exports the plugin interface so that plugin packages
- * can import { definePlugin, SigxPlugin } from '@sigx/cli/plugin'
+ * can import { definePlugin, a, SigxPlugin } from '@sigx/cli/plugin'
  */
-export { definePlugin } from './plugin.js';
+export { definePlugin, a } from './plugin.js';
 export type {
     SigxPlugin,
     PluginCommand,
     CommandContext,
-    ArgDef,
+    AnyArg,
+    ArgsShape,
+    InferArgs,
     Logger,
 } from './plugin.js';

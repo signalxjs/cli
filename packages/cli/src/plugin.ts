@@ -5,20 +5,29 @@
  * in their package.json pointing to a module that default-exports
  * a SigxPlugin created with `definePlugin()`.
  *
- * This module is deliberately dependency-free: plugins import it via
- * `@sigx/cli/plugin` without pulling the TUI stack. The TUI types below
- * (`ShellTab`, `ShellHandle`, …) are structural contracts consumed by
- * `runShell` from `@sigx/cli/shell`.
+ * Command args are declared with @sigx/args' fluent `a` builders
+ * (re-exported here so plugins keep a single import surface):
+ *
+ *     args: { port: a.number().alias('p').default(8788), open: a.boolean() }
+ *
+ * This module pulls in nothing beyond @sigx/args (which is itself
+ * zero-dependency): plugins import it via `@sigx/cli/plugin` without the TUI
+ * stack. The TUI types below (`ShellTab`, `ShellHandle`, …) are structural
+ * contracts consumed by `runShell` from `@sigx/cli/shell`.
  */
 
-export interface ArgDef {
-    type: 'string' | 'boolean';
-    description?: string;
-    default?: string | boolean;
-}
+import type { ArgsShape } from '@sigx/args';
+
+export { a } from '@sigx/args';
+export type { AnyArg, ArgsShape, InferArgs } from '@sigx/args';
 
 export interface CommandContext {
     cwd: string;
+    /**
+     * Parsed args, per the command's `args` builders. Declared positionals
+     * bind by position; `args._` holds the verbatim tokens after a bare `--`.
+     * Use a rest builder (`a.rest()`) for variadic positionals.
+     */
     args: Record<string, unknown>;
     logger: Logger;
     /**
@@ -39,7 +48,8 @@ export interface Logger {
 
 export interface PluginCommand {
     description: string;
-    args?: Record<string, ArgDef>;
+    /** Fluent arg builders, e.g. `{ port: a.number().default(8788) }`. */
+    args?: ArgsShape;
     run: (ctx: CommandContext) => Promise<void>;
 }
 

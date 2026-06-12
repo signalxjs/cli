@@ -14,7 +14,6 @@ export default defineLibConfig({
         'fs', 'path', 'url', 'child_process', 'os',
         'node:fs', 'node:path', 'node:url', 'node:module', 'node:os',
         // Runtime deps that will be in node_modules
-        'citty',
         /^@sigx\//,
     ],
     platform: 'node',
