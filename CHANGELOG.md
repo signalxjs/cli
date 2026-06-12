@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-06-12
+
+`@sigx/cli` 0.4.2, `@sigx/create` 0.2.2.
+
 ### Changed
 
 - **SSG templates re-pinned to the 0.6 core line** (#60). `@sigx/ssg@0.11.0` made `@sigx/router`/`@sigx/server-renderer` peerDependencies (`>=0.6.0 <0.7.0`) and widened its `sigx` peer to the 0.6 line, removing the blocker that kept the `ssg`, `ssg-tailwind`, and `ssg-daisyui` templates on the 0.4 set in #59. They now pin `sigx`/`@sigx/server-renderer`/`@sigx/vite` `^0.6.1`, `@sigx/router`/`@sigx/daisyui` `^0.6.0`, and `@sigx/ssg` `^0.11.0`. `@sigx/cli` stays `^0.3.0` in these templates: ssg 0.11.0's published CLI plugin still declares its command args in the pre-0.4 (citty-shaped) contract, which the 0.4 CLI's `@sigx/args` builders reject — move it to `^0.4.x` once ssg ships a plugin on the new contract.
