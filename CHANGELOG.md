@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Fixed
+
+- **Published `plugin.d.ts` was stale in 0.4.0** (#55): `scripts/generate-types.js` (hand-maintained d.ts strings) wasn't updated with the #52 plugin-contract migration, so `@sigx/cli@0.4.0` shipped declarations with the old `ArgDef` and no `a`/`ArgsShape` exports while the runtime correctly exported them — plugins on the new fluent contract failed typechecking. The generated declarations now match the source contract (`plugin.d.ts` re-exports `a`/`ArgsShape`/`InferArgs`, `index.d.ts` follows, `create.d.ts` declares `runCreate(opts?: CreateOptions)`), and a regression test locks them to it.
+
 ## [0.4.0] - 2026-06-12
 
 `@sigx/cli` 0.4.0, `@sigx/create` 0.2.0. Plugin authors: see the breaking plugin-contract change below.

@@ -9,13 +9,12 @@ import { writeFileSync, mkdirSync } from 'fs';
 
 // plugin.d.ts — the plugin interface that other packages import
 const pluginDts = `\
-export interface ArgDef {
-    type: 'string' | 'boolean';
-    description?: string;
-    default?: string | boolean;
-}
+import type { ArgsShape } from '@sigx/args';
+export { a } from '@sigx/args';
+export type { AnyArg, ArgsShape, InferArgs } from '@sigx/args';
 export interface CommandContext {
     cwd: string;
+    /** Parsed args per the command's builders; args._ = post-'--' tokens. */
     args: Record<string, unknown>;
     logger: Logger;
     /** All plugins discovered for this project (for runShell({ plugins })). */
@@ -30,7 +29,8 @@ export interface Logger {
 }
 export interface PluginCommand {
     description: string;
-    args?: Record<string, ArgDef>;
+    /** Fluent arg builders, e.g. { port: a.number().default(8788) }. */
+    args?: ArgsShape;
     run: (ctx: CommandContext) => Promise<void>;
 }
 /** Opaque renderable returned by a tab's render() — author with JSX. */
@@ -95,13 +95,21 @@ export declare function definePlugin(plugin: SigxPlugin): SigxPlugin;
 
 // index.d.ts — public API re-exports
 const indexDts = `\
-export { definePlugin } from './plugin.js';
-export type { SigxPlugin, PluginCommand, CommandContext, ArgDef, Logger, ShellNode, StatusItem, ShellTab, SlashCommand, Shortcut, ShellLogStore, ShellHandle, TuiContribution } from './plugin.js';
+export { definePlugin, a } from './plugin.js';
+export type { SigxPlugin, PluginCommand, CommandContext, AnyArg, ArgsShape, InferArgs, Logger, ShellNode, StatusItem, ShellTab, SlashCommand, Shortcut, ShellLogStore, ShellHandle, TuiContribution } from './plugin.js';
 `;
 
 // commands/create.d.ts
 const createDts = `\
-export declare function runCreate(): Promise<void>;
+export interface CreateOptions {
+    /** Project name (positional). */
+    name?: string;
+    type?: 'basic' | 'ssr' | 'ssg' | 'lynx';
+    styling?: 'none' | 'tailwind' | 'daisyui';
+    /** Skip prompts (headless mode). */
+    yes?: boolean;
+}
+export declare function runCreate(opts?: CreateOptions): Promise<void>;
 `;
 
 // shell/index.d.ts — the shell runtime surface
@@ -132,6 +140,7 @@ export declare function mergeShellConfig(config: ShellConfig, contributions: Tui
 `;
 
 mkdirSync('dist/shell', { recursive: true });
+mkdirSync('dist/commands', { recursive: true });
 writeFileSync('dist/plugin.d.ts', pluginDts);
 writeFileSync('dist/index.d.ts', indexDts);
 writeFileSync('dist/commands/create.d.ts', createDts);
