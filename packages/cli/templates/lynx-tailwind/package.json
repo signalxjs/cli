@@ -24,7 +24,7 @@
         "@sigx/lynx-websocket": "latest"
     },
     "devDependencies": {
-        "@sigx/cli": "latest",
+        "@sigx/cli": "^0.3.0",
         "@sigx/lynx-cli": "latest",
         "@sigx/lynx-plugin": "latest",
         "@sigx/lynx-dev-client": "latest",
