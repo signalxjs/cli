@@ -27,6 +27,8 @@ export interface CommandContext {
      * `runShell({ plugins })` from `@sigx/cli/shell`.
      */
     plugins?: SigxPlugin[];
+    /** The running CLI binary's version — for plugin feature detection. */
+    cliVersion?: string;
 }
 
 export interface Logger {

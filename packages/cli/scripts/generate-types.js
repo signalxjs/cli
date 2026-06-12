@@ -20,6 +20,8 @@ export interface CommandContext {
     logger: Logger;
     /** All plugins discovered for this project (for runShell({ plugins })). */
     plugins?: SigxPlugin[];
+    /** The running CLI binary's version — for plugin feature detection. */
+    cliVersion?: string;
 }
 export interface Logger {
     log: (msg: string) => void;
