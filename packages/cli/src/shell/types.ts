@@ -27,6 +27,8 @@ export interface ShellConfig {
      * shape — scrollback history + bottom-anchored command input.
      */
     mode?: 'inline' | 'fullscreen';
+    /** Design theme for the shell (themed canvas in fullscreen). Default 'obsidian'. */
+    theme?: string;
     /** Shown in the header line (and as the root view title). */
     title: string;
     /** Dim version string next to the title. */
