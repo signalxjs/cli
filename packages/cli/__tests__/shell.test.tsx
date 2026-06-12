@@ -31,6 +31,9 @@ describe('runShell', () => {
         shell = null;
         exitSpy.mockRestore();
         setOutputTarget(undefined);
+        for (const sig of ['SIGTERM', 'SIGHUP', 'SIGINT'] as const) {
+            process.removeAllListeners(sig);
+        }
         vi.useRealTimers();
     });
 
@@ -202,6 +205,64 @@ describe('runShell', () => {
         await settle();
         seen.push(...store.tail(5));
         expect(seen.join('\n')).toContain('build finished');
+    });
+
+    it('onExit subscribers run after the host onExit, most-recent-first', async () => {
+        const order: string[] = [];
+        exitSpy.mockImplementation(((code: number) => { order.push(`exit:${code}`); }) as never);
+        captureOutput();
+        shell = await runShell(config({ onExit: () => { order.push('host'); } }), { interactive: true });
+        await settle();
+        shell.onExit(() => { order.push('first'); });
+        const off = shell.onExit(() => { order.push('removed'); });
+        off();
+        shell.onExit(() => { order.push('second'); });
+
+        shell.exit(0);
+        await settle();
+        expect(order).toEqual(['host', 'second', 'first', 'exit:0']);
+        shell = null;
+    });
+
+    it('contribution setup runs on mount; its returned teardown runs on exit', async () => {
+        const order: string[] = [];
+        exitSpy.mockImplementation((() => { order.push('exit'); }) as never);
+        captureOutput();
+        const plugins: SigxPlugin[] = [{
+            name: 'web',
+            detect: () => true,
+            commands: {},
+            tui: {
+                setup: (s) => {
+                    order.push(`setup:${s.isInteractive}`);
+                    return () => { order.push('server-closed'); };
+                },
+            },
+        }];
+        shell = await runShell(config({ plugins }), { interactive: true });
+        await settle();
+        expect(order).toEqual(['setup:true']);
+
+        shell.exit(0);
+        await settle();
+        expect(order).toEqual(['setup:true', 'server-closed', 'exit']);
+        shell = null;
+    });
+
+    it('SIGTERM runs teardown before exiting 143', async () => {
+        const order: string[] = [];
+        exitSpy.mockImplementation(((code: number) => { order.push(`exit:${code}`); }) as never);
+        captureOutput();
+        shell = await runShell(config({ onExit: () => { order.push('cleanup'); } }), { interactive: true });
+        await settle();
+
+        process.emit('SIGTERM');
+        await settle();
+        // The runtime's own signal cleanup may also call (mocked) process.exit
+        // afterwards; what matters is cleanup ran BEFORE the first exit.
+        expect(order[0]).toBe('cleanup');
+        expect(order[1]).toBe('exit:143');
+        shell = null;
     });
 
     it('non-TTY: plain handle, no ANSI frames, onReady still runs', async () => {

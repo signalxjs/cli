@@ -99,6 +99,13 @@ export interface ShellHandle {
     switchTab: (id: string) => void;
     pushView: (id: string) => void;
     popView: () => void;
+    /**
+     * Register teardown to run BEFORE the process exits — on `exit()`,
+     * Ctrl+C/q, and external SIGTERM/SIGHUP/SIGINT. Subscribers run after
+     * the host's onExit, most-recently-registered first. Returns an
+     * unsubscribe. Use this for servers, watchers, locks.
+     */
+    onExit: (cb: () => void | Promise<void>) => () => void;
     exit: (code?: number) => void;
 }
 
@@ -111,6 +118,12 @@ export interface TuiContribution {
     commands?: SlashCommand[];
     shortcuts?: Shortcut[];
     status?: () => StatusItem[];
+    /**
+     * Lifecycle: called once when the hosting shell comes up (interactive or
+     * plain). Start servers/watchers here; an optionally returned function is
+     * registered as teardown (equivalent to `shell.onExit(fn)`).
+     */
+    setup?: (shell: ShellHandle) => void | (() => void | Promise<void>) | Promise<void | (() => void | Promise<void>)>;
 }
 
 export interface SigxPlugin {
