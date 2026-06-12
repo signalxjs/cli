@@ -8,7 +8,7 @@
     <script>(function(){try{var t=localStorage.getItem('daisy-theme');if(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)t='dark';if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})()</script>
   </head>
   <body class="bg-base-200 min-h-screen">
-    <div id="app"><!--app-html--></div>
+    <div id="app"><!--ssr-outlet--></div>
     <script type="module" src="/src/entry-client.tsx"></script>
   </body>
 </html>

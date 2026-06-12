@@ -1,24 +1,33 @@
 import { defineApp } from 'sigx';
-import { renderToString, renderToStreamWithCallbacks } from '@sigx/server-renderer/server';
+import { renderDocument, renderDocumentToNodeStream } from '@sigx/server-renderer/server';
+import type { Readable } from 'node:stream';
 import { App } from './App';
 import { createServerRouter } from './router';
 
-function createApp(url: string) {
+export interface RenderOpts {
+    /** Complete HTML for crawlers/AI agents: no placeholders, no scripts to run. */
+    bot: boolean;
+}
+
+export type RenderResult =
+    | { kind: 'blocking'; html: Promise<string> }
+    | { kind: 'stream'; stream: Readable; shell: Promise<void> };
+
+export function render(url: string, template: string, opts: RenderOpts): RenderResult {
+    // Per-request: fresh app + fresh router scoped to this URL. No module-level
+    // state is shared between requests, so concurrent SSR can't interleave.
     const router = createServerRouter(url);
-    return defineApp(<App />).use(router);
-}
+    const app = defineApp(<App />).use(router);
 
-export async function render(url: string) {
-    const app = createApp(url);
-    return await renderToString(app);
-}
+    if (opts.bot) {
+        // Blocking document: async content resolves inline — crawlers and AI
+        // agents get the full content with zero client JS work.
+        return { kind: 'blocking', html: renderDocument(app, { template, mode: 'blocking' }) };
+    }
 
-export async function renderStreamWithCallback(url: string, callbacks: {
-    onShellReady: (html: string) => void;
-    onAsyncChunk: (chunk: string) => void;
-    onComplete: () => void;
-    onError: (error: Error) => void;
-}) {
-    const app = createApp(url);
-    return await renderToStreamWithCallbacks(app, callbacks);
+    // Streaming document: head + shell flush immediately (async content as
+    // placeholders), data streams in afterwards. `shell` settles before the
+    // first byte — the server uses it to pick the status code.
+    const { stream, shell } = renderDocumentToNodeStream(app, { template });
+    return { kind: 'stream', stream, shell };
 }

@@ -13,7 +13,7 @@ export const About = component(() => {
                 <li>🔄 Client-side hydration</li>
                 <li>🧭 Router with <code class="bg-gray-200 px-2 py-1 rounded">@sigx/router</code></li>
                 <li>🎨 Tailwind CSS styling</li>
-                <li>📡 API routes ready (<code class="bg-gray-200 px-2 py-1 rounded">/api/hello</code>)</li>
+                <li>🤖 Blocking render for crawlers &amp; AI agents</li>
                 <li>🏗️ Production build support</li>
             </ul>
         </div>
