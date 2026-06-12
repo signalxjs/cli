@@ -15,7 +15,7 @@
         "@sigx/server-renderer": "latest"
     },
     "devDependencies": {
-        "@sigx/cli": "latest",
+        "@sigx/cli": "^0.3.0",
         "@sigx/vite": "latest",
         "vite": "^8.0.3",
         "typescript": "^5.9.3"
