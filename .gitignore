@@ -19,6 +19,8 @@ docs/dist/
 !*.config.js
 !examples/*.js
 !scripts/*.js
+# Template sources are shipped as-is, including plain-JS files (e.g. the SSR server.js)
+!packages/cli/templates/**/*.js
 
 # TypeScript cache
 *.tsbuildinfo

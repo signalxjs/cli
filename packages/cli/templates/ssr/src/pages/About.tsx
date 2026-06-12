@@ -12,7 +12,7 @@ export const About = component(() => {
                 <li>⚡ Streaming SSR with Express</li>
                 <li>🔄 Client-side hydration</li>
                 <li>🧭 Router with <code>@sigx/router</code></li>
-                <li>📡 API routes ready (<code>/api/hello</code>)</li>
+                <li>🤖 Blocking render for crawlers &amp; AI agents</li>
                 <li>🏗️ Production build support</li>
             </ul>
         </div>

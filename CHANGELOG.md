@@ -4,6 +4,12 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Fixed
+
+- **Templates: `latest` pins replaced with matched version sets** (#50). Every template pinned `latest` for `sigx`/`@sigx/*`, which scaffolded mutually-exclusive core ranges as soon as versions drifted (with sigx 0.6.0 + router 0.4.5 a fresh app got three copies of `@sigx/reactivity` and `npm install` failed ERESOLVE). Web templates now pin the 0.6 matched set (`sigx`/`@sigx/server-renderer`/`@sigx/vite` `^0.6.1`, `@sigx/router`/`@sigx/daisyui` `^0.6.0`), SSG templates pin the 0.4 set that `@sigx/ssg@0.10.0` is built against (`sigx ^0.4.9`, `@sigx/router ^0.4.5`, `@sigx/server-renderer ^0.4.8`, `@sigx/daisyui ^0.4.3`, `@sigx/cli ^0.3.0` — `@sigx/ssg` has not moved to the 0.6 line yet), and Lynx templates pin `@sigx/lynx-*` `^0.7.0` with `@sigx/reactivity`/`@sigx/runtime-core` `^0.6.1` and `@sigx/cli ^0.4.1` (`@sigx/lynx-cli@0.7.0` requires the 0.4 plugin contract). A regression test fails on any `latest` pin.
+- **SSR templates ported to the 0.6 document render API and the missing `server.js` added** (#50). `entry-server.tsx` used the pre-0.6 `renderToString`/`renderToStreamWithCallbacks` API and `package.json`'s `dev`/`start`/`preview` scripts ran a `server.js` the template never shipped. The SSR templates (`ssr`, `ssr-tailwind`, `ssr-daisyui`) now follow the canonical core `examples/spa-ssr` shape: an Express 5 `server.js` (Vite middleware in dev, static + built server bundle in prod) that serves crawlers/AI agents a blocking `renderDocument` and everyone else a streaming `renderDocumentToNodeStream`, an `index.html` with the standard `<!--ssr-outlet-->` marker, and a hydration entry gated on the completion signal (emitted in both modes as of server-renderer 0.6.1).
+- **Templates no longer ship a `legacy-peer-deps=true` `.npmrc`** (#50). npm strips `.npmrc` from published tarballs so it never took effect — and with correctly matched version sets it would only mask a broken peer graph. `npm install` on every scaffolded template now resolves cleanly with strict peer deps and a single copy of `@sigx/reactivity` in the app's runtime graph.
+
 ## [0.4.1] - 2026-06-12
 
 `@sigx/cli` 0.4.1, `@sigx/create` 0.2.1.
