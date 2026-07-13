@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-07-13
+
+`@sigx/cli` 0.5.1 (`@sigx/create` stays 0.2.3 — its `^0.5.0` dependency resolves to 0.5.1).
+
 ### Fixed
 
 - **Lynx templates were unusable out of the box** (#75): they shipped the pre-0.4 `sigx.lynx.config.ts`, which `@sigx/lynx-cli` ≥0.4 hard-errors on ("Found legacy sigx.lynx.config.ts — rename to signalx.config.ts") — renamed to `signalx.config.ts` in all three templates (plus README/gitignore mentions). Also dropped `@sigx/lynx-device-info` from dependencies and the `modules` array — it was folded into `@sigx/lynx-core` at lynx 0.8 and has no newer published version, so any modern pin failed to resolve.
