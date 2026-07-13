@@ -10,14 +10,14 @@
         "preview": "cross-env NODE_ENV=production node server.js"
     },
     "dependencies": {
-        "sigx": "^0.6.1",
-        "@sigx/daisyui": "^0.6.0",
-        "@sigx/server-renderer": "^0.6.1",
-        "@sigx/router": "^0.6.0",
+        "sigx": "^0.7.0",
+        "@sigx/daisyui": "^0.7.0",
+        "@sigx/server-renderer": "^0.7.0",
+        "@sigx/router": "^0.7.0",
         "express": "^5.2.1"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.6.1",
+        "@sigx/vite": "^0.7.0",
         "@types/node": "^22.0.0",
         "@types/express": "^5.0.6",
         "cross-env": "^7.0.3",

@@ -59,8 +59,10 @@ export const infoCommand = command('info')
 
         // Config files
         const configs = [
-            { file: 'sigx.lynx.config.ts', label: 'Lynx' },
-            { file: 'sigx.lynx.config.js', label: 'Lynx' },
+            { file: 'signalx.config.ts', label: 'Lynx' },
+            { file: 'signalx.config.js', label: 'Lynx' },
+            { file: 'sigx.lynx.config.ts', label: 'Lynx (legacy name — rename to signalx.config.ts)' },
+            { file: 'sigx.lynx.config.js', label: 'Lynx (legacy name — rename to signalx.config.js)' },
             { file: 'lynx.config.ts', label: 'Lynx (rspeedy)' },
             { file: 'lynx.config.js', label: 'Lynx (rspeedy)' },
             { file: 'ssg.config.ts', label: 'SSG' },

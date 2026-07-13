@@ -47,7 +47,7 @@ sigx doctor
 │   ├── main.tsx             # BG-thread entry point
 │   └── main.thread.tsx      # Main-thread entry point
 ├── lynx.config.ts           # rspeedy build config
-├── sigx.lynx.config.ts      # sigx-lynx native config
+├── signalx.config.ts        # sigx-lynx native config
 ├── tailwind.config.ts       # Tailwind CSS config
 ├── postcss.config.js        # PostCSS config
 ├── tsconfig.json

@@ -24,7 +24,6 @@ export default defineLynxConfig({
         '@sigx/lynx-storage',
         '@sigx/lynx-clipboard',
         '@sigx/lynx-haptics',
-        '@sigx/lynx-device-info',
         '@sigx/lynx-network',
         '@sigx/lynx-websocket',
     ],

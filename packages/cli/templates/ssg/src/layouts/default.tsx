@@ -16,7 +16,7 @@ export default component<LayoutProps, unknown, LayoutSlots>(({ slots }) => {
             </header>
 
             <main style="flex: 1; max-width: 800px; margin: 0 auto; padding: 2rem; width: 100%;">
-                {slots.default()}
+                {slots.default?.()}
             </main>
 
             <footer style="background: #2c3e50; color: #ccc; padding: 1rem; text-align: center; font-size: 0.875rem;">
