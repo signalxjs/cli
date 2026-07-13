@@ -180,6 +180,37 @@ describe('plugin command capabilities', () => {
         expect(help).toMatch(/^\s{2}other\s{2,}/m);
         expect(help).not.toContain('other, info');
     });
+
+    it('drops an alias shadowed by a LATER plugin command with that direct name', async () => {
+        // Direct names beat aliases at resolution, so lynx-like's serve alias
+        // 's' is dead the moment a later plugin registers a command named
+        // 's' — it must be dropped (with a warning) rather than rendered.
+        const stealer = definePlugin({
+            name: 'stealer',
+            detect: () => true,
+            commands: {
+                s: {
+                    description: 'Direct command occupying the alias token',
+                    run: async (ctx) => {
+                        received.push({ command: 'stealer-s', ctx });
+                    },
+                },
+            },
+        });
+
+        const { logger, stdout } = await dispatch(['--help'], [lynxLikePlugin, stealer]);
+        expect(logger.warns.join('\n')).toMatch(
+            /Plugin "lynx-like" command "serve" alias "s" collides with command "s" \(plugin "stealer"\)/,
+        );
+        const help = stdout.join('\n');
+        expect(help).not.toContain('serve, s');
+        expect(help).toMatch(/^\s{2}serve\s{2,}/m);
+
+        // The token resolves to the direct command.
+        resetReceived();
+        await dispatch(['s'], [lynxLikePlugin, stealer]);
+        expect(received.map((r) => r.command)).toEqual(['stealer-s']);
+    });
 });
 
 describe('plugin registration resilience', () => {

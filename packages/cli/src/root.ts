@@ -64,14 +64,24 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
     // @sigx/args resolves direct names before aliases but does not
     // collision-check aliases across a subcommand map, so colliding aliases
     // are dropped BEFORE wrapping (a registered-but-shadowed alias would
-    // still render in help, advertising a name that doesn't resolve).
+    // still render in help, advertising a name that doesn't resolve). All
+    // direct names — core and EVERY plugin's, including ones registered
+    // later — are reserved up-front: direct names always beat aliases at
+    // resolution, so an alias matching any of them is dead on arrival.
     const claimed = new Map<string, string>();
     for (const name of Object.keys(subCommands)) claimed.set(name, `core command "${name}"`);
+    for (const plugin of plugins) {
+        for (const name of Object.keys(plugin.commands)) {
+            claimed.set(name, `command "${name}" (plugin "${plugin.name}")`);
+        }
+    }
     for (const plugin of plugins) {
         for (const [name, cmd] of Object.entries(plugin.commands)) {
             const aliases: string[] = [];
             for (const alias of cmd.aliases ?? []) {
-                const owner = alias === name ? `command "${name}" itself` : claimed.get(alias);
+                // An alias matching the command's own name is caught by the
+                // up-front direct-name claims like any other collision.
+                const owner = claimed.get(alias);
                 if (owner) {
                     logger.warn(
                         `Plugin "${plugin.name}" command "${name}" alias "${alias}" collides with ${owner} — the alias will not resolve`,
@@ -96,7 +106,6 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
                 logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
             }
             subCommands[name] = wrapped;
-            claimed.set(name, `command "${name}" (plugin "${plugin.name}")`);
             for (const alias of aliases) {
                 claimed.set(alias, `alias of command "${name}" (plugin "${plugin.name}")`);
             }

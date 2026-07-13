@@ -24,7 +24,15 @@ Run `sigx --help` for the full live list (varies by what plugins are installed i
 
 ## Writing a plugin
 
-Declare a `sigx-cli` field in your package.json (`{ "plugin": "./dist/plugin.js", "requires": ">=0.4.0" }`) and default-export a plugin. Args declared with the `a` builders type `ctx.args` automatically — no casts:
+Declare a top-level `sigx-cli` field in your package.json pointing at your plugin module:
+
+```json
+{
+    "sigx-cli": { "plugin": "./dist/plugin.js", "requires": ">=0.4.0" }
+}
+```
+
+…and default-export a plugin from that module. Args declared with the `a` builders type `ctx.args` automatically — no casts:
 
 ```ts
 import { a, definePlugin } from '@sigx/cli/plugin';
