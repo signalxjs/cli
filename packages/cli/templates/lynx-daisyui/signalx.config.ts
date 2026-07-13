@@ -20,13 +20,10 @@ export default defineLynxConfig({
     // 'portrait' | 'landscape' | 'default'
     orientation: 'portrait',
 
-    // Native modules — these are auto-linked into the native project.
-    // Built-in modules available in sigx-lynx-go (dev client) without prebuild.
     modules: [
         '@sigx/lynx-storage',
         '@sigx/lynx-clipboard',
         '@sigx/lynx-haptics',
-        '@sigx/lynx-device-info',
         '@sigx/lynx-network',
         '@sigx/lynx-websocket',
     ],

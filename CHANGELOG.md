@@ -4,6 +4,19 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Fixed
+
+- **Lynx templates were unusable out of the box** (#75): they shipped the pre-0.4 `sigx.lynx.config.ts`, which `@sigx/lynx-cli` ≥0.4 hard-errors on ("Found legacy sigx.lynx.config.ts — rename to signalx.config.ts") — renamed to `signalx.config.ts` in all three templates (plus README/gitignore mentions). Also dropped `@sigx/lynx-device-info` from dependencies and the `modules` array — it was folded into `@sigx/lynx-core` at lynx 0.8 and has no newer published version, so any modern pin failed to resolve.
+- `sigx info` now detects `signalx.config.ts`/`.js` as the Lynx project config (#75); the legacy `sigx.lynx.config.*` names are still listed but labeled as legacy with a rename hint.
+
+### Changed
+
+- **All 12 templates re-pinned to current matched version sets** (#75):
+  - `basic`, `basic-tailwind` → core 0.8 line (`sigx`/`@sigx/vite` `^0.8.0` — 0.8.0 is perf/bugfix only, no code changes).
+  - `basic-daisyui`, `ssr`, `ssr-tailwind`, `ssr-daisyui` → core 0.7 line (`sigx`/`@sigx/server-renderer`/`@sigx/router`/`@sigx/vite`/`@sigx/daisyui` `^0.7.0`) — router/daisyui 0.7.0 peers cap core at `<0.8.0`; the 0.6.1 document API these templates use is unchanged.
+  - `ssg`, `ssg-tailwind`, `ssg-daisyui` → `@sigx/ssg ^0.15.0` + the 0.7 core set, and **`@sigx/cli` `^0.3.0` → `^0.5.0`** — ssg ≥0.13's CLI plugin is on the `@sigx/args` contract and a 0.3.x CLI crashes at startup registering its commands. Layout slot calls hardened to `slots.default?.()` per core 0.7's optional slot typing.
+  - `lynx`, `lynx-tailwind`, `lynx-daisyui` → `@sigx/lynx-*` `^0.12.1` (lynx 0.12.1 ships lynx-cli on `@sigx/cli ^0.5.0`, giving a single-copy cli install), `@sigx/reactivity`/`@sigx/runtime-core` `^0.7.0`, `@sigx/cli` `^0.5.0`.
+
 ## [0.5.0] - 2026-07-13
 
 `@sigx/cli` 0.5.0, `@sigx/create` 0.2.3.
