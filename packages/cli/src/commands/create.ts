@@ -8,6 +8,7 @@
  * `runCreate()` call from the `@sigx/create` shim (`pnpm create @sigx …`)
  * falls back to parsing `process.argv` itself.
  */
+import { a, parseArgs, ParseError } from '@sigx/args';
 import { intro, outro, note, cancel, isCancel, text, select, spinner } from '@sigx/terminal';
 import {
     scaffoldProject,
@@ -27,26 +28,37 @@ export interface CreateOptions {
     yes?: boolean;
 }
 
+const shimArgsShape = {
+    name: a.positional().describe('Project name'),
+    type: a.string().describe('Project type'),
+    styling: a.string().describe('Styling setup'),
+    yes: a.boolean().alias('y').default(false).describe('Skip prompts (headless mode)'),
+};
+
 /** Fallback argv parsing for the `@sigx/create` shim, which has no parser of its own. */
 function parseArgvFallback(): CreateOptions {
-    const rawArgs = process.argv.slice(2);
-    function getFlag(name: string): string | undefined {
-        const eq = rawArgs.find(a => a.startsWith(`--${name}=`));
-        if (eq) return eq.slice(name.length + 3);
-        const idx = rawArgs.indexOf(`--${name}`);
-        if (idx !== -1 && rawArgs[idx + 1] && !rawArgs[idx + 1].startsWith('-')) return rawArgs[idx + 1];
-        return undefined;
+    const raw = process.argv.slice(2);
+    // Some invocations pass a leading literal 'create' command token
+    // (npx @sigx/create create …); drop only that leading token so
+    // "create" stays valid as a project name or flag value elsewhere.
+    const argv = raw[0] === 'create' ? raw.slice(1) : raw;
+    try {
+        // allowUnknownFlags: package managers may append flags of their own
+        // (--registry, …) — collect them instead of failing the scaffold.
+        const { args } = parseArgs(argv, shimArgsShape, { allowUnknownFlags: true, commandPath: ['create'] });
+        return {
+            name: args.name,
+            type: args.type as ProjectType | undefined,
+            styling: args.styling as Styling | undefined,
+            yes: args.yes,
+        };
+    } catch (err) {
+        if (err instanceof ParseError) {
+            console.error(`Error: ${err.message}`);
+            process.exit(2);
+        }
+        throw err;
     }
-    function hasFlag(name: string, short?: string): boolean {
-        return rawArgs.includes(`--${name}`) || (short ? rawArgs.includes(`-${short}`) : false);
-    }
-    const positionalArgs = rawArgs.filter(a => !a.startsWith('-') && a !== 'create');
-    return {
-        name: positionalArgs[0],
-        type: getFlag('type') as ProjectType | undefined,
-        styling: getFlag('styling') as Styling | undefined,
-        yes: hasFlag('yes', 'y'),
-    };
 }
 
 function runHeadless(opts: CreateOptions): number {
