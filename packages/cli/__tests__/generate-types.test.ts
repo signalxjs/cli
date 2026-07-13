@@ -25,15 +25,35 @@ describe('generated type declarations', () => {
         expect(plugin).toContain("from '@sigx/args'");
         expect(plugin).toMatch(/export \{ a \}/);
         expect(plugin).toContain('ArgsShape');
-        expect(plugin).toContain('args?: ArgsShape');
         // The pre-0.4.0 object-literal arg defs are gone.
         expect(plugin).not.toContain('interface ArgDef');
     });
 
+    it('plugin.d.ts carries the typed plugin contract', () => {
+        const plugin = dts('plugin.d.ts');
+        expect(plugin).toContain('export type PluginArgs<S>');
+        expect(plugin).toContain('export type TypedCommandContext<S = ArgsShape>');
+        expect(plugin).toContain('export interface PluginCommand<S = ArgsShape>');
+        // run must be METHOD syntax (bivariant), not a property function type.
+        expect(plugin).toMatch(/run\(ctx: TypedCommandContext<S>\): Promise<void>;/);
+        expect(plugin).toContain('aliases?: string[]');
+        expect(plugin).toContain('hidden?: boolean');
+        expect(plugin).toContain('allowUnknownFlags?: boolean');
+        expect(plugin).toContain('unknownFlags?: string[]');
+        expect(plugin).toContain('commands: Record<string, PluginCommand<any>>');
+        expect(plugin).toContain('export interface PluginSpec<T extends Record<string, unknown>');
+        expect(plugin).toMatch(
+            /definePlugin<T extends Record<string, unknown>>\(plugin: PluginSpec<T>\): SigxPlugin/,
+        );
+        expect(plugin).toMatch(/defineCommand<S extends ArgsShape = ArgsShape>\(cmd: PluginCommand<S>\): PluginCommand<S>/);
+    });
+
     it('index.d.ts re-exports a and the builder types', () => {
         const index = dts('index.d.ts');
-        expect(index).toMatch(/export \{ definePlugin, a \}/);
+        expect(index).toMatch(/export \{ definePlugin, defineCommand, a \}/);
         expect(index).toContain('ArgsShape');
+        expect(index).toContain('PluginArgs');
+        expect(index).toContain('TypedCommandContext');
         expect(index).not.toContain('ArgDef');
     });
 
