@@ -297,6 +297,37 @@ describe('plugin command capabilities', () => {
         expect(received.map((r) => r.command)).toEqual(['instance']);
     });
 
+    it('an overriding command claims aliases at its override position, not the loser\'s', async () => {
+        // Load order: A(dev, alias x) → B(build, alias x) → C(dev override,
+        // alias x). C wins 'dev' but registers at ITS load position, so B's
+        // 'x' (claimed before C loaded) beats C's — not the other way round.
+        const mk = (pluginName: string, cmdName: string, tag: string) =>
+            definePlugin({
+                name: pluginName,
+                detect: () => true,
+                commands: {
+                    [cmdName]: {
+                        description: `${tag} command`,
+                        aliases: ['x'],
+                        run: async (ctx) => {
+                            received.push({ command: tag, ctx });
+                        },
+                    },
+                },
+            });
+        const pluginA = mk('a', 'dev', 'a-dev');
+        const pluginB = mk('b', 'build', 'b-build');
+        const pluginC = mk('c', 'dev', 'c-dev');
+
+        const { logger, stdout } = await dispatch(['--help'], [pluginA, pluginB, pluginC]);
+        expect(logger.warns.join('\n')).toMatch(/Plugin "c" command "dev" alias "x" collides with alias of command "build" \(plugin "b"\)/);
+        expect(stdout.join('\n')).toContain('build, x');
+
+        resetReceived();
+        await dispatch(['x'], [pluginA, pluginB, pluginC]);
+        expect(received.map((r) => r.command)).toEqual(['b-build']);
+    });
+
     it('deduplicates a command\'s own alias list', async () => {
         const dupey = definePlugin({
             name: 'dupey',

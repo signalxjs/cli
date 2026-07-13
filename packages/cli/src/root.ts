@@ -96,8 +96,13 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
                 throw err;
             }
             if (winners.has(name) || subCommands[name]) {
-                // Command conflict — last plugin wins, but warn
+                // Command conflict — last plugin wins, but warn. Delete
+                // before re-setting: Map.set on an existing key keeps the
+                // ORIGINAL iteration position, and alias claiming follows
+                // this order — the winner must claim at its own load
+                // position, not the loser's.
                 logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
+                winners.delete(name);
             }
             winners.set(name, { plugin, cmd });
         }
