@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-13
+
+`@sigx/cli` 0.5.0, `@sigx/create` 0.2.3.
+
 ### Added
 
 - **Typed plugin args** (#71). `ctx.args` inside `definePlugin`/`defineCommand` now infers its exact type from the command's `a` builders (`a.boolean().default(false)` → `boolean`, `a.number().required()` → `number`, …) and typo'd keys are compile errors — no more `ctx.args.ios as boolean` casts. Fully backward compatible: legacy plugins (hand-annotated or `SigxPlugin`-typed objects) keep the `Record<string, unknown>` typing and compile unchanged, `TypedCommandContext` stays assignable to plain `CommandContext` so helpers keep working, and arg-less commands fall back per command without untyping their siblings. New exports: `defineCommand` (typed command in its own file), `PluginSpec`, `PluginArgs`, `TypedCommandContext`.
