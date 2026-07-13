@@ -38,10 +38,10 @@ const shimArgsShape = {
 /** Fallback argv parsing for the `@sigx/create` shim, which has no parser of its own. */
 function parseArgvFallback(): CreateOptions {
     const raw = process.argv.slice(2);
-    // Package managers pass a leading literal 'create' token (npx @sigx/cli
-    // create …); drop only the first so a project can be named "create".
-    const idx = raw.indexOf('create');
-    const argv = idx === -1 ? raw : raw.filter((_, i) => i !== idx);
+    // Some invocations pass a leading literal 'create' command token
+    // (npx @sigx/create create …); drop only that leading token so
+    // "create" stays valid as a project name or flag value elsewhere.
+    const argv = raw[0] === 'create' ? raw.slice(1) : raw;
     try {
         // allowUnknownFlags: package managers may append flags of their own
         // (--registry, …) — collect them instead of failing the scaffold.
