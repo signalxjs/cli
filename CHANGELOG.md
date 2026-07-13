@@ -4,6 +4,12 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Added
+
+- **Typed plugin args** (#71). `ctx.args` inside `definePlugin`/`defineCommand` now infers its exact type from the command's `a` builders (`a.boolean().default(false)` → `boolean`, `a.number().required()` → `number`, …) and typo'd keys are compile errors — no more `ctx.args.ios as boolean` casts. Fully backward compatible: legacy plugins (hand-annotated or `SigxPlugin`-typed objects) keep the `Record<string, unknown>` typing and compile unchanged, `TypedCommandContext` stays assignable to plain `CommandContext` so helpers keep working, and arg-less commands fall back per command without untyping their siblings. New exports: `defineCommand` (typed command in its own file), `PluginSpec`, `PluginArgs`, `TypedCommandContext`.
+- **`PluginCommand` capabilities: `aliases`, `hidden`, `allowUnknownFlags`** (#71). Plugin commands can declare alternate names (rendered in `--help`, e.g. `serve, s`), hide themselves from help while staying dispatchable, and collect unrecognized flags into the new `ctx.unknownFlags` instead of erroring. Alias collisions with existing commands or aliases warn at startup (direct names always beat aliases). Nested plugin subcommands are deliberately deferred.
+- Anti-drift guard for the published declarations (#71): a new test type-checks a real consumer against the emitted `dist/plugin.d.ts` with the TypeScript compiler, so a `plugin.ts`↔`generate-types.js` mismatch (the #55 failure mode) fails CI even if the string assertions are kept in sync.
+
 ### Fixed
 
 - **`@sigx/create` shim: unknown-flag values no longer leak into positionals** (#69). The hand-rolled fallback argv parser treated an unknown flag's value as a positional, so `pnpm create @sigx --registry https://x my-app` scaffolded a project named `https://x`. The shim now parses with `@sigx/args`' headless `parseArgs` (`allowUnknownFlags`), sharing the CLI's parsing semantics; the last hand-rolled parser in the repo is gone. A project can now also literally be named `create` (previously every `create` token was stripped, not just the command token).

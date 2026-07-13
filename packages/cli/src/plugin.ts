@@ -16,10 +16,27 @@
  * contracts consumed by `runShell` from `@sigx/cli/shell`.
  */
 
-import type { ArgsShape } from '@sigx/args';
+import type { ArgsShape, InferArgs } from '@sigx/args';
 
 export { a } from '@sigx/args';
 export type { AnyArg, ArgsShape, InferArgs } from '@sigx/args';
+
+/**
+ * Parsed-args type for a command. With an inferred builders shape S this is
+ * the exact `InferArgs<S>` (e.g. `a.boolean().default(false)` → `boolean`);
+ * for everything else — the unconstrained default (legacy/hand-annotated
+ * commands), or `unknown` (a command with no `args`, which gives the
+ * per-key inference in `definePlugin` no candidate) — it stays the
+ * 0.4-contract `Record<string, unknown>` so existing plugins typecheck
+ * unchanged. S is deliberately NOT constrained to ArgsShape: constraining
+ * it makes one arg-less command collapse the whole plugin's inference to
+ * the constraint, untyping every sibling command.
+ */
+export type PluginArgs<S> = ArgsShape extends S
+    ? Record<string, unknown>
+    : S extends ArgsShape
+      ? InferArgs<S>
+      : Record<string, unknown>;
 
 export interface CommandContext {
     cwd: string;
@@ -38,7 +55,24 @@ export interface CommandContext {
     plugins?: SigxPlugin[];
     /** The running CLI binary's version — for plugin feature detection. */
     cliVersion?: string;
+    /**
+     * Unrecognized flag tokens, verbatim — populated only when the command
+     * sets `allowUnknownFlags`.
+     */
+    unknownFlags?: string[];
 }
+
+/**
+ * `CommandContext` with `args` narrowed to the command's inferred shape —
+ * what `run(ctx)` receives inside `definePlugin`/`defineCommand`. Built as
+ * an intersection (not a generic interface member) deliberately: a
+ * `TypedCommandContext<Specific>` stays assignable to plain
+ * `CommandContext`, so helpers typed `(ctx: CommandContext) => …` keep
+ * compiling, while `ctx.args.<typo>` is still a compile error.
+ */
+export type TypedCommandContext<S = ArgsShape> = Omit<CommandContext, 'args'> & {
+    args: PluginArgs<S>;
+};
 
 export interface Logger {
     log: (msg: string) => void;
@@ -46,11 +80,21 @@ export interface Logger {
     error: (msg: string) => void;
 }
 
-export interface PluginCommand {
+export interface PluginCommand<S = ArgsShape> {
     description: string;
     /** Fluent arg builders, e.g. `{ port: a.number().default(8788) }`. */
-    args?: ArgsShape;
-    run: (ctx: CommandContext) => Promise<void>;
+    args?: S;
+    /** Alternate command names, e.g. `['d']`. Collisions warn at startup; direct names beat aliases. */
+    aliases?: string[];
+    /** Hide from `sigx --help` (still dispatchable). */
+    hidden?: boolean;
+    /** Collect unknown flags into `ctx.unknownFlags` instead of erroring. */
+    allowUnknownFlags?: boolean;
+    // Method syntax (NOT a property function type) — deliberately bivariant,
+    // so differently-shaped PluginCommand instantiations stay mutually
+    // assignable under strictFunctionTypes (e.g. a hand-annotated legacy
+    // run(ctx: CommandContext) still satisfies a typed PluginCommand<S>).
+    run(ctx: TypedCommandContext<S>): Promise<void>;
 }
 
 /**
@@ -143,15 +187,52 @@ export interface SigxPlugin {
     name: string;
     /** Return true if this plugin handles the current project */
     detect: (cwd: string) => boolean;
-    /** Commands this plugin provides */
-    commands: Record<string, PluginCommand>;
+    /**
+     * Commands this plugin provides. `PluginCommand<any>` (not the default
+     * `PluginCommand`) so a typed `PluginCommand<Specific>` — e.g. a
+     * `defineCommand` result — is assignable into a hand-built SigxPlugin;
+     * the conditional in `PluginArgs` makes specific instantiations
+     * otherwise incomparable.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    commands: Record<string, PluginCommand<any>>;
     /** Optional TUI contributions merged into any plugin-hosted shell. */
     tui?: TuiContribution;
 }
 
 /**
- * Define a sigx CLI plugin. Identity function for type safety.
+ * `definePlugin` input. `commands` is a reverse (homomorphic) mapped type
+ * over T, so TypeScript infers each command's args shape per key from its
+ * `args` property and contextually types that command's `run(ctx)` with it —
+ * `ctx.args` needs no casts inside a definePlugin literal. T's values are
+ * unconstrained on purpose: an arg-less command has no inference site, and
+ * with a `Record<string, ArgsShape>` constraint that single `unknown` key
+ * would fail the constraint and collapse EVERY command's inference to
+ * untyped. Unconstrained, the arg-less key infers `unknown` and
+ * `PluginArgs<unknown>` resolves to the legacy record for just that command.
  */
-export function definePlugin(plugin: SigxPlugin): SigxPlugin {
-    return plugin;
+export interface PluginSpec<T extends Record<string, unknown> = Record<string, ArgsShape>> {
+    name: string;
+    detect: (cwd: string) => boolean;
+    commands: { [K in keyof T]: PluginCommand<T[K]> };
+    tui?: TuiContribution;
+}
+
+/**
+ * Define a sigx CLI plugin. Runtime identity; the generic infers each
+ * command's args shape so `run(ctx)` receives typed `ctx.args`.
+ */
+export function definePlugin<T extends Record<string, unknown>>(plugin: PluginSpec<T>): SigxPlugin {
+    // The conditional PluginArgs<T[K]> can't be compared while T is unresolved;
+    // the runtime is an identity and PluginSpec is structurally a SigxPlugin
+    // for every concrete T, so widen through unknown.
+    return plugin as unknown as SigxPlugin;
+}
+
+/**
+ * Typed helper for a command authored outside a `definePlugin` literal
+ * (e.g. its own file) — preserves the args shape for `ctx.args` inference.
+ */
+export function defineCommand<S extends ArgsShape = ArgsShape>(cmd: PluginCommand<S>): PluginCommand<S> {
+    return cmd;
 }

@@ -22,6 +22,43 @@ sigx build            # production build
 
 Run `sigx --help` for the full live list (varies by what plugins are installed in your project).
 
+## Writing a plugin
+
+Declare a top-level `sigx-cli` field in your package.json pointing at your plugin module:
+
+```json
+{
+    "sigx-cli": { "plugin": "./dist/plugin.js", "requires": ">=0.4.0" }
+}
+```
+
+…and default-export a plugin from that module. Args declared with the `a` builders type `ctx.args` automatically — no casts:
+
+```ts
+import { a, definePlugin } from '@sigx/cli/plugin';
+
+export default definePlugin({
+    name: 'my-tool',
+    detect: (cwd) => true,
+    commands: {
+        dev: {
+            description: 'Start the dev server',
+            aliases: ['d'],                    // optional alternate names
+            args: {
+                port: a.number().alias('p').default(8788),
+                open: a.boolean(),
+            },
+            run: async (ctx) => {
+                ctx.args.port;                 // number — inferred from the builders
+                ctx.args.open;                 // boolean | undefined
+            },
+        },
+    },
+});
+```
+
+Commands can also set `hidden: true` (dispatchable but not listed in `--help`) and `allowUnknownFlags: true` (unrecognized flags land in `ctx.unknownFlags` instead of erroring). For a command authored in its own file, wrap it in `defineCommand({...})` to keep the same `ctx.args` inference. Full plugin API → **<https://sigx.dev/cli/>**
+
 ## License
 
 MIT — © Andreas Ekdahl

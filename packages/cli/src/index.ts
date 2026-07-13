@@ -4,11 +4,14 @@
  * Re-exports the plugin interface so that plugin packages
  * can import { definePlugin, a, SigxPlugin } from '@sigx/cli/plugin'
  */
-export { definePlugin, a } from './plugin.js';
+export { definePlugin, defineCommand, a } from './plugin.js';
 export type {
     SigxPlugin,
+    PluginSpec,
     PluginCommand,
+    PluginArgs,
     CommandContext,
+    TypedCommandContext,
     AnyArg,
     ArgsShape,
     InferArgs,

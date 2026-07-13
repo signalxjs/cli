@@ -3,15 +3,20 @@
  * Since we use Vite (not tsc) for building, declarations must be generated separately.
  * We copy the source .ts files and strip the implementations.
  *
- * KEEP IN LOCKSTEP with src/plugin.ts and src/shell/ — these are hand-written.
+ * KEEP IN LOCKSTEP with src/plugin.ts, src/index.ts, and src/shell/ — these
+ * are hand-written. __tests__/plugin-dts.test.ts type-checks a consumer of
+ * the emitted plugin.d.ts to catch semantic drift.
  */
 import { writeFileSync, mkdirSync } from 'fs';
 
 // plugin.d.ts — the plugin interface that other packages import
 const pluginDts = `\
-import type { ArgsShape } from '@sigx/args';
+import type { ArgsShape, InferArgs } from '@sigx/args';
 export { a } from '@sigx/args';
 export type { AnyArg, ArgsShape, InferArgs } from '@sigx/args';
+/** Exact InferArgs<S> for an inferred builders shape; the legacy record for
+ *  the default, unknown (arg-less commands), or anything non-shape. */
+export type PluginArgs<S> = ArgsShape extends S ? Record<string, unknown> : S extends ArgsShape ? InferArgs<S> : Record<string, unknown>;
 export interface CommandContext {
     cwd: string;
     /** Parsed args per the command's builders; args._ = post-'--' tokens. */
@@ -21,17 +26,30 @@ export interface CommandContext {
     plugins?: SigxPlugin[];
     /** The running CLI binary's version — for plugin feature detection. */
     cliVersion?: string;
+    /** Unknown flag tokens — only when the command sets allowUnknownFlags. */
+    unknownFlags?: string[];
 }
+/** CommandContext with args narrowed to the command's inferred shape.
+ *  Intersection (not a generic member) so it stays assignable to CommandContext. */
+export type TypedCommandContext<S = ArgsShape> = Omit<CommandContext, 'args'> & {
+    args: PluginArgs<S>;
+};
 export interface Logger {
     log: (msg: string) => void;
     warn: (msg: string) => void;
     error: (msg: string) => void;
 }
-export interface PluginCommand {
+export interface PluginCommand<S = ArgsShape> {
     description: string;
     /** Fluent arg builders, e.g. { port: a.number().default(8788) }. */
-    args?: ArgsShape;
-    run: (ctx: CommandContext) => Promise<void>;
+    args?: S;
+    /** Alternate command names. Collisions warn; direct names beat aliases. */
+    aliases?: string[];
+    /** Hide from 'sigx --help' (still dispatchable). */
+    hidden?: boolean;
+    /** Collect unknown flags into ctx.unknownFlags instead of erroring. */
+    allowUnknownFlags?: boolean;
+    run(ctx: TypedCommandContext<S>): Promise<void>;
 }
 /** Opaque renderable returned by a tab's render() — author with JSX. */
 export type ShellNode = unknown;
@@ -86,17 +104,28 @@ export interface TuiContribution {
 export interface SigxPlugin {
     name: string;
     detect: (cwd: string) => boolean;
-    commands: Record<string, PluginCommand>;
+    /** PluginCommand<any> so typed defineCommand results slot in. */
+    commands: Record<string, PluginCommand<any>>;
     /** Optional TUI contributions merged into any plugin-hosted shell. */
     tui?: TuiContribution;
 }
-export declare function definePlugin(plugin: SigxPlugin): SigxPlugin;
+/** definePlugin input: commands is a reverse mapped type so each command's
+ *  args shape infers per key and types that command's run(ctx). */
+export interface PluginSpec<T extends Record<string, unknown> = Record<string, ArgsShape>> {
+    name: string;
+    detect: (cwd: string) => boolean;
+    commands: { [K in keyof T]: PluginCommand<T[K]> };
+    tui?: TuiContribution;
+}
+export declare function definePlugin<T extends Record<string, unknown>>(plugin: PluginSpec<T>): SigxPlugin;
+/** Typed helper for a command authored outside a definePlugin literal. */
+export declare function defineCommand<S extends ArgsShape = ArgsShape>(cmd: PluginCommand<S>): PluginCommand<S>;
 `;
 
 // index.d.ts — public API re-exports
 const indexDts = `\
-export { definePlugin, a } from './plugin.js';
-export type { SigxPlugin, PluginCommand, CommandContext, AnyArg, ArgsShape, InferArgs, Logger, ShellNode, StatusItem, ShellTab, SlashCommand, Shortcut, ShellLogStore, ShellHandle, TuiContribution } from './plugin.js';
+export { definePlugin, defineCommand, a } from './plugin.js';
+export type { SigxPlugin, PluginSpec, PluginCommand, PluginArgs, CommandContext, TypedCommandContext, AnyArg, ArgsShape, InferArgs, Logger, ShellNode, StatusItem, ShellTab, SlashCommand, Shortcut, ShellLogStore, ShellHandle, TuiContribution } from './plugin.js';
 `;
 
 // commands/create.d.ts
