@@ -60,55 +60,60 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
             await runCreate(args);
         });
 
-    // Register plugin commands. `claimed` tracks command names AND aliases:
-    // @sigx/args resolves direct names before aliases but does not
-    // collision-check aliases across a subcommand map, so colliding aliases
-    // are dropped BEFORE wrapping (a registered-but-shadowed alias would
-    // still render in help, advertising a name that doesn't resolve). All
-    // direct names — core and EVERY plugin's, including ones registered
-    // later — are reserved up-front: direct names always beat aliases at
-    // resolution, so an alias matching any of them is dead on arrival.
-    const claimed = new Map<string, string>();
-    for (const name of Object.keys(subCommands)) claimed.set(name, `core command "${name}"`);
-    for (const plugin of plugins) {
-        for (const name of Object.keys(plugin.commands)) {
-            claimed.set(name, `command "${name}" (plugin "${plugin.name}")`);
-        }
-    }
+    // Register plugin commands, in two phases.
+    //
+    // Phase 1 — probe each command's args schema (a bad schema in one plugin
+    // must not take down the whole CLI) and reserve the direct names of the
+    // commands that will actually register. Direct names always beat aliases
+    // at resolution and @sigx/args does not collision-check aliases across a
+    // subcommand map, so ALL surviving names — including later plugins' —
+    // must be known before any alias is accepted; a skipped-as-invalid
+    // command must NOT reserve its token.
+    const registrable: { plugin: SigxPlugin; name: string; cmd: PluginCommand }[] = [];
     for (const plugin of plugins) {
         for (const [name, cmd] of Object.entries(plugin.commands)) {
-            const aliases: string[] = [];
-            for (const alias of cmd.aliases ?? []) {
-                // An alias matching the command's own name is caught by the
-                // up-front direct-name claims like any other collision.
-                const owner = claimed.get(alias);
-                if (owner) {
-                    logger.warn(
-                        `Plugin "${plugin.name}" command "${name}" alias "${alias}" collides with ${owner} — the alias will not resolve`,
-                    );
-                    continue;
-                }
-                aliases.push(alias);
-            }
-            let wrapped: AnyCommand;
             try {
-                wrapped = wrapPluginCommand(name, { ...cmd, aliases }, opts);
+                command(name).args(cmd.args ?? {});
             } catch (err) {
-                // A bad schema in one plugin must not take down the whole CLI.
                 if (err instanceof DefinitionError) {
                     logger.warn(`Plugin "${plugin.name}" command "${name}" has an invalid args schema: ${err.message}`);
                     continue;
                 }
                 throw err;
             }
-            if (subCommands[name]) {
-                // Command conflict — last plugin wins, but warn
-                logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
+            registrable.push({ plugin, name, cmd });
+        }
+    }
+    const claimed = new Map<string, string>();
+    for (const name of Object.keys(subCommands)) claimed.set(name, `core command "${name}"`);
+    for (const { plugin, name } of registrable) {
+        claimed.set(name, `command "${name}" (plugin "${plugin.name}")`);
+    }
+
+    // Phase 2 — drop colliding aliases (a registered-but-shadowed alias
+    // would still render in help, advertising a name that doesn't resolve),
+    // then wrap and register.
+    for (const { plugin, name, cmd } of registrable) {
+        const aliases: string[] = [];
+        for (const alias of new Set(cmd.aliases ?? [])) {
+            // An alias matching the command's own name is caught by the
+            // up-front direct-name claims like any other collision.
+            const owner = claimed.get(alias);
+            if (owner) {
+                logger.warn(
+                    `Plugin "${plugin.name}" command "${name}" alias "${alias}" collides with ${owner} — the alias will not resolve`,
+                );
+                continue;
             }
-            subCommands[name] = wrapped;
-            for (const alias of aliases) {
-                claimed.set(alias, `alias of command "${name}" (plugin "${plugin.name}")`);
-            }
+            aliases.push(alias);
+        }
+        if (subCommands[name]) {
+            // Command conflict — last plugin wins, but warn
+            logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
+        }
+        subCommands[name] = wrapPluginCommand(name, { ...cmd, aliases }, opts);
+        for (const alias of aliases) {
+            claimed.set(alias, `alias of command "${name}" (plugin "${plugin.name}")`);
         }
     }
 

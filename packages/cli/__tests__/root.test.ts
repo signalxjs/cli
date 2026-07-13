@@ -211,6 +211,57 @@ describe('plugin command capabilities', () => {
         await dispatch(['s'], [lynxLikePlugin, stealer]);
         expect(received.map((r) => r.command)).toEqual(['stealer-s']);
     });
+
+    it('a schema-invalid command does not reserve its name against earlier aliases', async () => {
+        // 'brokenStealer' declares command 's' with an invalid schema: it is
+        // skipped, so it must NOT claim the token — lynx-like's serve alias
+        // 's' stays live.
+        const brokenStealer = definePlugin({
+            name: 'broken-stealer',
+            detect: () => true,
+            commands: {
+                s: {
+                    description: 'Invalid schema on the alias token',
+                    args: { thing: a.string().alias('help') },
+                    run: async () => {},
+                },
+            },
+        });
+
+        const { logger, stdout } = await dispatch(['--help'], [lynxLikePlugin, brokenStealer]);
+        expect(logger.warns.join('\n')).toMatch(/Plugin "broken-stealer" command "s" has an invalid args schema/);
+        expect(logger.warns.join('\n')).not.toMatch(/alias "s" collides/);
+        expect(stdout.join('\n')).toContain('serve, s');
+
+        resetReceived();
+        await dispatch(['s'], [lynxLikePlugin, brokenStealer]);
+        expect(received.map((r) => r.command)).toEqual(['serve']);
+    });
+
+    it('deduplicates a command\'s own alias list', async () => {
+        const dupey = definePlugin({
+            name: 'dupey',
+            detect: () => true,
+            commands: {
+                pack: {
+                    description: 'Duplicate aliases declared',
+                    aliases: ['pk', 'pk'],
+                    run: async (ctx) => {
+                        received.push({ command: 'pack', ctx });
+                    },
+                },
+            },
+        });
+
+        const { stdout, logger } = await dispatch(['--help'], [dupey]);
+        expect(stdout.join('\n')).toContain('pack, pk');
+        expect(stdout.join('\n')).not.toContain('pk, pk');
+        expect(logger.warns).toEqual([]);
+
+        resetReceived();
+        await dispatch(['pk'], [dupey]);
+        expect(received.map((r) => r.command)).toEqual(['pack']);
+    });
 });
 
 describe('plugin registration resilience', () => {
