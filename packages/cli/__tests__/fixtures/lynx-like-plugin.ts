@@ -41,11 +41,29 @@ export const lynxLikePlugin = definePlugin({
         },
         serve: {
             description: 'Serve with a short port alias (fixture)',
+            aliases: ['s'],
             args: {
                 port: a.number().alias('p').default(8788).describe('Port to listen on'),
             },
             run: async (ctx) => {
                 received.push({ command: 'serve', ctx });
+            },
+        },
+        internal: {
+            description: 'Hidden maintenance command (fixture)',
+            hidden: true,
+            run: async (ctx) => {
+                received.push({ command: 'internal', ctx });
+            },
+        },
+        passthru: {
+            description: 'Forwards unknown flags (fixture)',
+            allowUnknownFlags: true,
+            args: {
+                target: a.string().describe('Known flag'),
+            },
+            run: async (ctx) => {
+                received.push({ command: 'passthru', ctx });
             },
         },
     },

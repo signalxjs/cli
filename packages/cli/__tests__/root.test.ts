@@ -110,6 +110,65 @@ describe('plugin command dispatch', () => {
     });
 });
 
+describe('plugin command capabilities', () => {
+    beforeEach(() => resetReceived());
+    afterEach(() => {
+        process.exitCode = undefined;
+    });
+
+    it('dispatches command aliases', async () => {
+        await dispatch(['s', '-p', '3000']);
+        expect(received.map((r) => r.command)).toEqual(['serve']);
+        expect(received[0].ctx.args).toEqual({ port: 3000, _: [] });
+    });
+
+    it('hidden commands are still dispatchable', async () => {
+        await dispatch(['internal']);
+        expect(received.map((r) => r.command)).toEqual(['internal']);
+    });
+
+    it('allowUnknownFlags collects unknown flags into ctx.unknownFlags', async () => {
+        await dispatch(['passthru', '--target', 'ios', '--whatever', 'v']);
+        expect(received).toHaveLength(1);
+        expect(received[0].ctx.args.target).toBe('ios');
+        expect(received[0].ctx.unknownFlags).toEqual(['--whatever', 'v']);
+        expect(process.exitCode ?? 0).toBe(0);
+    });
+
+    it('commands without allowUnknownFlags get no unknownFlags key on ctx', async () => {
+        await dispatch(['dev']);
+        expect('unknownFlags' in received[0].ctx).toBe(false);
+    });
+
+    it('warns on alias collisions with commands and other aliases; direct names beat aliases', async () => {
+        const clasher = definePlugin({
+            name: 'clasher',
+            detect: () => true,
+            commands: {
+                other: {
+                    description: 'Aliases collide with core and plugin names',
+                    aliases: ['info', 's'],
+                    run: async (ctx) => {
+                        received.push({ command: 'other', ctx });
+                    },
+                },
+            },
+        });
+
+        const { logger } = await dispatch(['other'], [lynxLikePlugin, clasher]);
+        const warns = logger.warns.join('\n');
+        expect(warns).toMatch(/alias "info" collides with core command "info"/);
+        expect(warns).toMatch(/alias "s" collides with alias of command "serve" \(plugin "lynx-like"\)/);
+        expect(received.map((r) => r.command)).toEqual(['other']);
+
+        // Direct names always beat aliases — 'info' resolves to the core
+        // command, never to the clashing alias.
+        resetReceived();
+        await dispatch(['info'], [lynxLikePlugin, clasher]);
+        expect(received).toHaveLength(0);
+    });
+});
+
 describe('plugin registration resilience', () => {
     beforeEach(() => resetReceived());
     afterEach(() => {

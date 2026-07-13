@@ -18,10 +18,13 @@ export interface RootCommandOptions {
 }
 
 export function wrapPluginCommand(name: string, cmd: PluginCommand, opts: RootCommandOptions): AnyCommand {
-    return command(name)
-        .describe(cmd.description)
+    let builder = command(name).describe(cmd.description);
+    if (cmd.aliases?.length) builder = builder.aliases(...cmd.aliases);
+    if (cmd.hidden) builder = builder.hidden();
+    if (cmd.allowUnknownFlags) builder = builder.allowUnknownFlags();
+    return builder
         .args(cmd.args ?? {})
-        .run(async ({ args }) => {
+        .run(async ({ args, unknownFlags }) => {
             // `plugins` lets a shell-hosting command (e.g. lynx dev) merge
             // peer plugins' TUI contributions via runShell({ plugins }).
             await cmd.run({
@@ -30,6 +33,7 @@ export function wrapPluginCommand(name: string, cmd: PluginCommand, opts: RootCo
                 logger: opts.logger,
                 plugins: opts.plugins,
                 cliVersion: opts.version,
+                ...(cmd.allowUnknownFlags ? { unknownFlags } : {}),
             });
         });
 }
@@ -56,7 +60,11 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
             await runCreate(args);
         });
 
-    // Register plugin commands
+    // Register plugin commands. `claimed` tracks command names AND aliases:
+    // @sigx/args resolves direct names before aliases but does not
+    // collision-check aliases across a subcommand map, so warn here.
+    const claimed = new Map<string, string>();
+    for (const name of Object.keys(subCommands)) claimed.set(name, `core command "${name}"`);
     for (const plugin of plugins) {
         for (const [name, cmd] of Object.entries(plugin.commands)) {
             let wrapped: AnyCommand;
@@ -75,6 +83,17 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
                 logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
             }
             subCommands[name] = wrapped;
+            claimed.set(name, `command "${name}" (plugin "${plugin.name}")`);
+            for (const alias of cmd.aliases ?? []) {
+                const owner = claimed.get(alias);
+                if (owner) {
+                    logger.warn(
+                        `Plugin "${plugin.name}" command "${name}" alias "${alias}" collides with ${owner} — the alias will not resolve`,
+                    );
+                    continue;
+                }
+                claimed.set(alias, `alias of command "${name}" (plugin "${plugin.name}")`);
+            }
         }
     }
 

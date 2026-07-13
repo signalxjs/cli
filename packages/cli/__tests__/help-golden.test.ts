@@ -49,11 +49,12 @@ describe('help and version output', () => {
                 --version   Show version
 
           COMMANDS
-            info     Print environment and project info
-            create   Scaffold a new SignalX project
-            dev      Start dev server (fixture)
-            add      Add native modules (fixture)
-            serve    Serve with a short port alias (fixture)
+            info       Print environment and project info
+            create     Scaffold a new SignalX project
+            dev        Start dev server (fixture)
+            add        Add native modules (fixture)
+            serve, s   Serve with a short port alias (fixture)
+            passthru   Forwards unknown flags (fixture)
 
           Run 'sigx <command> --help' for details on a command."
         `);
