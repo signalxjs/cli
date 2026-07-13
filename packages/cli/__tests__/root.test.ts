@@ -166,6 +166,19 @@ describe('plugin command capabilities', () => {
         resetReceived();
         await dispatch(['info'], [lynxLikePlugin, clasher]);
         expect(received).toHaveLength(0);
+
+        // The earlier owner keeps its alias working.
+        resetReceived();
+        await dispatch(['s'], [lynxLikePlugin, clasher]);
+        expect(received.map((r) => r.command)).toEqual(['serve']);
+
+        // Colliding aliases are not registered at all — they must not render
+        // in help ("other, info, s" would advertise names that don't resolve).
+        const { stdout } = await dispatch(['--help'], [lynxLikePlugin, clasher]);
+        const help = stdout.join('\n');
+        expect(help).toContain('serve, s');
+        expect(help).toMatch(/^\s{2}other\s{2,}/m);
+        expect(help).not.toContain('other, info');
     });
 });
 
