@@ -91,8 +91,9 @@ export interface PluginCommand<S = ArgsShape> {
     /** Collect unknown flags into `ctx.unknownFlags` instead of erroring. */
     allowUnknownFlags?: boolean;
     // Method syntax (NOT a property function type) — deliberately bivariant,
-    // so PluginCommand<Specific> stays assignable to SigxPlugin's
-    // Record<string, PluginCommand> under strictFunctionTypes.
+    // so differently-shaped PluginCommand instantiations stay mutually
+    // assignable under strictFunctionTypes (e.g. a hand-annotated legacy
+    // run(ctx: CommandContext) still satisfies a typed PluginCommand<S>).
     run(ctx: TypedCommandContext<S>): Promise<void>;
 }
 
