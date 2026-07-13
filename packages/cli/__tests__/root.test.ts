@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runMain } from '@sigx/args';
-import { a, definePlugin, type Logger } from '../src/plugin.js';
+import { a, definePlugin, type CommandContext, type Logger } from '../src/plugin.js';
 import { buildRootCommand } from '../src/root.js';
 import { lynxLikePlugin, received, resetReceived } from './fixtures/lynx-like-plugin.js';
 
@@ -236,6 +236,65 @@ describe('plugin command capabilities', () => {
         resetReceived();
         await dispatch(['s'], [lynxLikePlugin, brokenStealer]);
         expect(received.map((r) => r.command)).toEqual(['serve']);
+    });
+
+    it('an overridden command does not poison the winning command\'s aliases', async () => {
+        // Both plugins declare `deploy` with alias 'd'. The later plugin wins
+        // the name entirely — the loser's alias must not be claimed, so the
+        // winner keeps 'd'.
+        const early = definePlugin({
+            name: 'early',
+            detect: () => true,
+            commands: {
+                deploy: {
+                    description: 'Loser deploy',
+                    aliases: ['d'],
+                    run: async (ctx) => {
+                        received.push({ command: 'early-deploy', ctx });
+                    },
+                },
+            },
+        });
+        const late = definePlugin({
+            name: 'late',
+            detect: () => true,
+            commands: {
+                deploy: {
+                    description: 'Winner deploy',
+                    aliases: ['d'],
+                    run: async (ctx) => {
+                        received.push({ command: 'late-deploy', ctx });
+                    },
+                },
+            },
+        });
+
+        const { logger, stdout } = await dispatch(['--help'], [early, late]);
+        expect(logger.warns.join('\n')).toMatch(/Plugin "late" overrides command "deploy"/);
+        expect(logger.warns.join('\n')).not.toMatch(/alias "d" collides/);
+        expect(stdout.join('\n')).toContain('deploy, d');
+
+        resetReceived();
+        await dispatch(['d'], [early, late]);
+        expect(received.map((r) => r.command)).toEqual(['late-deploy']);
+    });
+
+    it('supports class-instance commands (run on the prototype)', async () => {
+        class InstanceCommand {
+            description = 'Class-based command';
+            aliases = ['ic'];
+            async run(ctx: CommandContext) {
+                received.push({ command: 'instance', ctx });
+            }
+        }
+        const classy = definePlugin({
+            name: 'classy',
+            detect: () => true,
+            commands: { instance: new InstanceCommand() },
+        });
+
+        await dispatch(['ic'], [classy]);
+        expect(received.map((r) => r.command)).toEqual(['instance']);
     });
 
     it('deduplicates a command\'s own alias list', async () => {

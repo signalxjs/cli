@@ -17,9 +17,20 @@ export interface RootCommandOptions {
     cwd?: string;
 }
 
-export function wrapPluginCommand(name: string, cmd: PluginCommand, opts: RootCommandOptions): AnyCommand {
+/**
+ * `aliases` overrides `cmd.aliases` (the registration loop passes the
+ * collision-filtered list). A separate parameter rather than a `{...cmd}`
+ * clone: spread copies only own enumerable props and would drop a `run`
+ * defined on a class prototype.
+ */
+export function wrapPluginCommand(
+    name: string,
+    cmd: PluginCommand,
+    opts: RootCommandOptions,
+    aliases: readonly string[] = cmd.aliases ?? [],
+): AnyCommand {
     let builder = command(name).describe(cmd.description);
-    if (cmd.aliases?.length) builder = builder.aliases(...cmd.aliases);
+    if (aliases.length) builder = builder.aliases(...aliases);
     if (cmd.hidden) builder = builder.hidden();
     if (cmd.allowUnknownFlags) builder = builder.allowUnknownFlags();
     return builder
@@ -69,7 +80,10 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
     // subcommand map, so ALL surviving names — including later plugins' —
     // must be known before any alias is accepted; a skipped-as-invalid
     // command must NOT reserve its token.
-    const registrable: { plugin: SigxPlugin; name: string; cmd: PluginCommand }[] = [];
+    // Name conflicts resolve last-plugin-wins (warned) BEFORE any alias is
+    // considered, so an overridden command's aliases can't poison the
+    // winner's — only winners exist at alias-filtering time.
+    const winners = new Map<string, { plugin: SigxPlugin; cmd: PluginCommand }>();
     for (const plugin of plugins) {
         for (const [name, cmd] of Object.entries(plugin.commands)) {
             try {
@@ -81,19 +95,23 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
                 }
                 throw err;
             }
-            registrable.push({ plugin, name, cmd });
+            if (winners.has(name) || subCommands[name]) {
+                // Command conflict — last plugin wins, but warn
+                logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
+            }
+            winners.set(name, { plugin, cmd });
         }
     }
     const claimed = new Map<string, string>();
     for (const name of Object.keys(subCommands)) claimed.set(name, `core command "${name}"`);
-    for (const { plugin, name } of registrable) {
+    for (const [name, { plugin }] of winners) {
         claimed.set(name, `command "${name}" (plugin "${plugin.name}")`);
     }
 
     // Phase 2 — drop colliding aliases (a registered-but-shadowed alias
     // would still render in help, advertising a name that doesn't resolve),
     // then wrap and register.
-    for (const { plugin, name, cmd } of registrable) {
+    for (const [name, { plugin, cmd }] of winners) {
         const aliases: string[] = [];
         for (const alias of new Set(cmd.aliases ?? [])) {
             // An alias matching the command's own name is caught by the
@@ -107,11 +125,7 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
             }
             aliases.push(alias);
         }
-        if (subCommands[name]) {
-            // Command conflict — last plugin wins, but warn
-            logger.warn(`Plugin "${plugin.name}" overrides command "${name}"`);
-        }
-        subCommands[name] = wrapPluginCommand(name, { ...cmd, aliases }, opts);
+        subCommands[name] = wrapPluginCommand(name, cmd, opts, aliases);
         for (const alias of aliases) {
             claimed.set(alias, `alias of command "${name}" (plugin "${plugin.name}")`);
         }
