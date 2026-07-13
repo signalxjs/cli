@@ -81,6 +81,51 @@ describe('runCreate', () => {
         expect(exitCode).toBe(2);
     });
 
+    it('headless: unknown flag values do not leak into positionals', async () => {
+        // `pnpm create @sigx --registry https://x my-app` must scaffold
+        // "my-app", not a project named "https://x".
+        stubTty(false);
+        const mod = await importCreate(['--registry', 'https://x', 'my-app', '--type', 'basic']);
+        await run(mod);
+        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'my-app', projectType: 'basic', styling: 'none' });
+        expect(exitCode).toBe(0);
+    });
+
+    it('headless: -y short alias skips prompts', async () => {
+        stubTty(false);
+        const mod = await importCreate(['my-app', '-y']);
+        await run(mod);
+        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'my-app', projectType: 'basic', styling: 'none' });
+        expect(exitCode).toBe(0);
+    });
+
+    it('headless: --type=value equals form parses', async () => {
+        stubTty(false);
+        const mod = await importCreate(['my-app', '--type=ssg', '--styling=tailwind']);
+        await run(mod);
+        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'my-app', projectType: 'ssg', styling: 'tailwind' });
+        expect(exitCode).toBe(0);
+    });
+
+    it('headless: --type with no value exits 2 with a message', async () => {
+        stubTty(false);
+        const mod = await importCreate(['my-app', '--type']);
+        await run(mod);
+        expect(scaffoldProject).not.toHaveBeenCalled();
+        expect(exitCode).toBe(2);
+        expect(errSpy.mock.calls.flat().join('\n')).toMatch(/--type/);
+    });
+
+    it('headless: a project can literally be named "create"', async () => {
+        // argv is ['create', 'create', ...] — only the first (command) token
+        // is the shim invocation; the second is the project name.
+        stubTty(false);
+        const mod = await importCreate(['create', '--type', 'basic']);
+        await run(mod);
+        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'create', projectType: 'basic', styling: 'none' });
+        expect(exitCode).toBe(0);
+    });
+
     it('headless: scaffold failure exits 1', async () => {
         stubTty(false);
         scaffoldProject.mockReturnValue({ ok: false, error: 'Directory "my-app" already exists!' });

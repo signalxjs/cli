@@ -4,6 +4,15 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Fixed
+
+- **`@sigx/create` shim: unknown-flag values no longer leak into positionals** (#69). The hand-rolled fallback argv parser treated an unknown flag's value as a positional, so `pnpm create @sigx --registry https://x my-app` scaffolded a project named `https://x`. The shim now parses with `@sigx/args`' headless `parseArgs` (`allowUnknownFlags`), sharing the CLI's parsing semantics; the last hand-rolled parser in the repo is gone. A project can now also literally be named `create` (previously every `create` token was stripped, not just the command token).
+
+### Changed
+
+- **`@sigx/create` shim: a value-taking flag with no value (e.g. trailing `--type`) now errors with exit code 2** (#69) instead of silently scaffolding with defaults.
+- Internal: root command construction extracted from `cli.ts` into a testable `buildRootCommand()` (`src/root.ts`), plus an extensibility conformance suite — a lynx-shaped fixture plugin covering kebab/`no-*` literal flags, defaults, rest args, aliases, `--` passthrough, unknown-flag rejection, `DefinitionError` isolation, and collision warnings — and golden `sigx --help`/`--version` output tests (#69). No behavior change to the published CLI.
+
 ## [0.4.2] - 2026-06-12
 
 `@sigx/cli` 0.4.2, `@sigx/create` 0.2.2.
