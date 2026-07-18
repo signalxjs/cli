@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Changed
+
+- **Migrated onto the terminal 0.8 family and core 0.12's build tool** (#79). `@sigx/cli` now depends on `@sigx/args ^0.8.0` (was `^0.6.0`) and `@sigx/terminal ^0.8.0` (was `^0.5.0`); the `@sigx/vite` devDependency in both `cli` and `create` moves to `^0.12.0` (was `^0.4.7`). The whole terminal family (`@sigx/terminal`, `@sigx/terminal-zero`, `@sigx/terminal-ui`, `@sigx/runtime-terminal`) is now the 0.8.0 line built on core 0.12 (`@sigx/reactivity`/`@sigx/runtime-core` `^0.12.0`). No source changes were needed — the prompt kit (`intro`/`outro`/`note`/`text`/`select`/`spinner`/`isCancel`/`cancel`), the dev-shell render surface (`defineApp`/`terminalMount`/`Tabs`/`StatusBar`/`renderPixelArt`/`createLogStore`/…), and the `@sigx/args` builder API (`a`/`command`/`runMain`/`parseArgs`) all kept their signatures across the 0.5→0.8 / 0.6→0.8 jumps. The CLI's runtime reactivity now resolves to a single `@sigx/reactivity@0.12.0` copy (the only other copy is the build-tool-only one bundled inside `@sigx/vite`'s own `sigx` devDependency, which is unchanged).
+
 ## [0.5.1] - 2026-07-13
 
 `@sigx/cli` 0.5.1 (`@sigx/create` stays 0.2.3 — its `^0.5.0` dependency resolves to 0.5.1).
