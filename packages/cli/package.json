@@ -35,11 +35,11 @@
         "dev": "vite build --watch"
     },
     "dependencies": {
-        "@sigx/args": "^0.6.0",
-        "@sigx/terminal": "^0.5.0"
+        "@sigx/args": "^0.8.0",
+        "@sigx/terminal": "^0.8.0"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.4.7",
+        "@sigx/vite": "^0.12.0",
         "@types/node": "^22.0.0",
         "typescript": "^5.9.3",
         "vite": "^8.0.12"
