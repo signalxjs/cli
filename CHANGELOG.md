@@ -4,6 +4,14 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-23
+
+`@sigx/cli` 0.7.0, `@sigx/create` 0.3.0.
+
+### Changed
+
+- **Aligned to the SignalX core 0.13 line** (#86). The workspace catalog pin `@sigx/vite` moves to `^0.13.0` (was `^0.12.0`) — the single source of truth for the core minor this repo builds against, consumed via `"catalog:"` in both `@sigx/cli` and `@sigx/create`. The tier-1 sibling pins in `@sigx/cli` bump to `@sigx/args ^0.9.0` (was `^0.8.0`) and `@sigx/terminal ^0.9.0` (was `^0.8.0`), tracking the terminal family's 0.9 line on core 0.13. No CLI source changed — the prompt kit, dev-shell render surface, and `@sigx/args` builder API all kept their signatures across the bump.
+
 ## [0.6.0] - 2026-07-18
 
 ### Changed
