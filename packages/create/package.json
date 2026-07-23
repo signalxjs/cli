@@ -37,7 +37,7 @@
         "@sigx/cli": "workspace:^"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.12.0",
+        "@sigx/vite": "catalog:",
         "typescript": "^5.9.3",
         "vite": "^8.0.12"
     },
