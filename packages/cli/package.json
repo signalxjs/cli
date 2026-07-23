@@ -35,8 +35,8 @@
         "dev": "vite build --watch"
     },
     "dependencies": {
-        "@sigx/args": "^0.8.0",
-        "@sigx/terminal": "^0.8.0"
+        "@sigx/args": "^0.9.0",
+        "@sigx/terminal": "^0.9.0"
     },
     "devDependencies": {
         "@sigx/vite": "catalog:",
