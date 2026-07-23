@@ -39,7 +39,7 @@
         "@sigx/terminal": "^0.8.0"
     },
     "devDependencies": {
-        "@sigx/vite": "^0.12.0",
+        "@sigx/vite": "catalog:",
         "@types/node": "^22.0.0",
         "typescript": "^5.9.3",
         "vite": "^8.0.12"

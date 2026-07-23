@@ -4,6 +4,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@sigx/vite':
+      specifier: ^0.12.0
+      version: 0.12.0
+
 importers:
 
   .:
@@ -40,7 +46,7 @@ importers:
         version: 0.8.0
     devDependencies:
       '@sigx/vite':
-        specifier: ^0.12.0
+        specifier: 'catalog:'
         version: 0.12.0(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))
       '@types/node':
         specifier: ^22.0.0
@@ -59,7 +65,7 @@ importers:
         version: link:../cli
     devDependencies:
       '@sigx/vite':
-        specifier: ^0.12.0
+        specifier: 'catalog:'
         version: 0.12.0(sigx@0.4.1)(vite@8.0.12(@types/node@22.19.18))
       typescript:
         specifier: ^5.9.3
