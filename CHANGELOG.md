@@ -4,6 +4,18 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-29
+
+`@sigx/cli` 0.8.0, `@sigx/create` 0.4.0.
+
+### Changed
+
+- **Aligned to the SignalX core 0.14 line** (#90). The workspace catalog pin `@sigx/vite` moves to `^0.14.0` (was `^0.13.0`) — the single source of truth for the core minor this repo builds against, consumed via `"catalog:"` in both `@sigx/cli` and `@sigx/create`. The tier-1 sibling pins in `@sigx/cli` bump to `@sigx/args ^0.10.0` and `@sigx/terminal ^0.10.0` (both were `^0.9.0`), tracking the terminal family's 0.10 line on core 0.14. No CLI source changed — the prompt kit, dev-shell render surface and `@sigx/args` builder API all kept their signatures across the bump, and `build`, `typecheck` and `test` (11 files, 109 tests) passed on the first run.
+
+### Known issue
+
+- The scaffolding templates under `packages/cli/templates/` still pin siblings several minors back — `@sigx/router@^0.7.0` (now 0.10.0), `@sigx/daisyui@^0.7.0` (now 0.11.0), `@sigx/cli@^0.5.0`. An app scaffolded from those and then given a current `sigx` resolves **two copies of `@sigx/reactivity`**, which breaks reactivity silently. The drift predates this release; tracked in #91.
+
 ## [0.7.0] - 2026-07-23
 
 `@sigx/cli` 0.7.0, `@sigx/create` 0.3.0.
