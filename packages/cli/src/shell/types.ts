@@ -1,4 +1,5 @@
 import type {
+    ShellPane,
     ShellTab,
     SlashCommand,
     Shortcut,
@@ -9,6 +10,7 @@ import type {
 } from '../plugin.js';
 
 export type {
+    ShellPane,
     ShellTab,
     SlashCommand,
     Shortcut,

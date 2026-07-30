@@ -4,6 +4,24 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Added
+
+- **A shell tab is told the pane it has to fill** (#88). `ShellTab.render` now receives a `ShellPane` — `{ width, height }`, the terminal minus whatever chrome the shell drew around the body (title bar, tab strip, body border and drop shadow, status/hints, and the command palette while it is open). That number was previously unavailable to a tab: `getTerminalSize()` reports the *terminal*, and the difference is a private detail of `runShell`'s own layout, so a tab wanting to scroll a table or fit columns to the width had to guess. Guessing low wastes the screen; guessing high pushes the shell's own footer off the bottom. The argument is additive — a `render: () => …` that ignores it still typechecks and behaves identically.
+
+  The pane is a **budget, not a reservation**. The renderer's layout is content-driven and there is no clipping primitive, so a body that emits more rows than it was given still costs the footer; `fitLines(lines, pane)` from `@sigx/terminal` fits content to it in one call.
+
+  Both layouts report it. Fullscreen charges each chrome segment against the terminal and derives the body box's own cost from `boxChrome`, so a change to the renderer's box geometry moves this number rather than silently misreporting it. Inline subtracts the transcript and the bottom chrome.
+
+- **`ShellHandle.activeTab`** (#88): the id of the tab currently on screen. A shortcut that acts on "the visible tab" — a per-tab cursor, say — could not previously know which that was, and tracking it plugin-side does not work, because the shell's own `1`–`9` keys switch tabs without routing through `switchTab`, so a plugin-held copy desynchronises silently.
+
+  It reports what is **rendered**, not what is selected: a pushed view (`pushView`) displaces the selected tab, so `activeTab` follows the view stack and falls back to the selection only at the root. The renderer resolves the visible tab through the same function, so the two cannot disagree. `''` when nothing is on screen — no tabs, the non-TTY fallback, or a view pushed for an id that is not a tab at all, which `pushView` permits.
+
+### Changed
+
+- **Tier-1 sibling pins move to the terminal family's 0.11 line** (#88): `@sigx/terminal ^0.11.0` and `@sigx/args ^0.11.0` (both were `^0.10.0`). Required, not cosmetic — `boxChrome` is new in `@sigx/terminal-zero` 0.11 and is what the fullscreen pane arithmetic is built on. Core stays on the 0.14 line.
+
+- **Inline's body-height assumption is one named constant instead of two row-counts that had to agree** (#88). The filler that pushes the input to the bottom assumed a fixed 16-row body in a sum that separately re-counted the chrome; it is now `pane.height - NOMINAL_INLINE_BODY_ROWS`. An assumption is still unavoidable there — the renderer cannot measure an opaque child — but it no longer has to be kept in step with a second calculation. Two rows are also now charged only when they are actually drawn, which they previously were not: the tab strip (hidden outside the root view and with a single tab) and the status line (which renders nothing when there is nothing to show).
+
 ## [0.8.0] - 2026-07-29
 
 `@sigx/cli` 0.8.0, `@sigx/create` 0.4.0.

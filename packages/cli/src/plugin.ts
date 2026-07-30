@@ -112,11 +112,38 @@ export interface StatusItem {
     tone?: string;
 }
 
+/**
+ * The area a tab's body has to render into — the terminal minus whatever
+ * chrome the shell drew around it (title bar, tab strip, body border,
+ * status/hints, and the command palette while it is open).
+ *
+ * Structurally identical to `ShellPane` in `@sigx/terminal-ui`, restated here
+ * so this module stays dependency-free, like `ShellLogStore` below.
+ *
+ * It is a **budget, not a reservation**: the renderer's layout is
+ * content-driven, so a body that emits more rows than it was given pushes the
+ * footer off the bottom rather than being clipped. Fit content to it —
+ * `fitLines(lines, pane)` from `@sigx/terminal` does that in one call.
+ */
+export interface ShellPane {
+    /** Columns available to the body. */
+    width: number;
+    /** Rows available to the body. */
+    height: number;
+}
+
 /** A tab in the shell's tab strip. */
 export interface ShellTab {
     id: string;
     label: string;
-    render: () => ShellNode;
+    /**
+     * Render the tab body. Receives the pane it has to fill — a tab that
+     * scrolls a table or fits columns to the width needs that number, and
+     * `getTerminalSize()` cannot give it (it reports the terminal, not the
+     * terminal minus the shell's own chrome). Ignoring the argument is fine
+     * and stays source-compatible.
+     */
+    render: (pane: ShellPane) => ShellNode;
 }
 
 /** A `/command` offered in the shell input's intellisense. */
@@ -152,6 +179,15 @@ export interface ShellHandle {
     /** The main streaming log store (feeds the host's Logs tab). */
     store: ShellLogStore;
     setStatus: (items: StatusItem[]) => void;
+    /**
+     * Id of the tab currently on screen. Read it in a shortcut that acts on
+     * "the visible tab" — a per-tab cursor, say. Tracking it plugin-side does
+     * not work: the shell's own `1`–`9` keys switch tabs without telling the
+     * plugin, so a plugin-held copy desynchronises silently. `''` when the
+     * shell has no tabs, and in the non-TTY fallback where nothing is on
+     * screen at all.
+     */
+    readonly activeTab: string;
     switchTab: (id: string) => void;
     pushView: (id: string) => void;
     popView: () => void;

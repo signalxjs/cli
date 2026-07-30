@@ -9,6 +9,7 @@ export { createShellLogger } from './logger.js';
 export { collectTuiContributions, mergeShellConfig } from './contributions.js';
 export type { ShellConfig } from './types.js';
 export type {
+    ShellPane,
     ShellTab,
     SlashCommand,
     Shortcut,
