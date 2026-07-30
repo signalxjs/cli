@@ -1,9 +1,9 @@
 /** @jsxImportSource @sigx/terminal */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { setOutputTarget, Text } from '@sigx/terminal';
+import { setOutputTarget, Text, Col } from '@sigx/terminal';
 import { captureOutput, settle, press, type, stripAnsi, ESC } from './harness.js';
 import { runShell } from '../src/shell/runShell.js';
-import type { ShellHandle } from '../src/plugin.js';
+import type { ShellHandle, ShellPane } from '../src/plugin.js';
 import type { ShellConfig } from '../src/shell/types.js';
 import type { SigxPlugin } from '../src/plugin.js';
 
@@ -61,6 +61,114 @@ describe('runShell', () => {
         await settle();
         const frame = stripAnsi(cap.chunks[cap.chunks.length - 1] ?? '');
         expect(frame).toContain('logs body');
+    });
+
+    // ── The pane and the active tab (#88) ──────────────────────────────────
+    //
+    // Both assert on *structure* rather than on a joined blob of frame text:
+    // a body that fills the pane it was handed must leave the shell's own
+    // footer on screen, and that is a claim about line counts.
+
+    it('fullscreen: a tab is told its pane, and a body that fills it keeps the footer on screen', async () => {
+        const seen: ShellPane[] = [];
+        const cap = captureOutput({ columns: 80, rows: 24 });
+        shell = await runShell(config({
+            mode: 'fullscreen',
+            tabs: [{
+                id: 'home',
+                label: 'Home',
+                // Fill the pane exactly — the contract a well-behaved body
+                // honours. Each row is its own <box>: <Text> is a span, so
+                // sibling <Text>s would concatenate onto one line.
+                render: (pane) => {
+                    seen.push({ ...pane });
+                    return <Col>{Array.from({ length: pane.height }, (_, i) =>
+                        <box><Text color="fg">{`row ${i}`}</Text></box>)}</Col>;
+                },
+            }],
+        }), { interactive: true });
+        await settle();
+
+        const pane = seen.at(-1);
+        expect(pane).toBeDefined();
+        // Not the terminal size: the frame's chrome has been charged against it.
+        expect(pane!.height).toBeGreaterThan(0);
+        expect(pane!.height).toBeLessThan(24);
+        expect(pane!.width).toBeLessThan(80);
+
+        const lines = stripAnsi(cap.chunks.at(-1) ?? '').split('\n');
+        // Every body row made it, and so did the footer underneath them —
+        // which is the whole point: an over-reported pane pushes the footer
+        // off the bottom, and the renderer's fullscreen clamp then eats it.
+        expect(lines.filter((l) => /^\s*│?\s*row \d+/.test(l)).length).toBe(pane!.height);
+        expect(lines.some((l) => l.includes('quit'))).toBe(true);
+        // The frame fits the terminal it was drawn for.
+        expect(lines.filter((l) => l.trim() !== '').length).toBeLessThanOrEqual(24);
+    });
+
+    it('fullscreen: opening the palette shrinks the pane it reports', async () => {
+        const seen: ShellPane[] = [];
+        captureOutput({ columns: 80, rows: 24 });
+        shell = await runShell(config({
+            mode: 'fullscreen',
+            tabs: [{
+                id: 'home',
+                label: 'Home',
+                render: (pane) => { seen.push({ ...pane }); return <Text color="fg">home body</Text>; },
+            }],
+        }), { interactive: true });
+        await settle();
+        const closed = seen.at(-1)!.height;
+
+        await press('/');
+        await settle();
+        // The palette is chrome too — it is drawn out of the body's budget,
+        // not on top of it.
+        expect(seen.at(-1)!.height).toBeLessThan(closed);
+    });
+
+    it('activeTab tracks the shell\'s own 1-9 keys, not just switchTab()', async () => {
+        captureOutput();
+        shell = await runShell(config({ mode: 'fullscreen' }), { interactive: true });
+        await settle();
+        expect(shell.activeTab).toBe('home');
+
+        // The desync case from the issue: the shell switches tabs on a digit
+        // without routing through switchTab, so a plugin-held copy would be
+        // stale here.
+        await press('2');
+        expect(shell.activeTab).toBe('logs');
+
+        shell.switchTab('home');
+        expect(shell.activeTab).toBe('home');
+    });
+
+    it('non-TTY: activeTab is empty — nothing is on screen', async () => {
+        const logSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
+        captureOutput({ isTTY: false });
+        shell = await runShell(config(), { interactive: false });
+        expect(shell.activeTab).toBe('');
+        logSpy.mockRestore();
+        shell = null;
+    });
+
+    it('inline: a tab is told a pane that leaves room for the bottom chrome', async () => {
+        const seen: ShellPane[] = [];
+        captureOutput({ columns: 80, rows: 24 });
+        shell = await runShell(config({
+            tabs: [{
+                id: 'home',
+                label: 'Home',
+                render: (pane) => { seen.push({ ...pane }); return <Text color="fg">home body</Text>; },
+            }],
+        }), { interactive: true });
+        await settle();
+
+        const pane = seen.at(-1);
+        expect(pane).toBeDefined();
+        expect(pane!.width).toBe(80); // inline draws no box around the body
+        expect(pane!.height).toBeGreaterThan(0);
+        expect(pane!.height).toBeLessThan(24);
     });
 
     it('slash input opens intellisense over merged commands and runs them', async () => {

@@ -59,10 +59,17 @@ export interface StatusItem {
     /** Theme token, e.g. 'success' | 'warn' | 'danger' | 'dim' | 'accent' */
     tone?: string;
 }
+/** The area a tab's body has to render into — the terminal minus the
+ *  shell's own chrome. A budget, not a reservation: fit content to it. */
+export interface ShellPane {
+    width: number;
+    height: number;
+}
 export interface ShellTab {
     id: string;
     label: string;
-    render: () => ShellNode;
+    /** Receives the pane it has to fill; ignoring the argument is fine. */
+    render: (pane: ShellPane) => ShellNode;
 }
 export interface SlashCommand {
     /** Includes the leading slash, e.g. '/reload'. */
@@ -84,6 +91,10 @@ export interface ShellHandle {
     say: (text?: string) => void;
     store: ShellLogStore;
     setStatus: (items: StatusItem[]) => void;
+    /** Id of the tab currently on screen ('' with no tabs, and in the
+     *  non-TTY fallback). Tracks the shell's own 1-9 keys, which a
+     *  plugin-held copy cannot. */
+    readonly activeTab: string;
     switchTab: (id: string) => void;
     pushView: (id: string) => void;
     popView: () => void;
@@ -125,7 +136,7 @@ export declare function defineCommand<S extends ArgsShape = ArgsShape>(cmd: Plug
 // index.d.ts — public API re-exports
 const indexDts = `\
 export { definePlugin, defineCommand, a } from './plugin.js';
-export type { SigxPlugin, PluginSpec, PluginCommand, PluginArgs, CommandContext, TypedCommandContext, AnyArg, ArgsShape, InferArgs, Logger, ShellNode, StatusItem, ShellTab, SlashCommand, Shortcut, ShellLogStore, ShellHandle, TuiContribution } from './plugin.js';
+export type { SigxPlugin, PluginSpec, PluginCommand, PluginArgs, CommandContext, TypedCommandContext, AnyArg, ArgsShape, InferArgs, Logger, ShellNode, StatusItem, ShellPane, ShellTab, SlashCommand, Shortcut, ShellLogStore, ShellHandle, TuiContribution } from './plugin.js';
 `;
 
 // commands/create.d.ts
@@ -143,8 +154,8 @@ export declare function runCreate(opts?: CreateOptions): Promise<void>;
 
 // shell/index.d.ts — the shell runtime surface
 const shellDts = `\
-import type { SigxPlugin, ShellTab, SlashCommand, Shortcut, StatusItem, ShellHandle, TuiContribution, Logger } from '../plugin.js';
-export type { ShellTab, SlashCommand, Shortcut, StatusItem, ShellHandle, TuiContribution } from '../plugin.js';
+import type { SigxPlugin, ShellPane, ShellTab, SlashCommand, Shortcut, StatusItem, ShellHandle, TuiContribution, Logger } from '../plugin.js';
+export type { ShellPane, ShellTab, SlashCommand, Shortcut, StatusItem, ShellHandle, TuiContribution } from '../plugin.js';
 export interface ShellConfig {
     /** 'fullscreen': alt-screen dashboard (title bar, tabs, palette);
      *  'inline' (default): transcript shape with bottom-anchored input. */

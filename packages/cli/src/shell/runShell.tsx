@@ -24,14 +24,27 @@ import {
     defineApp, component, signal, onMounted, onUnmounted, terminalMount, exitTerminal,
     TextArea, SuggestionList, Tabs, Divider, KeyHints, Text, Col, Spacer, Box, StatusBar,
     renderPixelArt, createViewStack, onKey, isEsc, printStatic, paintToken,
-    getTerminalSize, layoutText, createLogStore, setTheme, listThemes,
+    getTerminalSize, layoutText, createLogStore, setTheme, listThemes, boxChrome,
 } from '@sigx/terminal';
-import type { ShellHandle, SlashCommand, StatusItem } from '../plugin.js';
+import type { ShellHandle, ShellPane, SlashCommand, StatusItem } from '../plugin.js';
 import type { ShellConfig } from './types.js';
 import { collectTuiContributions, mergeShellConfig } from './contributions.js';
 
 const CTRL_C = String.fromCharCode(3);
 const MAX_INPUT_ROWS = 6;
+/** The palette's TextArea is capped at 2 rows (`maxRows` on the element). */
+const PALETTE_INPUT_ROWS = 2;
+/** `TextArea` spends 2 cells on its `> ` prefix — it draws no border. */
+const INPUT_PREFIX_COLS = 2;
+/** The title bar: a bordered box around one line — 2 border + 1 content. */
+const TITLE_BOX_ROWS = 3;
+/**
+ * How tall inline assumes a tab body is when deciding how far to push the
+ * input down. An assumption is unavoidable — the renderer cannot measure an
+ * opaque child — and it only affects where the bottom chrome sits, not what
+ * the body is told it may use (that is the pane).
+ */
+const NOMINAL_INLINE_BODY_ROWS = 16;
 
 export async function runShell(
     config: ShellConfig,
@@ -81,6 +94,9 @@ export async function runShell(
         say,
         store,
         setStatus: (items) => { status.items = items; },
+        // A getter, not a snapshot: the shell's own 1–9 keys move this, so a
+        // value copied at handle-construction time would be wrong forever.
+        get activeTab() { return tab.active; },
         switchTab: (id) => {
             if (merged.tabs.some((t) => t.id === id)) tab.active = id;
         },
@@ -255,7 +271,7 @@ export async function runShell(
         //    around the body, chip-style StatusBar; `/` palette swaps in
         //    over the bottom chrome.
         const renderFullscreen = () => {
-            const { columns: cols } = getTerminalSize();
+            const { columns: cols, rows } = getTerminalSize();
             const activeTab = resolveTab();
             const suggestions = suggestionsFor(input.value);
 
@@ -280,6 +296,30 @@ export async function runShell(
                 { key: '^C', label: 'quit' },
             ];
 
+            // What the body has left, charged segment by segment against the
+            // JSX below. Every row spent above or under the body is listed
+            // here and nowhere else — a guess like `rows - 12` is wrong the
+            // moment the chrome changes shape, and it is this function that
+            // changes it. The body box's own cost comes from `boxChrome`,
+            // which mirrors `drawBox`, so a renderer change moves this number
+            // instead of silently misreporting it.
+            const footerRows = palette.open
+                ? 1 /* divider */
+                  + Math.min(PALETTE_INPUT_ROWS, layoutText(input.value, Math.max(1, cols - INPUT_PREFIX_COLS)).rows.length)
+                  + suggestions.length
+                : 1 /* status bar */;
+            const chromeRows =
+                TITLE_BOX_ROWS
+                + (merged.tabs.length > 1 ? 1 : 0)
+                + 1 /* spacer above the body */
+                + 1 /* spacer below the body */
+                + footerRows;
+            const bodyChrome = boxChrome({ border: true, padX: 1, dropShadow: true });
+            const pane: ShellPane = {
+                width: Math.max(1, cols - bodyChrome.cols),
+                height: Math.max(1, rows - chromeRows - bodyChrome.rows),
+            };
+
             return (
                 <Col>
                     <Box border="thick" borderColor="accent" padX={1}>
@@ -290,7 +330,7 @@ export async function runShell(
                     <Spacer size={1} />
                     {activeTab ? (
                         <Box border="rounded" borderColor="line" label={activeTab.label} labelColor="accent" padX={1} dropShadow={true}>
-                            {activeTab.render() as never}
+                            {activeTab.render(pane) as never}
                         </Box>
                     ) : null}
                     <Spacer size={1} />
@@ -327,8 +367,25 @@ export async function runShell(
             const activeTab = resolveTab();
 
             const chrome = 1 /* divider */ + inputRows + suggestions.length + 1 /* hints */;
-            const bodyLines = 1 /* status */ + 1 /* tabs */ + 16 /* nominal body */;
-            const filler = Math.max(0, rows - transcript.lines - bodyLines - chrome - 1);
+            const tabStripRows = viewId === 'shell' && merged.tabs.length > 1 ? 1 : 0;
+            const aboveBody = 1 /* status */ + tabStripRows;
+
+            // Inline shares the screen with scrollback, so the body's budget is
+            // what is left after the transcript and the bottom chrome. The
+            // body draws no box here — it is emitted bare into the column — so
+            // there is no box chrome to subtract, and the width is the full
+            // terminal.
+            const pane: ShellPane = {
+                width: Math.max(1, cols),
+                height: Math.max(1, rows - transcript.lines - aboveBody - chrome - 1),
+            };
+
+            // `filler` pushes the input to the bottom when the body underfills
+            // its budget. It still has to assume a body height — the renderer
+            // has no way to measure an opaque child — but the assumption is
+            // now one named constant subtracted from the pane, rather than a
+            // second full row-count that has to agree with the first.
+            const filler = Math.max(0, pane.height - NOMINAL_INLINE_BODY_ROWS);
 
             return (
                 <Col>
@@ -340,7 +397,7 @@ export async function runShell(
                             onChange={(id: string) => { tab.active = id; }}
                         />
                     )}
-                    {activeTab ? (activeTab.render() as never) : null}
+                    {activeTab ? (activeTab.render(pane) as never) : null}
                     {filler > 0 && <Spacer size={filler} />}
                     <Divider width={Math.min(cols, 120)} />
                     <TextArea
@@ -420,6 +477,8 @@ function plainShell(merged: ShellConfig): ShellHandle {
         say: (text = '') => { console.log(text); },
         store,
         setStatus: () => { },
+        // Nothing is on screen in the non-TTY fallback, so no tab is active.
+        activeTab: '',
         switchTab: () => { },
         pushView: () => { },
         popView: () => { },
