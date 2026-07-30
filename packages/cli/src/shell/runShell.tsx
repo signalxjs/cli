@@ -71,6 +71,19 @@ export async function runShell(
     const tab = signal({ active: merged.tabs[0]?.id ?? '' });
     const views = createViewStack<string>('shell');
 
+    /**
+     * Which tab is on screen. A pushed view displaces the selected tab, so
+     * this is NOT `tab.active` — the renderer and `shell.activeTab` both go
+     * through here precisely so they cannot disagree about what is visible.
+     * `''` when nothing resolves: no tabs, or a view pushed for an id that
+     * is not a tab at all (`pushView` accepts any id).
+     */
+    const currentTabId = (): string => {
+        const viewId = views.current();
+        const id = viewId !== 'shell' ? viewId : tab.active;
+        return merged.tabs.some((t) => t.id === id) ? id : '';
+    };
+
     const say = (text = '') => {
         if (fullscreen) {
             // Live: into the log store (a Logs tab shows it immediately).
@@ -94,9 +107,10 @@ export async function runShell(
         say,
         store,
         setStatus: (items) => { status.items = items; },
-        // A getter, not a snapshot: the shell's own 1–9 keys move this, so a
-        // value copied at handle-construction time would be wrong forever.
-        get activeTab() { return tab.active; },
+        // A getter, not a snapshot: the shell's own 1–9 keys and its view
+        // stack move this, so a value copied at handle-construction time
+        // would be wrong forever.
+        get activeTab() { return currentTabId(); },
         switchTab: (id) => {
             if (merged.tabs.some((t) => t.id === id)) tab.active = id;
         },
@@ -253,12 +267,7 @@ export async function runShell(
             );
         };
 
-        const resolveTab = () => {
-            const viewId = views.current();
-            return viewId !== 'shell'
-                ? merged.tabs.find((t) => t.id === viewId)
-                : merged.tabs.find((t) => t.id === tab.active);
-        };
+        const resolveTab = () => merged.tabs.find((t) => t.id === currentTabId());
 
         const hintList = () => [
             ...(merged.shortcuts ?? []).map((s) => ({ key: s.key, label: s.label })),

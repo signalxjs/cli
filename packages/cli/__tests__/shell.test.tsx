@@ -143,6 +143,37 @@ describe('runShell', () => {
         expect(shell.activeTab).toBe('home');
     });
 
+    it('activeTab follows a pushed view, which displaces the selected tab', async () => {
+        const cap = captureOutput();
+        shell = await runShell(config({ mode: 'fullscreen' }), { interactive: true });
+        await settle();
+        expect(shell.activeTab).toBe('home');
+
+        // pushView renders the pushed view's tab while tab.active still points
+        // at 'home' — so anything reading the selection rather than what is
+        // rendered reports a tab that is not on screen.
+        shell.pushView('logs');
+        await settle();
+        expect(stripAnsi(cap.chunks.at(-1) ?? '')).toContain('logs body');
+        expect(shell.activeTab).toBe('logs');
+
+        shell.popView();
+        await settle();
+        expect(shell.activeTab).toBe('home');
+    });
+
+    it('activeTab is empty for a pushed view that is not a tab', async () => {
+        captureOutput();
+        shell = await runShell(config({ mode: 'fullscreen' }), { interactive: true });
+        await settle();
+
+        // pushView takes any id — a detail view need not be a tab. No tab is
+        // on screen then, and '' says so rather than naming an unrendered one.
+        shell.pushView('silo-detail');
+        await settle();
+        expect(shell.activeTab).toBe('');
+    });
+
     it('non-TTY: activeTab is empty — nothing is on screen', async () => {
         const logSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
         captureOutput({ isTTY: false });

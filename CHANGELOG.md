@@ -12,7 +12,9 @@ All notable changes to this repository are documented here. Per-package changelo
 
   Both layouts report it. Fullscreen charges each chrome segment against the terminal and derives the body box's own cost from `boxChrome`, so a change to the renderer's box geometry moves this number rather than silently misreporting it. Inline subtracts the transcript and the bottom chrome.
 
-- **`ShellHandle.activeTab`** (#88): the id of the tab currently on screen. A shortcut that acts on "the visible tab" — a per-tab cursor, say — could not previously know which that was, and tracking it plugin-side does not work, because the shell's own `1`–`9` keys switch tabs without routing through `switchTab`, so a plugin-held copy desynchronises silently. It is a getter over the shell's own state, so it cannot drift. `''` when there are no tabs, and in the non-TTY fallback where nothing is on screen.
+- **`ShellHandle.activeTab`** (#88): the id of the tab currently on screen. A shortcut that acts on "the visible tab" — a per-tab cursor, say — could not previously know which that was, and tracking it plugin-side does not work, because the shell's own `1`–`9` keys switch tabs without routing through `switchTab`, so a plugin-held copy desynchronises silently.
+
+  It reports what is **rendered**, not what is selected: a pushed view (`pushView`) displaces the selected tab, so `activeTab` follows the view stack and falls back to the selection only at the root. The renderer resolves the visible tab through the same function, so the two cannot disagree. `''` when nothing is on screen — no tabs, the non-TTY fallback, or a view pushed for an id that is not a tab at all, which `pushView` permits.
 
 ### Changed
 
