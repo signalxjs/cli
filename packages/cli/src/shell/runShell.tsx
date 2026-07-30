@@ -253,8 +253,11 @@ export async function runShell(
                 .map((c) => ({ value: c.name, label: c.name, description: c.description }))
             : []);
 
+        /** Host-provided items plus anything set through `shell.setStatus`. */
+        const statusItemList = () => [...(merged.status?.() ?? []), ...status.items];
+
         const statusLine = () => {
-            const items = [...(merged.status?.() ?? []), ...status.items];
+            const items = statusItemList();
             if (items.length === 0) return null;
             return (
                 <box>
@@ -295,7 +298,7 @@ export async function runShell(
                 );
             });
 
-            const statusItems = [...(merged.status?.() ?? []), ...status.items];
+            const statusItems = statusItemList();
             const barItems = [
                 // Status reads as chips too: value chip + dim label.
                 ...statusItems.map((s) => ({ key: s.value, label: s.label })),
@@ -377,7 +380,11 @@ export async function runShell(
 
             const chrome = 1 /* divider */ + inputRows + suggestions.length + 1 /* hints */;
             const tabStripRows = viewId === 'shell' && merged.tabs.length > 1 ? 1 : 0;
-            const aboveBody = 1 /* status */ + tabStripRows;
+            // `statusLine()` renders nothing when there is nothing to show, so
+            // the row is only charged when it is actually drawn — a pane that
+            // reports the chrome the shell *might* draw is not the contract.
+            const statusRows = statusItemList().length > 0 ? 1 : 0;
+            const aboveBody = statusRows + tabStripRows;
 
             // Inline shares the screen with scrollback, so the body's budget is
             // what is left after the transcript and the bottom chrome. The

@@ -202,6 +202,32 @@ describe('runShell', () => {
         expect(pane!.height).toBeLessThan(24);
     });
 
+    it('inline: the status row is charged to the pane only when it is drawn', async () => {
+        const paneOf = async (over: Partial<ShellConfig>): Promise<ShellPane> => {
+            const seen: ShellPane[] = [];
+            captureOutput({ columns: 80, rows: 24 });
+            shell = await runShell(config({
+                tabs: [{
+                    id: 'home',
+                    label: 'Home',
+                    render: (pane) => { seen.push({ ...pane }); return <Text color="fg">home body</Text>; },
+                }],
+                ...over,
+            }), { interactive: true });
+            await settle();
+            shell.exit(0);
+            await settle();
+            shell = null;
+            return seen.at(-1)!;
+        };
+
+        // statusLine() renders nothing when there is nothing to show, so the
+        // pane gets that row back rather than being told the shell took it.
+        const without = await paneOf({});
+        const with_ = await paneOf({ status: () => [{ label: 'src', value: 'live' }] });
+        expect(without.height).toBe(with_.height + 1);
+    });
+
     it('slash input opens intellisense over merged commands and runs them', async () => {
         const ran: string[] = [];
         const plugins: SigxPlugin[] = [{

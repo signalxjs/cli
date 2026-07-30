@@ -20,7 +20,7 @@ All notable changes to this repository are documented here. Per-package changelo
 
 - **Tier-1 sibling pins move to the terminal family's 0.11 line** (#88): `@sigx/terminal ^0.11.0` and `@sigx/args ^0.11.0` (both were `^0.10.0`). Required, not cosmetic — `boxChrome` is new in `@sigx/terminal-zero` 0.11 and is what the fullscreen pane arithmetic is built on. Core stays on the 0.14 line.
 
-- **Inline's body-height assumption is one named constant instead of two row-counts that had to agree** (#88). The filler that pushes the input to the bottom assumed a fixed 16-row body in a sum that separately re-counted the chrome; it is now `pane.height - NOMINAL_INLINE_BODY_ROWS`. An assumption is still unavoidable there — the renderer cannot measure an opaque child — but it no longer has to be kept in step with a second calculation. The tab strip is also now charged only when it is actually drawn (it is hidden outside the root view and with a single tab), which it previously was not.
+- **Inline's body-height assumption is one named constant instead of two row-counts that had to agree** (#88). The filler that pushes the input to the bottom assumed a fixed 16-row body in a sum that separately re-counted the chrome; it is now `pane.height - NOMINAL_INLINE_BODY_ROWS`. An assumption is still unavoidable there — the renderer cannot measure an opaque child — but it no longer has to be kept in step with a second calculation. Two rows are also now charged only when they are actually drawn, which they previously were not: the tab strip (hidden outside the root view and with a single tab) and the status line (which renders nothing when there is nothing to show).
 
 ## [0.8.0] - 2026-07-29
 
