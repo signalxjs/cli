@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-30
+
+`@sigx/cli` 0.9.0, `@sigx/create` 0.5.0.
+
 ### Added
 
 - **A shell tab is told the pane it has to fill** (#88). `ShellTab.render` now receives a `ShellPane` — `{ width, height }`, the terminal minus whatever chrome the shell drew around the body (title bar, tab strip, body border and drop shadow, status/hints, and the command palette while it is open). That number was previously unavailable to a tab: `getTerminalSize()` reports the *terminal*, and the difference is a private detail of `runShell`'s own layout, so a tab wanting to scroll a table or fit columns to the width had to guess. Guessing low wastes the screen; guessing high pushes the shell's own footer off the bottom. The argument is additive — a `render: () => …` that ignores it still typechecks and behaves identically.

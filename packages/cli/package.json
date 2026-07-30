@@ -1,6 +1,6 @@
 {
     "name": "@sigx/cli",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "description": "Unified CLI for SignalX — create, dev, build, and run projects",
     "type": "module",
     "main": "./dist/index.js",
