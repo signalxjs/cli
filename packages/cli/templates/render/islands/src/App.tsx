@@ -1,5 +1,8 @@
 import { component } from 'sigx';
 import { Counter } from './islands/Counter';
+// @sigx:if server-fn
+import { ServerGreeting } from './components/ServerGreeting';
+// @sigx:endif
 
 /**
  * The page is a server-only component: everything outside the islands is
@@ -23,6 +26,9 @@ export const App = component(() => {
                             edit <code>src/App.tsx</code> or <code>src/islands/Counter.tsx</code>.
                         </p>
                         <Counter client:load />
+                        {/* @sigx:if server-fn */}
+                        <ServerGreeting />
+                        {/* @sigx:endif */}
                     </div>
                 </div>
             </main>

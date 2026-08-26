@@ -32,7 +32,15 @@ const MATRIX: Array<[string, Omit<SpecInput, 'name'>]> = [
     ['ssr-vercel', { kind: 'ssr', target: 'vercel' }],
     ['ssr-vercel-edge-resume', { kind: 'ssr', target: 'vercel-edge', render: 'resume' }],
     ['ssr-netlify-islands', { kind: 'ssr', target: 'netlify', render: 'islands', pm: 'npm' }],
+    ['spa-router-testing', { kind: 'spa', features: ['router', 'testing'] }],
+    ['spa-i18n', { kind: 'spa', features: ['i18n'] }],
+    ['spa-router-i18n-testing-tailwind', { kind: 'spa', styling: 'tailwind', features: ['router', 'i18n', 'testing'] }],
+    ['ssr-node-all-extras', { kind: 'ssr', features: ['router', 'i18n', 'testing', 'server-fn'] }],
+    ['ssr-node-server-fn', { kind: 'ssr', features: ['server-fn'] }],
+    ['ssr-cloudflare-islands-server-fn', { kind: 'ssr', target: 'cloudflare', render: 'islands', features: ['server-fn'] }],
+    ['ssr-node-resume-server-fn-testing', { kind: 'ssr', render: 'resume', features: ['server-fn', 'testing'] }],
     ['ssg', { kind: 'ssg' }],
+    ['ssg-testing', { kind: 'ssg', features: ['testing'] }],
     ['ssg-daisyui-yarn', { kind: 'ssg', styling: 'daisyui', pm: 'yarn' }],
     ['terminal', { kind: 'terminal' }],
     ['lynx', { kind: 'lynx' }],
@@ -125,7 +133,40 @@ describe('composeProject', () => {
     });
 
     it('rejects features that are not available yet', () => {
-        expect(() => compose({ kind: 'spa', features: ['router'] })).toThrow(/not available yet/);
+        expect(() => compose({ kind: 'ssr', features: ['actors'] })).toThrow(/not available yet/);
+    });
+
+    it('composes features through the kind overlays\' conditional hooks', () => {
+        const plain = compose({ kind: 'spa' }).tree;
+        const full = compose({ kind: 'spa', features: ['router', 'i18n', 'testing'] }).tree;
+        expect(text(plain.get('src/main.tsx')!)).not.toContain('createAppRouter');
+        expect(text(full.get('src/main.tsx')!)).toContain('app.use(createAppRouter());');
+        expect(text(full.get('src/main.tsx')!)).toContain('app.use(i18nPlugin());');
+        expect(text(full.get('src/App.tsx')!)).toContain('<RouterView />');
+        expect(text(full.get('src/App.tsx')!)).not.toContain("import { Counter }");
+        expect(text(full.get('src/pages/Home.tsx')!)).toContain("t('greeting')");
+        expect(full.has('src/App.test.tsx')).toBe(true);
+        expect(text(full.get('vitest.config.ts')!)).toContain("environment: 'happy-dom'");
+        const pkg = JSON.parse(text(full.get('package.json')!)!);
+        expect(pkg.scripts.test).toBe('vitest run');
+        expect(pkg.dependencies['@sigx/router']).toBeDefined();
+        expect(pkg.dependencies['@sigx/store']).toBeDefined();
+    });
+
+    it('keeps resume\'s sigxServer() call when the server-fn feature re-declares the plugin', () => {
+        const vite = text(compose({ kind: 'ssr', render: 'resume', features: ['server-fn'] }).tree.get('vite.config.ts')!)!;
+        expect(vite).toContain("sigxServer({ renderBoundaries: '/src/dev-refresh.ts' })");
+        expect(vite.match(/sigxServer\(/g)).toHaveLength(1);
+        const hydrate = text(compose({ kind: 'ssr', features: ['server-fn'] }).tree.get('vite.config.ts')!)!;
+        expect(hydrate).toContain('sigxServer()');
+        const server = text(compose({ kind: 'ssr', features: ['server-fn'] }).tree.get('server.mjs')!)!;
+        expect(server).toContain('createServerFnHandler');
+        expect(server).not.toContain('createBoundaryRefresh');
+    });
+
+    it('makes the SSR app factory async only with i18n', () => {
+        expect(text(compose({ kind: 'ssr' }).tree.get('src/entry-server.tsx')!)).toContain('export function createApp(url: string)');
+        expect(text(compose({ kind: 'ssr', features: ['i18n'] }).tree.get('src/entry-server.tsx')!)).toContain('export async function createApp(url: string)');
     });
 
     it('wires server functions into every entry only when the build carries a registry', () => {

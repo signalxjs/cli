@@ -74,7 +74,7 @@ describe('runCreate', () => {
         stubTty(false);
         const mod = await importCreate(['my-app', '--type', 'ssg', '--styling', 'tailwind']);
         await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'my-app', projectType: 'ssg', styling: 'tailwind' });
+        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'ssg', styling: 'tailwind' }));
         expect(exitCode).toBe(0);
         const transcript = logSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n');
         expect(transcript).toContain('Creating SignalX app "my-app"');
@@ -95,7 +95,7 @@ describe('runCreate', () => {
         stubTty(false);
         const mod = await importCreate(['--registry', 'https://x', 'my-app', '--type', 'basic']);
         await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'my-app', projectType: 'basic', styling: 'none' });
+        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'basic', styling: 'none' }));
         expect(exitCode).toBe(0);
     });
 
@@ -103,7 +103,7 @@ describe('runCreate', () => {
         stubTty(false);
         const mod = await importCreate(['my-app', '-y']);
         await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'my-app', projectType: 'basic', styling: 'none' });
+        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'basic', styling: 'none' }));
         expect(exitCode).toBe(0);
     });
 
@@ -111,7 +111,7 @@ describe('runCreate', () => {
         stubTty(false);
         const mod = await importCreate(['my-app', '--type=ssg', '--styling=tailwind']);
         await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'my-app', projectType: 'ssg', styling: 'tailwind' });
+        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'ssg', styling: 'tailwind' }));
         expect(exitCode).toBe(0);
     });
 
@@ -130,7 +130,7 @@ describe('runCreate', () => {
         stubTty(false);
         const mod = await importCreate(['create', '--type', 'basic']);
         await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'create', projectType: 'basic', styling: 'none' });
+        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'create', projectType: 'basic', styling: 'none' }));
         expect(exitCode).toBe(0);
     });
 
@@ -141,7 +141,7 @@ describe('runCreate', () => {
         stubTty(false);
         const mod = await importCreateBare(['--registry', 'create', 'my-app', '--type', 'basic']);
         await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith({ projectName: 'my-app', projectType: 'basic', styling: 'none' });
+        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'basic', styling: 'none' }));
         expect(exitCode).toBe(0);
     });
 
@@ -167,12 +167,14 @@ describe('runCreate', () => {
         await press(ENTER); // project type: basic (initial)
         await settle();
         await press(ENTER); // styling: none (initial)
+        await settle();
+        await press(ENTER); // extras: none selected
         await settle(200); // spinner + note + outro
         await done;
 
-        expect(scaffoldProject).toHaveBeenCalledWith({
-            projectName: 'my-sigx-app', projectType: 'basic', styling: 'none',
-        });
+        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({
+            projectName: 'my-sigx-app', projectType: 'basic', styling: 'none', features: [],
+        }));
         expect(exitCode).toBe(0);
         const out = stripAnsi(cap.output());
         expect(out).toContain('Create SignalX App');
@@ -193,5 +195,31 @@ describe('runCreate', () => {
 
         expect(scaffoldProject).not.toHaveBeenCalled();
         expect(exitCode).toBe(130);
+    });
+});
+
+describe('interactive --features validation', () => {
+    it('rejects an unknown or unsupported extra with exit 2 instead of dropping it', async () => {
+        vi.useFakeTimers();
+        let code: number | undefined;
+        const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((c?: number) => { code = c ?? 0; throw new Error('__exit__'); }) as never);
+        for (const stream of [process.stdout, process.stdin] as const) Object.defineProperty(stream, 'isTTY', { value: true, configurable: true });
+        captureOutput();
+        vi.resetModules();
+        process.argv = ['node', 'sigx', 'create', '--features', 'server-fn'];
+        const mod = await import('../src/commands/create.js');
+        const done = mod.runCreate().catch((e: Error) => { if (e.message !== '__exit__') throw e; });
+        await settle();
+        await press(ENTER); // name
+        await settle();
+        await press(ENTER); // type: basic — server-fn needs ssr
+        await settle();
+        await press(ENTER); // styling
+        await settle(200);
+        await done;
+        expect(code).toBe(2);
+        exitSpy.mockRestore();
+        setOutputTarget(undefined);
+        vi.useRealTimers();
     });
 });

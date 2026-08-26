@@ -61,4 +61,5 @@ export const THIRD_PARTY: Readonly<Record<string, string>> = {
     'wrangler': '^4.0.0',
     '@types/bun': '^1.2.0',
     '@cloudflare/workers-types': '^4.20250801.0',
+    'happy-dom': '^20.0.0',
 };

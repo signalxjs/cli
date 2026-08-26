@@ -66,6 +66,7 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
             styling: a.enum(['none', 'tailwind', 'daisyui']).describe('Styling setup'),
             render: a.enum(['hydrate', 'islands', 'resume']).describe('SSR render mode'),
             target: a.enum(['node', 'cloudflare', 'bun', 'deno', 'vercel', 'vercel-edge', 'netlify']).describe('SSR deploy target'),
+            features: a.string().describe('Extras, comma-separated: router, i18n, testing, server-fn'),
             yes: a.boolean().alias('y').describe('Skip prompts (headless mode)'),
         })
         .run(async ({ args }) => {

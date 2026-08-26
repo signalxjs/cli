@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { applyConditionals, readOverlay, writeTree } from '../../src/create/tree.js';
+import { applyConditionals, isTextExtension, readOverlay, writeTree } from '../../src/create/tree.js';
 
 describe('applyConditionals', () => {
     const src = [
@@ -35,6 +35,15 @@ describe('applyConditionals', () => {
 
     it('handles CRLF input', () => {
         expect(applyConditionals('a\r\n// @sigx:if x\r\nb\r\n// @sigx:endif\r\nc', new Set())).toBe('a\r\nc');
+    });
+});
+
+describe('isTextExtension', () => {
+    it('classifies dotfiles by their real extension when they have one', () => {
+        expect(isTextExtension('.gitignore')).toBe(true);
+        expect(isTextExtension('.oxlintrc.json')).toBe(true);
+        expect(isTextExtension('.env.example')).toBe(false);
+        expect(isTextExtension('logo.png')).toBe(false);
     });
 });
 

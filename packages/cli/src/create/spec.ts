@@ -119,19 +119,28 @@ export const LEGACY_TYPE_MAP: Readonly<Record<string, Kind>> = {
     terminal: 'terminal',
 };
 
-/** Where each feature makes sense. `targets` restricts SSR further. */
-export const FEATURE_SUPPORT: Readonly<Record<Feature, { kinds: readonly Kind[]; targets?: readonly Target[] }>> = {
-    router: { kinds: ['spa', 'ssr'] },
-    i18n: { kinds: ['spa', 'ssr', 'ssg', 'terminal'] },
-    testing: { kinds: ['spa', 'ssr', 'ssg', 'terminal'] },
+/**
+ * Where each feature makes sense. `renders`/`targets` restrict SSR further:
+ * a client router needs a hydrated client app (islands and resumable pages
+ * have none), and actors need a host the target can run.
+ */
+export const FEATURE_SUPPORT: Readonly<
+    Record<Feature, { kinds: readonly Kind[]; renders?: readonly Render[]; targets?: readonly Target[] }>
+> = {
+    router: { kinds: ['spa', 'ssr'], renders: ['hydrate'] },
+    i18n: { kinds: ['spa', 'ssr'], renders: ['hydrate'] },
+    testing: { kinds: ['spa', 'ssr', 'ssg'] },
     'server-fn': { kinds: ['ssr'] },
-    actors: { kinds: ['spa', 'ssr'], targets: ['node', 'cloudflare', 'bun'] },
+    actors: { kinds: ['ssr'], targets: ['node', 'cloudflare', 'bun'] },
 };
 
-export function featureSupported(feature: Feature, spec: { kind: Kind; target?: Target }): boolean {
+export function featureSupported(feature: Feature, spec: { kind: Kind; render?: Render; target?: Target }): boolean {
     const support = FEATURE_SUPPORT[feature];
     if (!support.kinds.includes(spec.kind)) return false;
-    if (support.targets && spec.kind === 'ssr' && !support.targets.includes(spec.target ?? 'node')) return false;
+    if (spec.kind === 'ssr') {
+        if (support.renders && !support.renders.includes(spec.render ?? 'hydrate')) return false;
+        if (support.targets && !support.targets.includes(spec.target ?? 'node')) return false;
+    }
     return true;
 }
 
@@ -172,7 +181,7 @@ export function validateSpec(spec: ProjectSpec): string[] {
     for (const feature of spec.features) {
         if (!FEATURES.includes(feature)) errors.push(`unknown feature "${feature}" (valid: ${FEATURES.join(', ')})`);
         else if (!featureSupported(feature, spec)) {
-            const where = spec.kind === 'ssr' ? `${spec.kind} on ${spec.target}` : spec.kind;
+            const where = spec.kind === 'ssr' ? `${spec.kind} (${spec.render}) on ${spec.target}` : spec.kind;
             errors.push(`feature "${feature}" is not available for ${where}`);
         }
     }

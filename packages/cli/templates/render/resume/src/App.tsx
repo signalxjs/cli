@@ -1,5 +1,8 @@
 import { component } from 'sigx';
 import { Counter } from './resume/Counter';
+// @sigx:if server-fn
+import { ServerGreeting } from './components/ServerGreeting';
+// @sigx:endif
 
 /**
  * A server-only page. The browser receives HTML plus a <1 kB event loader
@@ -23,6 +26,9 @@ export const App = component(() => {
                             the handler chunk loads, the write upgrades this one component.
                         </p>
                         <Counter initial={0} />
+                        {/* @sigx:if server-fn */}
+                        <ServerGreeting />
+                        {/* @sigx:endif */}
                     </div>
                 </div>
             </main>

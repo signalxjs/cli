@@ -9,7 +9,8 @@
  * falls back to parsing `process.argv` itself.
  */
 import { a, parseArgs, ParseError } from '@sigx/args';
-import { intro, outro, note, cancel, isCancel, text, select, spinner } from '@sigx/terminal';
+import { intro, outro, note, cancel, isCancel, text, select, multiselect, spinner } from '@sigx/terminal';
+import { featureSupported, LEGACY_TYPE_MAP } from '../create/spec.js';
 import {
     scaffoldProject,
     projectTypeOptions,
@@ -17,10 +18,12 @@ import {
     lynxStylingOptions,
     renderModeOptions,
     deployTargetOptions,
+    extraOptions,
     type ProjectType,
     type Styling,
     type Render,
     type Target,
+    type Feature,
 } from './scaffold.js';
 
 export interface CreateOptions {
@@ -32,6 +35,8 @@ export interface CreateOptions {
     render?: Render;
     /** SSR deploy target (`--type ssr` only). */
     target?: Target;
+    /** Extras, comma-separated on the command line (`--features router,testing`). */
+    features?: string;
     /** Skip prompts (headless mode). */
     yes?: boolean;
 }
@@ -42,6 +47,7 @@ const shimArgsShape = {
     styling: a.string().describe('Styling setup'),
     render: a.string().describe('SSR render mode: hydrate | islands | resume'),
     target: a.string().describe('SSR deploy target: node | cloudflare | bun | deno | vercel | vercel-edge | netlify'),
+    features: a.string().describe('Extras, comma-separated: router, i18n, testing, server-fn'),
     yes: a.boolean().alias('y').default(false).describe('Skip prompts (headless mode)'),
 };
 
@@ -62,6 +68,7 @@ function parseArgvFallback(): CreateOptions {
             styling: args.styling as Styling | undefined,
             render: args.render as Render | undefined,
             target: args.target as Target | undefined,
+            features: args.features,
             yes: args.yes,
         };
     } catch (err) {
@@ -103,6 +110,18 @@ function runHeadless(opts: CreateOptions): number {
         console.error('Error: --render and --target apply to --type ssr only');
         return 2;
     }
+    const features = parseFeatures(opts.features);
+    const validFeatures = extraOptions.map((o) => o.value);
+    for (const f of features) {
+        if (!validFeatures.includes(f)) {
+            console.error(`Error: --features must be a comma-separated list of ${validFeatures.join(', ')}`);
+            return 2;
+        }
+        if (!featureSupported(f, { kind: LEGACY_TYPE_MAP[projectType], render: opts.render, target: opts.target })) {
+            console.error(`Error: feature "${f}" is not available for this project type / render mode / target`);
+            return 2;
+        }
+    }
 
     console.log(`\n  ⚡ Creating SignalX app "${projectName}"`);
     console.log(`     type:    ${projectType}`);
@@ -110,9 +129,10 @@ function runHeadless(opts: CreateOptions): number {
         console.log(`     render:  ${opts.render ?? 'hydrate'}`);
         console.log(`     target:  ${opts.target ?? 'node'}`);
     }
+    if (features.length) console.log(`     extras:  ${features.join(', ')}`);
     console.log(`     styling: ${styling}\n`);
 
-    const result = scaffoldProject({ projectName, projectType, styling, render: opts.render, target: opts.target });
+    const result = scaffoldProject({ projectName, projectType, styling, render: opts.render, target: opts.target, features });
     if (!result.ok) {
         console.error(`Error: ${result.error}`);
         return 1;
@@ -123,6 +143,13 @@ function runHeadless(opts: CreateOptions): number {
     for (const step of result.nextSteps) console.log(`    ${step}`);
     console.log('');
     return 0;
+}
+
+function parseFeatures(raw: string | undefined): Feature[] {
+    return (raw ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean) as Feature[];
 }
 
 function bail(): never {
@@ -190,14 +217,46 @@ export async function runCreate(opts?: CreateOptions): Promise<void> {
         styling = picked;
     }
 
+    let features: Feature[] = parseFeatures(options.features);
+    // Flags are validated like in headless mode: an unknown extra, or one the
+    // chosen kind/render/target cannot take, is an error — not silently dropped.
+    const validFeatures = extraOptions.map((o) => o.value);
+    const available = extraOptions.filter((o) =>
+        featureSupported(o.value, { kind: LEGACY_TYPE_MAP[projectType], render, target }),
+    );
+    for (const f of features) {
+        if (!validFeatures.includes(f)) {
+            cancel(`--features must be a comma-separated list of ${validFeatures.join(', ')}`);
+            process.exit(2);
+        }
+        if (!available.some((o) => o.value === f)) {
+            cancel(`feature "${f}" is not available for this project type / render mode / target`);
+            process.exit(2);
+        }
+    }
+    if (available.length) {
+        const picked = await multiselect<Feature>({
+            message: 'Extras',
+            initialValues: features.filter((f) => available.some((o) => o.value === f)),
+            options: available,
+        });
+        if (isCancel(picked)) bail();
+        features = picked;
+    }
+
     const s = spinner();
     s.start(`Scaffolding ${projectName}`);
-    const result = scaffoldProject({ projectName, projectType, styling, render, target });
+    const result = scaffoldProject({ projectName, projectType, styling, render, target, features });
     if (!result.ok) {
         s.stop(result.error, 'error');
         process.exit(1);
     }
-    const summary = [projectType, ...(projectType === 'ssr' ? [render, target] : []), ...(styling !== 'none' ? [styling] : [])].join(' + ');
+    const summary = [
+        projectType,
+        ...(projectType === 'ssr' ? [render, target] : []),
+        ...(styling !== 'none' ? [styling] : []),
+        ...features,
+    ].join(' + ');
     s.stop(`Created ${projectName} (${summary}, ${result.files} files)`);
 
     note(result.nextSteps.join('\n'), 'Next steps');

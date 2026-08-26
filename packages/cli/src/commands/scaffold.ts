@@ -16,22 +16,25 @@ import {
     targetOptions,
     validateSpec,
     webStylingOptions,
+    featureOptions,
+    type Feature,
     type Kind,
     type Option,
     type Render,
     type Styling,
     type Target,
 } from '../create/spec.js';
-import { availableRenders, availableTargets } from '../create/layers/index.js';
+import { availableFeatures, availableRenders, availableTargets } from '../create/layers/index.js';
 import { readOverlay, writeTree } from '../create/tree.js';
 
 export { isTextExtension } from '../create/tree.js';
 export { webStylingOptions, lynxStylingOptions };
-export type { Styling, Render, Target };
+export type { Styling, Render, Target, Feature };
 
 /** Render modes / deploy targets this build can generate, in prompt shape. */
 export const renderModeOptions: Option<Render>[] = renderOptions.filter((o) => availableRenders.includes(o.value));
 export const deployTargetOptions: Option<Target>[] = targetOptions.filter((o) => availableTargets.includes(o.value));
+export const extraOptions: Option<Feature>[] = featureOptions.filter((o) => availableFeatures.includes(o.value));
 
 /** The `--type` vocabulary (`basic` is the pre-0.11 name for `spa`). */
 export type ProjectType = 'basic' | 'ssr' | 'ssg' | 'terminal' | 'lynx';
@@ -94,6 +97,7 @@ export function scaffoldProject(opts: {
     render?: Render;
     /** SSR only. */
     target?: Target;
+    features?: Iterable<Feature>;
 }): ScaffoldResult {
     const kind: Kind | undefined = LEGACY_TYPE_MAP[opts.projectType];
     if (!kind) return { ok: false, error: `Unknown project type "${opts.projectType}"` };
@@ -101,6 +105,7 @@ export function scaffoldProject(opts: {
         name: opts.projectName,
         kind,
         styling: opts.styling,
+        features: opts.features,
         ...(kind === 'ssr' ? { render: opts.render, target: opts.target } : {}),
     });
     const problems = validateSpec(spec);

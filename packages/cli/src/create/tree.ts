@@ -23,10 +23,10 @@ const TEXT_EXTS = new Set([
 
 /** Text files get `{{projectName}}` substitution and conditionals; anything else is copied byte-for-byte. */
 export function isTextExtension(filename: string): boolean {
-    // Dotfiles: name after leading dot (.gitignore → "gitignore").
-    const ext = filename.startsWith('.')
-        ? filename.slice(1).toLowerCase()
-        : filename.split('.').pop()?.toLowerCase() ?? '';
+    // Dotfiles: the name after the leading dot (.gitignore → "gitignore"),
+    // unless there is a real extension too (.oxlintrc.json → "json").
+    const body = filename.startsWith('.') ? filename.slice(1) : filename;
+    const ext = (body.includes('.') ? body.split('.').pop()! : body).toLowerCase();
     return TEXT_EXTS.has(ext);
 }
 
@@ -45,11 +45,12 @@ export function substitute(content: string, projectName: string): string {
  *     …kept only when "server-fn" is an active condition…
  *     // @sigx:endif
  *
- * `!name` negates. The marker may sit behind `//`, `#`, `<!-- -->` or
- * `/* *\/` so the overlay stays a valid file of its type (and typechecks in
- * this repo). Blocks nest. Marker lines are always removed.
+ * `!name` negates. The marker may sit behind `//`, `#`, `<!-- -->`,
+ * `/* *\/` or a JSX comment `{/* *\/}` so the overlay stays a valid file of
+ * its type (and typechecks in this repo). Blocks nest. Marker lines are
+ * always removed.
  */
-const MARKER = /^[ \t]*(?:\/\/|#|<!--|\/\*)\s*@sigx:(if\s+(!?)([\w:-]+)|endif)\s*(?:-->|\*\/)?[ \t]*$/;
+const MARKER = /^[ \t]*(?:\/\/|#|<!--|\{\s*\/\*|\/\*)\s*@sigx:(if\s+(!?)([\w:-]+)|endif)\s*(?:-->|\*\/\s*\}|\*\/)?[ \t]*$/;
 
 export function applyConditionals(content: string, conditions: ReadonlySet<string>): string {
     const out: string[] = [];

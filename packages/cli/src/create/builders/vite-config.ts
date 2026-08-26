@@ -21,7 +21,9 @@ export class ViteConfigBuilder {
         for (const plugin of fragment.plugins ?? []) {
             const i = this.plugins.findIndex((p) => p.name === plugin.name);
             if (i === -1) this.plugins.push(plugin);
-            else this.plugins[i] = plugin; // later layer refines the call (adapter, options)
+            // A later layer refines the call only when it says how (`call`);
+            // a bare re-declaration keeps the earlier, more specific one.
+            else if (plugin.call !== undefined) this.plugins[i] = plugin;
         }
         Object.assign(this.ssr, fragment.ssr);
         Object.assign(this.sigxOptions, fragment.sigxOptions);
