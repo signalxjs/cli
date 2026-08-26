@@ -36,10 +36,10 @@ describe('install', () => {
         expect(r).toEqual({ ok: true, code: 0, output: 'Done in 2s\n' });
         expect(spawn).toHaveBeenCalledWith('pnpm', ['install'], expect.objectContaining({ cwd: '/p', stdio: ['ignore', 'pipe', 'pipe'] }));
 
-        spawn.mockReturnValueOnce(fakeChild(1, '', 'ERR_PNPM_X\n'));
+        // Inherited stdio: nothing to capture — only the exit code is reported.
+        spawn.mockReturnValueOnce(fakeChild(1));
         const f = await runInstall({ cwd: '/p', pm: 'npm', captured: false });
-        expect(f.ok).toBe(false);
-        expect(f.output).toContain('ERR_PNPM_X');
+        expect(f).toMatchObject({ ok: false, code: 1 });
         expect(spawn).toHaveBeenLastCalledWith('npm', ['install'], expect.objectContaining({ stdio: 'inherit' }));
     });
 
@@ -73,6 +73,10 @@ describe('git', () => {
         expect(insideGitRepo('/x')).toBe(true);
         spawnSync.mockReturnValueOnce(fail('fatal: not a git repository'));
         expect(insideGitRepo('/x')).toBe(false);
+        // A directory that does not exist yet is checked through its nearest existing parent.
+        spawnSync.mockReturnValueOnce(ok('true\n'));
+        expect(insideGitRepo(process.cwd() + '/does-not-exist-yet/nested')).toBe(true);
+        expect(spawnSync.mock.calls.at(-1)?.[2]).toMatchObject({ cwd: process.cwd() });
     });
 
     it('init + add + commit, with a fallback identity only when none is configured', () => {

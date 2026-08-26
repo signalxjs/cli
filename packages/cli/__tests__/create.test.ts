@@ -276,6 +276,18 @@ describe('runCreate', () => {
             expect(exitCode).toBe(0);
         });
 
+        it('rejects invalid --kind / --preset / --pm before any prompt (exit 2)', async () => {
+            for (const argv of [['--kind', 'nope'], ['--preset', 'fast'], ['--pm', 'cargo'], ['--kind', 'spa', '--type', 'ssr']]) {
+                scaffoldSpec.mockClear();
+                captureOutput();
+                const done = run(await importCreate(argv));
+                await settle(200);
+                await done;
+                expect(exitCode, argv.join(' ')).toBe(2);
+                expect(scaffoldSpec).not.toHaveBeenCalled();
+            }
+        });
+
         it('rejects a --features value the chosen kind cannot take (exit 2)', async () => {
             captureOutput();
             const done = run(await importCreate(['--features', 'server-fn', '--no-install', '--no-git']));

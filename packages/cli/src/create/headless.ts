@@ -133,7 +133,9 @@ export function specFromOptions(
         install: opts.install ?? defaults.install,
         git: opts.git ?? defaults.git,
     });
-    const problems = validateSpec(spec);
+    // validateSpec speaks in spec terms; in headless mode every problem it can
+    // still find was caused by a flag, so name it.
+    const problems = validateSpec(spec).map((m) => (m.startsWith('feature "') || m.startsWith('unknown feature') ? `--features: ${m}` : m));
     return problems.length ? { ok: false, errors: problems } : { ok: true, spec };
 }
 

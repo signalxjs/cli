@@ -23,7 +23,9 @@ import {
     kindOptions,
     lynxStylingOptions,
     normalizeSpec,
+    PACKAGE_MANAGERS,
     packageManagerOptions,
+    STYLINGS,
     validateSpec,
     webStylingOptions,
     type Feature,
@@ -62,6 +64,19 @@ function unwrap<T>(value: T): Exclude<T, symbol> {
 
 export async function runWizard(ctx: WizardContext): Promise<ProjectSpec> {
     const { options } = ctx;
+    // Flags are validated up front, exactly as headless does — an invalid
+    // value is an error (exit 2), not a silently ignored initial value.
+    const { error } = resolveKind(options);
+    if (error) fail(error);
+    if (options.preset !== undefined && options.preset !== 'quick') fail('--preset must be "quick"');
+    if (options.pm !== undefined && !PACKAGE_MANAGERS.includes(options.pm)) fail(`--pm must be one of ${PACKAGE_MANAGERS.join(', ')}`);
+    if (options.render !== undefined && !renderModeOptions.some((o) => o.value === options.render)) {
+        fail(`--render must be one of ${renderModeOptions.map((o) => o.value).join(', ')}`);
+    }
+    if (options.target !== undefined && !deployTargetOptions.some((o) => o.value === options.target)) {
+        fail(`--target must be one of ${deployTargetOptions.map((o) => o.value).join(', ')}`);
+    }
+    if (options.styling !== undefined && !STYLINGS.includes(options.styling)) fail(`--styling must be one of ${STYLINGS.join(', ')}`);
 
     const name = unwrap(
         await text({
@@ -84,7 +99,7 @@ export async function runWizard(ctx: WizardContext): Promise<ProjectSpec> {
             await select<PackageManager>({
                 message: 'Package manager',
                 initialValue: ctx.detectedPm,
-                options: packageManagerOptions.filter((o) => o.value !== 'deno' || shape.target === 'deno'),
+                options: packageManagerOptions,
             }),
         );
         const install = options.install ?? unwrap(await confirm({ message: `Install dependencies with ${pm}?`, initialValue: true }));

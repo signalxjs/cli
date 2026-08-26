@@ -40,6 +40,9 @@ describe('specFromOptions', () => {
             expect(bad.errors.join('\n')).toMatch(/--features/);
         }
         expect(specFromOptions({ kind: 'spa', render: 'islands' }, defaults)).toMatchObject({ ok: false, errors: ['--render and --target apply to --kind ssr only'] });
+        const unsupported = specFromOptions({ kind: 'ssg', features: 'router' }, defaults);
+        expect(unsupported.ok).toBe(false);
+        if (!unsupported.ok) expect(unsupported.errors[0]).toMatch(/^--features: feature "router" is not available for ssg/);
         expect(specFromOptions({ kind: 'terminal', styling: 'tailwind' }, defaults).ok).toBe(true); // forced to none
     });
 

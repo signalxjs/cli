@@ -6,6 +6,8 @@
  * the user's config.
  */
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { dirname } from 'node:path';
 import type { RunResult } from './install.js';
 
 function git(args: string[], cwd: string): { ok: boolean; stdout: string; stderr: string } {
@@ -21,7 +23,13 @@ export function gitAvailable(): boolean {
 
 /** True when `dir` (which may not exist yet — its parent is checked) is inside a git work tree. */
 export function insideGitRepo(dir: string): boolean {
-    const r = git(['rev-parse', '--is-inside-work-tree'], dir);
+    let cwd = dir;
+    while (!existsSync(cwd)) {
+        const parent = dirname(cwd);
+        if (parent === cwd) return false;
+        cwd = parent;
+    }
+    const r = git(['rev-parse', '--is-inside-work-tree'], cwd);
     return r.ok && r.stdout.trim() === 'true';
 }
 
