@@ -1,6 +1,6 @@
 @import "tailwindcss";
 /* @sigx:if !ssg */
-@source "../../node_modules/@sigx/daisyui/dist/**/*.js";
+@source "../node_modules/@sigx/daisyui/dist/**/*.js";
 /* @sigx:endif */
 @plugin "daisyui" {
     themes: light --default, dark --prefersdark, cupcake, synthwave, dracula, nord;

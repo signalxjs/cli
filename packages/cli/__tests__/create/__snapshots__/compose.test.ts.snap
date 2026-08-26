@@ -1128,7 +1128,7 @@ defineApp(<App />).mount('#app');
 ",
     "==> src/styles.css <==
 @import "tailwindcss";
-@source "../../node_modules/@sigx/daisyui/dist/**/*.js";
+@source "../node_modules/@sigx/daisyui/dist/**/*.js";
 @plugin "daisyui" {
     themes: light --default, dark --prefersdark, cupcake, synthwave, dracula, nord;
 }
@@ -2594,7 +2594,7 @@ export function createApp(_url: string) {
 ",
     "==> src/styles.css <==
 @import "tailwindcss";
-@source "../../node_modules/@sigx/daisyui/dist/**/*.js";
+@source "../node_modules/@sigx/daisyui/dist/**/*.js";
 @plugin "daisyui" {
     themes: light --default, dark --prefersdark, cupcake, synthwave, dracula, nord;
 }

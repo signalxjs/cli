@@ -54,6 +54,8 @@ describe('ViteConfigBuilder', () => {
         expect(out).toContain("sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: cloudflare() } })");
         expect(out).toContain("...(command === 'serve' && {\n        ssr: { external: SIGX_FAMILY }\n    })");
         expect(out).toContain("import { cloudflare } from '@sigx/cloudflare';");
+        // `call: ''` is import-only: no dangling element, no trailing comma.
+        expect(out).toMatch(/plugins: \[\n\s+sigx\(\{[^\n]*\}\)\n\s+\],/);
     });
 
     it('sorts plugins by order regardless of merge order', () => {

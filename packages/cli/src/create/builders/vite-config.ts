@@ -69,9 +69,13 @@ export class ViteConfigBuilder {
 
         const body: string[] = [];
         body.push('    plugins: [');
+        // An entry with `call: ''` is import-only (a helper referenced inside
+        // another call) — it keeps its import line and contributes no element.
         body.push(
             plugins
-                .map((p) => `        ${p.name === 'sigx' ? this.renderSigxCall() : (p.call ?? `${p.name}()`)}`)
+                .map((p) => (p.name === 'sigx' ? this.renderSigxCall() : (p.call ?? `${p.name}()`)))
+                .filter((call) => call !== '')
+                .map((call) => `        ${call}`)
                 .join(',\n'),
         );
         body.push('    ],');
