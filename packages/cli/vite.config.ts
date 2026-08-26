@@ -10,9 +10,11 @@ export default defineLibConfig({
         'shell/index': 'src/shell/index.ts',
     },
     external: [
-        // Node built-ins
-        'fs', 'path', 'url', 'child_process', 'os',
-        'node:fs', 'node:path', 'node:url', 'node:module', 'node:os',
+        // Node built-ins — every `node:` specifier, plus the bare names still
+        // in use. A built-in missing here is silently replaced by a browser
+        // stub (`spawn is not a function` at runtime), so match the prefix.
+        /^node:/,
+        'fs', 'path', 'url', 'child_process', 'os', 'events',
         // Runtime deps that will be in node_modules
         /^@sigx\//,
     ],

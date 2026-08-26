@@ -62,12 +62,18 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
         .describe('Scaffold a new SignalX project')
         .args({
             name: a.positional().describe('Project name'),
-            type: a.enum(['basic', 'ssr', 'ssg', 'terminal', 'lynx']).describe('Project type'),
-            styling: a.enum(['none', 'tailwind', 'daisyui']).describe('Styling setup'),
+            kind: a.enum(['spa', 'ssr', 'ssg', 'terminal', 'lynx']).describe('Project kind'),
+            type: a.enum(['basic', 'ssr', 'ssg', 'terminal', 'lynx']).describe('Deprecated alias of --kind (basic = spa)'),
             render: a.enum(['hydrate', 'islands', 'resume']).describe('SSR render mode'),
             target: a.enum(['node', 'cloudflare', 'bun', 'deno', 'vercel', 'vercel-edge', 'netlify']).describe('SSR deploy target'),
+            styling: a.enum(['none', 'tailwind', 'daisyui']).describe('Styling'),
             features: a.string().describe('Extras, comma-separated: router, i18n, testing, server-fn'),
+            pm: a.enum(['pnpm', 'npm', 'yarn', 'bun', 'deno']).describe('Package manager for install and next steps'),
+            install: a.boolean().describe('Install dependencies after scaffolding (--no-install to skip)'),
+            git: a.boolean().describe('Initialize a git repository (--no-git to skip)'),
+            preset: a.enum(['quick']).describe('Preset: quick = SPA + Tailwind + router + tests'),
             yes: a.boolean().alias('y').describe('Skip prompts (headless mode)'),
+            list: a.boolean().describe('List kinds, render modes, targets and extras'),
         })
         .run(async ({ args }) => {
             const { runCreate } = await import('./commands/create.js');

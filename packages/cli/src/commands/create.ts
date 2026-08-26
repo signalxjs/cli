@@ -1,54 +1,39 @@
 /**
- * `sigx create` — interactive scaffolder on the @sigx/terminal prompt kit,
- * with a flag-driven headless mode for CI (`--type`, `--styling`, `--yes`,
- * or any non-TTY stdio).
+ * `sigx create` — the thin command: flags → spec (headless) or the wizard
+ * (interactive), then scaffold → install → git → next steps.
  *
  * Two entry paths share this module: the sigx CLI passes args it already
  * parsed with @sigx/args (`runCreate(ctx.args)`), while the bare
  * `runCreate()` call from the `@sigx/create` shim (`pnpm create @sigx …`)
  * falls back to parsing `process.argv` itself.
  */
+import { resolve } from 'node:path';
 import { a, parseArgs, ParseError } from '@sigx/args';
-import { intro, outro, note, cancel, isCancel, text, select, multiselect, spinner } from '@sigx/terminal';
-import { featureSupported, LEGACY_TYPE_MAP } from '../create/spec.js';
-import {
-    scaffoldProject,
-    projectTypeOptions,
-    webStylingOptions,
-    lynxStylingOptions,
-    renderModeOptions,
-    deployTargetOptions,
-    extraOptions,
-    type ProjectType,
-    type Styling,
-    type Render,
-    type Target,
-    type Feature,
-} from './scaffold.js';
+import { intro, note, outro, spinner } from '@sigx/terminal';
+import { renderList, specFromOptions, type CreateOptions } from '../create/headless.js';
+import { gitAvailable, initGitRepo, insideGitRepo } from '../create/postinstall/git.js';
+import { runInstall, tailLines } from '../create/postinstall/install.js';
+import { detectPackageManager, pmCommands } from '../create/postinstall/pm.js';
+import { describeSpec, type PackageManager, type ProjectSpec } from '../create/spec.js';
+import { runWizard } from '../create/wizard.js';
+import { scaffoldSpec } from './scaffold.js';
 
-export interface CreateOptions {
-    /** Project name (positional). */
-    name?: string;
-    type?: ProjectType;
-    styling?: Styling;
-    /** SSR render mode (`--type ssr` only). */
-    render?: Render;
-    /** SSR deploy target (`--type ssr` only). */
-    target?: Target;
-    /** Extras, comma-separated on the command line (`--features router,testing`). */
-    features?: string;
-    /** Skip prompts (headless mode). */
-    yes?: boolean;
-}
+export type { CreateOptions };
 
 const shimArgsShape = {
     name: a.positional().describe('Project name'),
-    type: a.string().describe('Project type'),
-    styling: a.string().describe('Styling setup'),
+    kind: a.string().describe('Project kind: spa | ssr | ssg | terminal | lynx'),
+    type: a.string().describe('Deprecated alias of --kind (basic = spa)'),
     render: a.string().describe('SSR render mode: hydrate | islands | resume'),
     target: a.string().describe('SSR deploy target: node | cloudflare | bun | deno | vercel | vercel-edge | netlify'),
+    styling: a.string().describe('Styling: none | tailwind | daisyui'),
     features: a.string().describe('Extras, comma-separated: router, i18n, testing, server-fn'),
+    pm: a.string().describe('Package manager: pnpm | npm | yarn | bun | deno'),
+    install: a.boolean().describe('Install dependencies after scaffolding (--no-install to skip)'),
+    git: a.boolean().describe('Initialize a git repository (--no-git to skip)'),
+    preset: a.string().describe('Preset: quick'),
     yes: a.boolean().alias('y').default(false).describe('Skip prompts (headless mode)'),
+    list: a.boolean().default(false).describe('List kinds, render modes, targets and extras'),
 };
 
 /** Fallback argv parsing for the `@sigx/create` shim, which has no parser of its own. */
@@ -62,15 +47,7 @@ function parseArgvFallback(): CreateOptions {
         // allowUnknownFlags: package managers may append flags of their own
         // (--registry, …) — collect them instead of failing the scaffold.
         const { args } = parseArgs(argv, shimArgsShape, { allowUnknownFlags: true, commandPath: ['create'] });
-        return {
-            name: args.name,
-            type: args.type as ProjectType | undefined,
-            styling: args.styling as Styling | undefined,
-            render: args.render as Render | undefined,
-            target: args.target as Target | undefined,
-            features: args.features,
-            yes: args.yes,
-        };
+        return args as CreateOptions;
     } catch (err) {
         if (err instanceof ParseError) {
             console.error(`Error: ${err.message}`);
@@ -80,186 +57,108 @@ function parseArgvFallback(): CreateOptions {
     }
 }
 
-function runHeadless(opts: CreateOptions): number {
-    const validTypes = projectTypeOptions.map((o) => o.value);
-    const validStyling = [...new Set([...webStylingOptions, ...lynxStylingOptions].map((o) => o.value))];
-
-    const projectName = opts.name || 'my-sigx-app';
-    const projectType: ProjectType = opts.type ?? 'basic';
-    const styling: Styling = opts.styling ?? 'none';
-
-    if (!validTypes.includes(projectType)) {
-        console.error(`Error: --type must be one of ${validTypes.join(', ')}`);
-        return 2;
-    }
-    if (!validStyling.includes(styling)) {
-        console.error(`Error: --styling must be one of ${validStyling.join(', ')}`);
-        return 2;
-    }
-    const validRenders = renderModeOptions.map((o) => o.value);
-    const validTargets = deployTargetOptions.map((o) => o.value);
-    if (opts.render !== undefined && !validRenders.includes(opts.render)) {
-        console.error(`Error: --render must be one of ${validRenders.join(', ')}`);
-        return 2;
-    }
-    if (opts.target !== undefined && !validTargets.includes(opts.target)) {
-        console.error(`Error: --target must be one of ${validTargets.join(', ')}`);
-        return 2;
-    }
-    if ((opts.render !== undefined || opts.target !== undefined) && projectType !== 'ssr') {
-        console.error('Error: --render and --target apply to --type ssr only');
-        return 2;
-    }
-    const features = parseFeatures(opts.features);
-    const validFeatures = extraOptions.map((o) => o.value);
-    for (const f of features) {
-        if (!validFeatures.includes(f)) {
-            console.error(`Error: --features must be a comma-separated list of ${validFeatures.join(', ')}`);
-            return 2;
-        }
-        if (!featureSupported(f, { kind: LEGACY_TYPE_MAP[projectType], render: opts.render, target: opts.target })) {
-            console.error(`Error: feature "${f}" is not available for this project type / render mode / target`);
-            return 2;
-        }
-    }
-
-    console.log(`\n  ⚡ Creating SignalX app "${projectName}"`);
-    console.log(`     type:    ${projectType}`);
-    if (projectType === 'ssr') {
-        console.log(`     render:  ${opts.render ?? 'hydrate'}`);
-        console.log(`     target:  ${opts.target ?? 'node'}`);
-    }
-    if (features.length) console.log(`     extras:  ${features.join(', ')}`);
-    console.log(`     styling: ${styling}\n`);
-
-    const result = scaffoldProject({ projectName, projectType, styling, render: opts.render, target: opts.target, features });
+async function runHeadless(opts: CreateOptions, detectedPm: PackageManager): Promise<number> {
+    // Headless never installs or touches git unless asked — CI-safe defaults.
+    const result = specFromOptions(opts, { name: 'my-sigx-app', pm: detectedPm, install: false, git: false });
     if (!result.ok) {
-        console.error(`Error: ${result.error}`);
+        for (const e of result.errors) console.error(`Error: ${e}`);
+        return 2;
+    }
+    const { spec } = result;
+    console.log(`\n  ⚡ Creating SignalX app "${spec.name}"`);
+    console.log(`     ${describeSpec(spec)}`);
+    console.log(`     package manager: ${spec.pm}\n`);
+
+    const scaffolded = scaffoldSpec(spec);
+    if (!scaffolded.ok) {
+        console.error(`Error: ${scaffolded.error}`);
         return 1;
     }
+    console.log(`  ✓ Project created (${scaffolded.files} files)`);
 
-    console.log(`  ✓ Project created (${result.files} files)\n`);
-    console.log(`  Next steps:`);
-    for (const step of result.nextSteps) console.log(`    ${step}`);
+    const dir = resolve(process.cwd(), spec.name);
+    if (spec.install) {
+        const r = await runInstall({ cwd: dir, pm: spec.pm, captured: false });
+        console.log(r.ok ? '  ✓ Dependencies installed' : `  ✗ Install failed (${pmCommands(spec.pm).install} to retry)`);
+    }
+    if (spec.git) {
+        const r = initGitRepo(dir);
+        console.log(r.ok ? '  ✓ Git repository initialized' : `  ✗ ${r.output}`);
+    }
+
+    console.log(`\n  Next steps:`);
+    for (const step of scaffolded.nextSteps) console.log(`    ${step}`);
     console.log('');
     return 0;
 }
 
-function parseFeatures(raw: string | undefined): Feature[] {
-    return (raw ?? '')
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean) as Feature[];
-}
+async function runInteractive(spec: ProjectSpec): Promise<number> {
+    const s = spinner();
+    s.start(`Scaffolding ${spec.name}`);
+    const scaffolded = scaffoldSpec(spec);
+    if (!scaffolded.ok) {
+        s.stop(scaffolded.error, 'error');
+        return 1;
+    }
+    s.stop(`Created ${spec.name} (${describeSpec(spec)}, ${scaffolded.files} files)`);
 
-function bail(): never {
-    cancel('Cancelled — nothing was created.');
-    process.exit(130);
+    const dir = resolve(process.cwd(), spec.name);
+    const pm = pmCommands(spec.pm);
+    const steps = [...scaffolded.nextSteps];
+
+    if (spec.install) {
+        const i = spinner();
+        i.start(`Installing dependencies (${pm.install})`);
+        const r = await runInstall({ cwd: dir, pm: spec.pm, captured: true });
+        if (r.ok) {
+            i.stop('Dependencies installed');
+        } else {
+            i.stop('Install failed — the project is ready, run the install yourself', 'error');
+            const tail = tailLines(r.output);
+            if (tail) note(tail, `${pm.install} output`);
+            if (!steps.includes(pm.install)) steps.splice(1, 0, pm.install);
+        }
+    }
+
+    if (spec.git) {
+        const g = spinner();
+        g.start('Initializing git repository');
+        const r = initGitRepo(dir);
+        if (r.ok) g.stop('Git repository initialized with a first commit');
+        else g.stop(`Git skipped: ${r.output}`, 'error');
+    }
+
+    note(steps.join('\n'), 'Next steps');
+    outro('Happy hacking!');
+    return 0;
 }
 
 export async function runCreate(opts?: CreateOptions): Promise<void> {
     const options = opts ?? parseArgvFallback();
+    if (options.list) {
+        console.log(renderList());
+        process.exit(0);
+    }
+
+    const detectedPm = detectPackageManager();
+    const kindGiven = options.kind !== undefined || options.type !== undefined || options.preset !== undefined;
     const isNonInteractive =
-        !process.stdout.isTTY || !process.stdin.isTTY || Boolean(options.yes) || Boolean(options.type && options.name);
+        !process.stdout.isTTY || !process.stdin.isTTY || Boolean(options.yes) || (kindGiven && Boolean(options.name));
 
     if (isNonInteractive) {
-        process.exit(runHeadless(options));
+        process.exit(await runHeadless(options, detectedPm));
     }
 
     intro('⚡ Create SignalX App');
-
-    const projectName = await text({
-        message: 'Project name',
-        placeholder: 'my-sigx-app',
-        initialValue: options.name || 'my-sigx-app',
-        validate: (v: string) => (v.trim() ? undefined : 'Project name is required'),
+    const spec = await runWizard({
+        options,
+        detectedPm,
+        insideGitRepo: gitAvailable() && insideGitRepo(process.cwd()),
+        cwd: process.cwd(),
     });
-    if (isCancel(projectName)) bail();
-
-    const projectType = await select<ProjectType>({
-        message: 'Project type',
-        initialValue: options.type ?? 'basic',
-        options: projectTypeOptions,
-    });
-    if (isCancel(projectType)) bail();
-
-    let render: Render | undefined;
-    let target: Target | undefined;
-    if (projectType === 'ssr') {
-        const pickedRender = await select<Render>({
-            message: 'Rendering',
-            initialValue: options.render ?? 'hydrate',
-            options: renderModeOptions,
-        });
-        if (isCancel(pickedRender)) bail();
-        render = pickedRender;
-
-        const pickedTarget = await select<Target>({
-            message: 'Deploy target',
-            initialValue: options.target ?? 'node',
-            options: deployTargetOptions,
-        });
-        if (isCancel(pickedTarget)) bail();
-        target = pickedTarget;
-        if (target === 'vercel-edge') {
-            note('Edge runtime: Web APIs only — no Node built-ins or filesystem in server code.', 'Heads-up');
-        }
+    if (spec.git && !gitAvailable()) {
+        note('git is not installed — skipping the repository init.', 'Heads-up');
+        spec.git = false;
     }
-
-    let styling: Styling = 'none';
-    if (projectType !== 'terminal') {
-        const picked = await select<Styling>({
-            message: 'Styling',
-            initialValue: options.styling ?? 'none',
-            options: projectType === 'lynx' ? lynxStylingOptions : webStylingOptions,
-        });
-        if (isCancel(picked)) bail();
-        styling = picked;
-    }
-
-    let features: Feature[] = parseFeatures(options.features);
-    // Flags are validated like in headless mode: an unknown extra, or one the
-    // chosen kind/render/target cannot take, is an error — not silently dropped.
-    const validFeatures = extraOptions.map((o) => o.value);
-    const available = extraOptions.filter((o) =>
-        featureSupported(o.value, { kind: LEGACY_TYPE_MAP[projectType], render, target }),
-    );
-    for (const f of features) {
-        if (!validFeatures.includes(f)) {
-            cancel(`--features must be a comma-separated list of ${validFeatures.join(', ')}`);
-            process.exit(2);
-        }
-        if (!available.some((o) => o.value === f)) {
-            cancel(`feature "${f}" is not available for this project type / render mode / target`);
-            process.exit(2);
-        }
-    }
-    if (available.length) {
-        const picked = await multiselect<Feature>({
-            message: 'Extras',
-            initialValues: features.filter((f) => available.some((o) => o.value === f)),
-            options: available,
-        });
-        if (isCancel(picked)) bail();
-        features = picked;
-    }
-
-    const s = spinner();
-    s.start(`Scaffolding ${projectName}`);
-    const result = scaffoldProject({ projectName, projectType, styling, render, target, features });
-    if (!result.ok) {
-        s.stop(result.error, 'error');
-        process.exit(1);
-    }
-    const summary = [
-        projectType,
-        ...(projectType === 'ssr' ? [render, target] : []),
-        ...(styling !== 'none' ? [styling] : []),
-        ...features,
-    ].join(' + ');
-    s.stop(`Created ${projectName} (${summary}, ${result.files} files)`);
-
-    note(result.nextSteps.join('\n'), 'Next steps');
-    outro('Happy hacking!');
-    process.exit(0);
+    process.exit(await runInteractive(spec));
 }
