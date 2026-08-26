@@ -62,7 +62,7 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
         .describe('Scaffold a new SignalX project')
         .args({
             name: a.positional().describe('Project name'),
-            type: a.enum(['basic', 'ssr', 'ssg', 'lynx']).describe('Project type'),
+            type: a.enum(['basic', 'ssr', 'ssg', 'terminal', 'lynx']).describe('Project type'),
             styling: a.enum(['none', 'tailwind', 'daisyui']).describe('Styling setup'),
             yes: a.boolean().alias('y').describe('Skip prompts (headless mode)'),
         })

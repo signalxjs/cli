@@ -1,0 +1,91 @@
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }

@@ -1,0 +1,3137 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`composeProject > lynx > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# Dependencies
+node_modules/
+
+# Build output (rspeedy / TypeScript)
+dist/
+.rspeedy/
+.sigx/
+*.tsbuildinfo
+*.local
+
+# Generated native projects — emitted by \`sigx prebuild\` from
+# signalx.config.ts + auto-linked @sigx/lynx-* modules.
+# Regenerated on demand; do not commit.
+android/
+ios/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+",
+    "==> README.md <==
+# my-app
+
+A native mobile app built with [sigx-lynx](https://github.com/signalxjs/core).
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm (recommended) or npm
+- [sigx-lynx-go](https://github.com/signalxjs/core/tree/main/go) app on your device/emulator
+
+### Development
+
+\`\`\`bash
+# Install dependencies
+pnpm install
+
+# Start the dev server
+sigx dev
+
+# Or use npx
+npx sigx dev
+\`\`\`
+
+Scan the QR code shown in the terminal with sigx-lynx-go, or enter the URL manually.
+
+### Building
+
+\`\`\`bash
+sigx build
+\`\`\`
+
+### Environment Check
+
+\`\`\`bash
+sigx doctor
+\`\`\`
+
+## Project Structure
+
+\`\`\`
+my-app/
+├── src/
+│   ├── App.tsx              # Root component
+│   ├── main.tsx             # BG-thread entry point
+│   └── main.thread.tsx      # Main-thread entry point
+├── lynx.config.ts           # rspeedy build config
+├── signalx.config.ts        # sigx-lynx native config
+├── tsconfig.json
+└── package.json
+\`\`\`
+
+## Learn More
+
+- [sigx-lynx Documentation](https://github.com/signalxjs/core)
+- [Lynx Runtime](https://lynxjs.org)
+",
+    "==> assets/adaptive-foreground.png <==
+<binary 23482 bytes>",
+    "==> assets/icon.png <==
+<binary 52775 bytes>",
+    "==> assets/splash.png <==
+<binary 5917 bytes>",
+    "==> lynx.config.ts <==
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginSigxLynx } from '@sigx/lynx-plugin';
+
+export default defineConfig({
+    source: {
+        entry: {
+            main: './src/main.tsx',
+        },
+    },
+    server: {
+        host: '0.0.0.0',
+        port: 3000,
+    },
+    plugins: [
+        pluginSigxLynx(),
+    ],
+});
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "sigx dev",
+        "build": "sigx build",
+        "doctor": "sigx doctor",
+        "prebuild": "sigx prebuild"
+    },
+    "dependencies": {
+        "@sigx/lynx": "^0.12.1",
+        "@sigx/lynx-runtime": "^0.12.1",
+        "@sigx/lynx-runtime-main": "^0.12.1",
+        "@sigx/lynx-core": "^0.12.1",
+        "@sigx/reactivity": "^0.7.0",
+        "@sigx/runtime-core": "^0.7.0",
+        "@sigx/lynx-storage": "^0.12.1",
+        "@sigx/lynx-clipboard": "^0.12.1",
+        "@sigx/lynx-haptics": "^0.12.1",
+        "@sigx/lynx-network": "^0.12.1",
+        "@sigx/lynx-websocket": "^0.12.1"
+    },
+    "devDependencies": {
+        "@sigx/cli": "^0.5.0",
+        "@sigx/lynx-cli": "^0.12.1",
+        "@sigx/lynx-plugin": "^0.12.1",
+        "@sigx/lynx-dev-client": "^0.12.1",
+        "@lynx-js/rspeedy": ">=0.1.0",
+        "@lynx-js/css-extract-webpack-plugin": ">=0.1.0",
+        "@lynx-js/template-webpack-plugin": ">=0.1.0",
+        "@lynx-js/runtime-wrapper-webpack-plugin": ">=0.1.0",
+        "@lynx-js/webpack-dev-transport": ">=0.1.0",
+        "typescript": "^5.9.3"
+    }
+}
+",
+    "==> signalx.config.ts <==
+import { defineLynxConfig } from '@sigx/lynx-cli/config';
+
+export default defineLynxConfig({
+    name: 'my-app',
+    version: '0.1.0',
+    buildNumber: '1',
+
+    // App-shell assets — sigx ships sensible defaults in ./assets/.
+    // Swap these PNGs to rebrand without touching native code.
+    icon: 'assets/icon.png',
+    splash: {
+        image: 'assets/splash.png',
+        backgroundColor: '#FFFFFF',
+    },
+
+    // Custom URL scheme for deep linking (my-app://...).
+    // Comment out if you don't need deep links.
+    scheme: 'my-app',
+
+    // 'portrait' | 'landscape' | 'default'
+    orientation: 'portrait',
+
+    // Native modules — these are auto-linked into the native project.
+    // Built-in modules available in sigx-lynx-go (dev client) without prebuild.
+    modules: [
+        '@sigx/lynx-storage',
+        '@sigx/lynx-clipboard',
+        '@sigx/lynx-haptics',
+        '@sigx/lynx-network',
+        '@sigx/lynx-websocket',
+    ],
+    android: {
+        applicationId: 'com.example.my-app',
+        versionCode: 1,
+        minSdk: 24,
+        targetSdk: 35,
+        adaptiveIcon: {
+            foreground: 'assets/adaptive-foreground.png',
+            backgroundColor: '#0D9488',
+        },
+    },
+    ios: {
+        bundleIdentifier: 'com.example.my-app',
+        deploymentTarget: '15.0',
+    },
+});
+",
+    "==> src/App.tsx <==
+import { signal, component } from '@sigx/lynx';
+
+const App = component(() => {
+    const count = signal(0);
+
+    return () => (
+        <scroll-view scroll-orientation="vertical" style={{ height: '100vh', backgroundColor: '#0f172a' }}>
+            <view style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '100vh',
+                paddingLeft: '24px',
+                paddingRight: '24px',
+                paddingTop: '48px',
+                paddingBottom: '48px',
+                backgroundColor: '#0f172a',
+            }}>
+                {/* Header group */}
+                <view style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px',
+                }}>
+                    {/* Logo */}
+                    <view style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '20px',
+                        backgroundColor: '#3b82f6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        <text style={{ fontSize: '36px', color: '#fff' }}>⚡</text>
+                    </view>
+
+                    <text style={{
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        color: '#f1f5f9',
+                        textAlign: 'center',
+                    }}>
+                        my-app
+                    </text>
+
+                    <text style={{
+                        fontSize: '14px',
+                        color: '#94a3b8',
+                        textAlign: 'center',
+                        maxWidth: '280px',
+                    }}>
+                        Built with sigx-lynx — signal-based native apps
+                    </text>
+                </view>
+
+                {/* Counter card */}
+                <view style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    marginTop: '40px',
+                    padding: '24px',
+                    backgroundColor: '#1e293b',
+                    borderRadius: '16px',
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: '#334155',
+                    alignItems: 'center',
+                    gap: '20px',
+                    width: '280px',
+                }}>
+                    <text style={{ fontSize: '56px', fontWeight: 'bold', color: '#f1f5f9' }}>
+                        {count.value}
+                    </text>
+
+                    <view style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: '12px',
+                    }}>
+                        <view
+                            bindtap={() => count.value > 0 && count.value--}
+                            style={{
+                                paddingLeft: '28px',
+                                paddingRight: '28px',
+                                paddingTop: '12px',
+                                paddingBottom: '12px',
+                                backgroundColor: '#334155',
+                                borderRadius: '12px',
+                            }}
+                        >
+                            <text style={{ color: '#f1f5f9', fontSize: '20px' }}>−</text>
+                        </view>
+                        <view
+                            bindtap={() => count.value++}
+                            style={{
+                                paddingLeft: '28px',
+                                paddingRight: '28px',
+                                paddingTop: '12px',
+                                paddingBottom: '12px',
+                                backgroundColor: '#3b82f6',
+                                borderRadius: '12px',
+                            }}
+                        >
+                            <text style={{ color: '#fff', fontSize: '20px' }}>+</text>
+                        </view>
+                    </view>
+                </view>
+
+                <text style={{
+                    fontSize: '12px',
+                    color: '#64748b',
+                    marginTop: '40px',
+                    textAlign: 'center',
+                }}>
+                    Edit src/App.tsx to get started
+                </text>
+            </view>
+        </scroll-view>
+    );
+});
+
+export default App;
+",
+    "==> src/lynx-env.d.ts <==
+/// <reference types="@sigx/lynx/client" />
+",
+    "==> src/main.thread.tsx <==
+// Main-thread entry — bootstraps the Lepus-side globals
+import '@sigx/lynx-runtime-main';
+",
+    "==> src/main.tsx <==
+import { defineApp } from '@sigx/lynx';
+import App from './App';
+
+defineApp(<App />).mount(null);
+
+if (module.hot) {
+    module.hot.accept();
+}
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": ["ES2020", "DOM"],
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        "jsxImportSource": "@sigx/lynx",
+        "types": []
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx"],
+    "exclude": ["node_modules", "dist"]
+}
+",
+  ],
+  "layers": [
+    "lynx:lynx",
+  ],
+}
+`;
+
+exports[`composeProject > lynx-tailwind > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# Dependencies
+node_modules/
+
+# Build output (rspeedy / TypeScript)
+dist/
+.rspeedy/
+.sigx/
+*.tsbuildinfo
+*.local
+
+# Generated native projects — emitted by \`sigx prebuild\` from
+# signalx.config.ts + auto-linked @sigx/lynx-* modules.
+# Regenerated on demand; do not commit.
+android/
+ios/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+",
+    "==> README.md <==
+# my-app
+
+A native mobile app built with [sigx-lynx](https://github.com/signalxjs/core) and Tailwind CSS.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- pnpm (recommended) or npm
+- [sigx-lynx-go](https://github.com/signalxjs/core/tree/main/go) app on your device/emulator
+
+### Development
+
+\`\`\`bash
+# Install dependencies
+pnpm install
+
+# Start the dev server
+sigx dev
+
+# Or use npx
+npx sigx dev
+\`\`\`
+
+Scan the QR code shown in the terminal with sigx-lynx-go, or enter the URL manually.
+
+### Building
+
+\`\`\`bash
+sigx build
+\`\`\`
+
+### Environment Check
+
+\`\`\`bash
+sigx doctor
+\`\`\`
+
+## Project Structure
+
+\`\`\`
+my-app/
+├── src/
+│   ├── App.tsx              # Root component
+│   ├── styles.css           # Tailwind entry point
+│   ├── main.tsx             # BG-thread entry point
+│   └── main.thread.tsx      # Main-thread entry point
+├── lynx.config.ts           # rspeedy build config
+├── signalx.config.ts        # sigx-lynx native config
+├── tailwind.config.ts       # Tailwind CSS config
+├── postcss.config.js        # PostCSS config
+├── tsconfig.json
+└── package.json
+\`\`\`
+
+## Learn More
+
+- [sigx-lynx Documentation](https://github.com/signalxjs/core)
+- [Lynx Runtime](https://lynxjs.org)
+- [Tailwind CSS](https://tailwindcss.com)
+",
+    "==> assets/adaptive-foreground.png <==
+<binary 23482 bytes>",
+    "==> assets/icon.png <==
+<binary 52775 bytes>",
+    "==> assets/splash.png <==
+<binary 5917 bytes>",
+    "==> lynx.config.ts <==
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginSigxLynx } from '@sigx/lynx-plugin';
+
+export default defineConfig({
+    source: {
+        entry: {
+            main: './src/main.tsx',
+        },
+    },
+    server: {
+        host: '0.0.0.0',
+        port: 3000,
+    },
+    plugins: [
+        pluginSigxLynx({
+            enableCSSInheritance: true,
+            enableCSSInlineVariables: true,
+        }),
+    ],
+});
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "sigx dev",
+        "build": "sigx build",
+        "doctor": "sigx doctor",
+        "prebuild": "sigx prebuild"
+    },
+    "dependencies": {
+        "@sigx/lynx": "^0.12.1",
+        "@sigx/lynx-runtime": "^0.12.1",
+        "@sigx/lynx-runtime-main": "^0.12.1",
+        "@sigx/lynx-core": "^0.12.1",
+        "@sigx/reactivity": "^0.7.0",
+        "@sigx/runtime-core": "^0.7.0",
+        "@sigx/lynx-storage": "^0.12.1",
+        "@sigx/lynx-clipboard": "^0.12.1",
+        "@sigx/lynx-haptics": "^0.12.1",
+        "@sigx/lynx-network": "^0.12.1",
+        "@sigx/lynx-websocket": "^0.12.1"
+    },
+    "devDependencies": {
+        "@sigx/cli": "^0.5.0",
+        "@sigx/lynx-cli": "^0.12.1",
+        "@sigx/lynx-plugin": "^0.12.1",
+        "@sigx/lynx-dev-client": "^0.12.1",
+        "@lynx-js/rspeedy": ">=0.1.0",
+        "@lynx-js/css-extract-webpack-plugin": ">=0.1.0",
+        "@lynx-js/template-webpack-plugin": ">=0.1.0",
+        "@lynx-js/runtime-wrapper-webpack-plugin": ">=0.1.0",
+        "@lynx-js/webpack-dev-transport": ">=0.1.0",
+        "@lynx-js/tailwind-preset": "^0.4.0",
+        "tailwindcss": "^3.4.0",
+        "postcss": "^8.4.0",
+        "autoprefixer": "^10.4.0",
+        "typescript": "^5.9.3"
+    }
+}
+",
+    "==> postcss.config.js <==
+export default {
+    plugins: {
+        tailwindcss: {},
+    },
+};
+",
+    "==> signalx.config.ts <==
+import { defineLynxConfig } from '@sigx/lynx-cli/config';
+
+export default defineLynxConfig({
+    name: 'my-app',
+    version: '0.1.0',
+    buildNumber: '1',
+
+    // App-shell assets — sigx ships sensible defaults in ./assets/.
+    // Swap these PNGs to rebrand without touching native code.
+    icon: 'assets/icon.png',
+    splash: {
+        image: 'assets/splash.png',
+        backgroundColor: '#FFFFFF',
+    },
+
+    // Custom URL scheme for deep linking (my-app://...).
+    // Comment out if you don't need deep links.
+    scheme: 'my-app',
+
+    // 'portrait' | 'landscape' | 'default'
+    orientation: 'portrait',
+
+    modules: [
+        '@sigx/lynx-storage',
+        '@sigx/lynx-clipboard',
+        '@sigx/lynx-haptics',
+        '@sigx/lynx-network',
+        '@sigx/lynx-websocket',
+    ],
+    android: {
+        applicationId: 'com.example.my-app',
+        versionCode: 1,
+        minSdk: 24,
+        targetSdk: 35,
+        adaptiveIcon: {
+            foreground: 'assets/adaptive-foreground.png',
+            backgroundColor: '#0D9488',
+        },
+    },
+    ios: {
+        bundleIdentifier: 'com.example.my-app',
+        deploymentTarget: '15.0',
+    },
+});
+",
+    "==> src/App.tsx <==
+import { signal, component } from '@sigx/lynx';
+
+const App = component(() => {
+    const count = signal(0);
+
+    return () => (
+        <scroll-view scroll-orientation="vertical" class="h-screen bg-slate-900">
+            <view class="flex flex-col items-center justify-center min-h-screen px-6 py-12 bg-slate-900">
+                {/* Header group */}
+                <view class="flex flex-col items-center gap-4">
+                    {/* Logo */}
+                    <view class="w-20 h-20 rounded-2xl bg-blue-500 flex items-center justify-center">
+                        <text class="text-4xl text-white">⚡</text>
+                    </view>
+
+                    <text class="text-3xl font-bold text-slate-100 text-center">
+                        my-app
+                    </text>
+
+                    <text class="text-sm text-slate-400 text-center max-w-[280px]">
+                        Built with sigx-lynx + Tailwind CSS
+                    </text>
+                </view>
+
+                {/* Counter card */}
+                <view class="flex flex-col mt-10 p-6 bg-slate-800 rounded-2xl border border-slate-700 items-center gap-5 w-[280px]">
+                    <text class="text-6xl font-bold text-slate-100">
+                        {count.value}
+                    </text>
+
+                    <view class="flex flex-row gap-3">
+                        <view
+                            bindtap={() => count.value > 0 && count.value--}
+                            class="px-7 py-3 bg-slate-700 rounded-xl"
+                        >
+                            <text class="text-slate-100 text-xl">−</text>
+                        </view>
+                        <view
+                            bindtap={() => count.value++}
+                            class="px-7 py-3 bg-blue-500 rounded-xl"
+                        >
+                            <text class="text-white text-xl">+</text>
+                        </view>
+                    </view>
+                </view>
+
+                <text class="text-xs text-slate-500 mt-10 text-center">
+                    Edit src/App.tsx to get started
+                </text>
+            </view>
+        </scroll-view>
+    );
+});
+
+export default App;
+",
+    "==> src/lynx-env.d.ts <==
+/// <reference types="@sigx/lynx/client" />
+",
+    "==> src/main.thread.tsx <==
+// Main-thread entry — bootstraps the Lepus-side globals
+import '@sigx/lynx-runtime-main';
+",
+    "==> src/main.tsx <==
+import './styles.css';
+import { defineApp } from '@sigx/lynx';
+import App from './App';
+
+defineApp(<App />).mount(null);
+
+if (module.hot) {
+    module.hot.accept();
+}
+",
+    "==> src/styles.css <==
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+",
+    "==> tailwind.config.ts <==
+import type { Config } from 'tailwindcss';
+import LynxPreset from '@lynx-js/tailwind-preset';
+
+export default {
+    content: [
+        './src/**/*.{tsx,ts,jsx,js}',
+    ],
+    presets: [LynxPreset],
+} satisfies Config;
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": ["ES2020", "DOM"],
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        "jsxImportSource": "@sigx/lynx",
+        "types": []
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx"],
+    "exclude": ["node_modules", "dist"]
+}
+",
+  ],
+  "layers": [
+    "lynx:lynx-tailwind",
+  ],
+}
+`;
+
+exports[`composeProject > spa > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A client-rendered SignalX app on Vite. Scaffolded by \`npm create @sigx\` (spa).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+
+## Project layout
+
+- \`src/main.tsx\` — mounts the app (\`defineApp(<App />).mount('#app')\`)
+- \`src/App.tsx\` — the root component; edit it and watch HMR update the page
+- \`src/styles.css\` — global styles
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "sigx": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/main.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+defineApp(<App />).mount('#app');
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+  ],
+  "layers": [
+    "base",
+    "spa",
+  ],
+}
+`;
+
+exports[`composeProject > spa-daisyui-npm > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A client-rendered SignalX app on Vite. Scaffolded by \`npm create @sigx\` (spa + daisyui).
+
+## Getting started
+
+\`\`\`sh
+npm install
+npm run dev
+\`\`\`
+
+## Scripts
+
+- \`npm run build\` — production build
+- \`npm run preview\` — preview the production build
+
+## Project layout
+
+- \`src/main.tsx\` — mounts the app (\`defineApp(<App />).mount('#app')\`)
+- \`src/App.tsx\` — the root component; edit it and watch HMR update the page
+- \`src/styles.css\` — global styles
+
+## Styling
+
+Tailwind CSS 4 + daisyUI 5. Themes are declared in \`src/styles.css\` (\`@plugin "daisyui" { themes: … }\`); set \`data-theme\` on \`<html>\` to switch.
+
+\`@sigx/daisyui\` ships ready-made components (\`Button\`, \`Card\`, \`Modal\`, \`ThemeSelector\`, …) — see https://sigx.dev/daisyui/.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/daisyui": "^0.12.0"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@tailwindcss/vite": "^4.1.0",
+        "daisyui": "^5.0.0",
+        "tailwindcss": "^4.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/main.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+defineApp(<App />).mount('#app');
+",
+    "==> src/styles.css <==
+@import "tailwindcss";
+@source "../node_modules/@sigx/daisyui/dist/**/*.js";
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark, cupcake, synthwave, dracula, nord;
+}
+
+/* daisyUI provides .btn, .card, .badge, … — only the starter's layout
+   classes are defined here. */
+@layer components {
+    .app { @apply min-h-screen flex flex-col bg-base-200 text-base-content; }
+    .app-header { @apply navbar bg-base-100 shadow-sm px-6; justify-content: space-between; }
+    .brand { @apply font-bold text-lg; }
+    .nav { @apply flex gap-4; }
+    .link { @apply link link-primary no-underline hover:underline; }
+    .app-main { @apply flex-1 grid place-items-center px-4 py-8; }
+    .app-footer { @apply footer footer-center p-4 text-sm; }
+    .card { @apply w-full max-w-md bg-base-100 shadow-lg; }
+    .card-body { @apply items-center text-center; }
+    .muted { @apply text-base-content/60 mb-4; }
+    .counter { @apply flex items-center justify-center gap-4; }
+    .prose { @apply max-w-2xl w-full block; }
+    .prose h1 { @apply text-3xl font-bold mb-4; }
+    .prose p, .prose li { @apply mb-2; }
+    .prose ul { @apply list-disc pl-6; }
+    code { @apply rounded bg-base-300 px-1 py-0.5 text-[0.92em]; }
+}
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx(),
+        tailwindcss()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+  ],
+  "layers": [
+    "base",
+    "spa",
+    "styling:daisyui",
+  ],
+}
+`;
+
+exports[`composeProject > spa-tailwind > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A client-rendered SignalX app on Vite. Scaffolded by \`npm create @sigx\` (spa + tailwind).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+
+## Project layout
+
+- \`src/main.tsx\` — mounts the app (\`defineApp(<App />).mount('#app')\`)
+- \`src/App.tsx\` — the root component; edit it and watch HMR update the page
+- \`src/styles.css\` — global styles
+
+## Styling
+
+Tailwind CSS 4 via \`@tailwindcss/vite\` — no config file needed. \`src/styles.css\` imports Tailwind and defines the starter's component classes with \`@apply\`.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "sigx": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@tailwindcss/vite": "^4.1.0",
+        "tailwindcss": "^4.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/main.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+defineApp(<App />).mount('#app');
+",
+    "==> src/styles.css <==
+@import "tailwindcss";
+
+/* The starter's component classes, expressed with Tailwind utilities. Replace
+   them with utilities in your markup as you go — nothing else depends on them. */
+@layer components {
+    .app { @apply min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100; }
+    .app-header { @apply flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800; }
+    .brand { @apply font-bold text-lg; }
+    .nav { @apply flex gap-4; }
+    .link { @apply text-indigo-600 hover:underline dark:text-indigo-400; }
+    .app-main { @apply flex-1 grid place-items-center px-4 py-8; }
+    .app-footer { @apply text-center text-sm py-4; }
+    .card { @apply w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-lg dark:bg-slate-900 dark:border-slate-800; }
+    .card-body { @apply p-8 text-center; }
+    .card-title { @apply text-2xl font-semibold mb-2; }
+    .muted { @apply text-slate-500 dark:text-slate-400 mb-6; }
+    .counter { @apply flex items-center justify-center gap-4; }
+    .btn { @apply cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 transition hover:brightness-95 dark:bg-slate-800 dark:border-slate-700; }
+    .btn-primary { @apply bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700; }
+    .btn-ghost { @apply bg-transparent; }
+    .badge { @apply inline-block min-w-14 rounded-full bg-indigo-100 px-3 py-1 font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300; }
+    .badge-lg { @apply text-xl; }
+    .prose { @apply max-w-2xl w-full block; }
+    .prose h1 { @apply text-3xl font-bold mb-4; }
+    .prose p, .prose li { @apply mb-2; }
+    .prose ul { @apply list-disc pl-6; }
+    code { @apply rounded bg-slate-200 px-1 py-0.5 text-[0.92em] dark:bg-slate-800; }
+}
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx(),
+        tailwindcss()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+  ],
+  "layers": [
+    "base",
+    "spa",
+    "styling:tailwind",
+  ],
+}
+`;
+
+exports[`composeProject > ssg > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A static site built with \`@sigx/ssg\` — file-based routing, MDX pages, built-in search. Scaffolded by \`npm create @sigx\` (ssg).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+
+## Project layout
+
+- \`src/pages/\` — every \`.mdx\` or \`.tsx\` file is a route (\`index.mdx\` → \`/\`, \`about.mdx\` → \`/about\`)
+- \`src/layouts/default.tsx\` — the page frame
+- \`src/styles/global.css\` — global styles (auto-imported by the generated client entry)
+- \`ssg.config.ts\` — site metadata, search, markdown options
+
+Interactive components inside MDX hydrate with \`client:*\` directives, e.g. \`<Counter client:load />\`.
+
+## Deploy
+
+The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`, \`robots.txt\` and the search index). Upload \`dist/\` to any static host — Cloudflare Pages, Netlify, Vercel, GitHub Pages, S3.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "sigx dev",
+        "build": "sigx build",
+        "preview": "sigx preview"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/router": "^0.12.0",
+        "@sigx/server-renderer": "<core>",
+        "@sigx/ssg": "^0.21.0"
+    },
+    "devDependencies": {
+        "@sigx/cli": "^0.10.0",
+        "@sigx/vite": "<core>",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> pnpm-workspace.yaml <==
+# pnpm settings for this project (a single-package "workspace").
+# Dependencies allowed to run install scripts — pnpm ignores them otherwise
+# (and pnpm 11 fails the install). Both spellings: pnpm 11 reads allowBuilds,
+# older pnpm 10 reads onlyBuiltDependencies.
+allowBuilds:
+  esbuild: true
+onlyBuiltDependencies:
+  - esbuild
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** An island: server-rendered, hydrated in the browser via \`client:load\`. */
+export const Counter = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <div class="counter">
+                    <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                    <span class="badge badge-primary badge-lg">{state.count}</span>
+                    <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                </div>
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/layouts/default.tsx <==
+import { component } from 'sigx';
+import type { LayoutProps, LayoutSlots } from '@sigx/ssg';
+import { Link } from '@sigx/router';
+
+/** The page frame every route renders into. */
+export default component<LayoutProps, unknown, LayoutSlots>(({ slots }) => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <nav class="nav">
+                    <Link class="link" to="/">Home</Link>
+                    <Link class="link" to="/about">About</Link>
+                </nav>
+            </header>
+
+            <main class="app-main prose">{slots.default?.()}</main>
+
+            <footer class="app-footer muted">Built with @sigx/ssg</footer>
+        </div>
+    );
+});
+",
+    "==> src/pages/about.mdx <==
+---
+title: About
+description: About this site
+---
+
+# About
+
+Built with [@sigx/ssg](https://sigx.dev/ssg/):
+
+- File-based routing — \`src/pages/about.mdx\` is \`/about\`
+- MDX: Markdown with components
+- Syntax highlighting with Shiki
+- Islands: components hydrate only where you add \`client:*\`
+- Sitemap, robots and a search index out of the box
+",
+    "==> src/pages/index.mdx <==
+---
+title: Home
+description: A SignalX static site
+---
+
+import { Counter } from '../components/Counter';
+
+# Welcome to my-app
+
+This site is built with **@sigx/ssg** — every file in \`src/pages/\` is a route,
+Markdown and JSX mix freely, and interactive components hydrate on demand.
+
+<Counter client:load />
+
+Edit \`src/pages/index.mdx\` and save to see it update.
+",
+    "==> src/styles/global.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> ssg.config.ts <==
+import { defineSSGConfig } from '@sigx/ssg';
+
+export default defineSSGConfig({
+    site: {
+        title: 'my-app',
+        description: 'A SignalX static site',
+        url: 'https://example.com',
+        favicon: '/favicon.svg',
+    },
+    // Built-in search index over the rendered pages.
+    search: true,
+    markdown: {
+        shiki: {
+            light: 'github-light',
+            dark: 'github-dark',
+        },
+    },
+});
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "vite/client",
+            "@sigx/ssg/virtual"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { ssgPlugin } from '@sigx/ssg/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx(),
+        ssgPlugin()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+  ],
+  "layers": [
+    "base",
+    "ssg",
+  ],
+}
+`;
+
+exports[`composeProject > ssg-daisyui-yarn > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A static site built with \`@sigx/ssg\` — file-based routing, MDX pages, built-in search. Scaffolded by \`npm create @sigx\` (ssg + daisyui).
+
+## Getting started
+
+\`\`\`sh
+yarn
+yarn dev
+\`\`\`
+
+## Scripts
+
+- \`yarn build\` — production build
+- \`yarn preview\` — preview the production build
+
+## Project layout
+
+- \`src/pages/\` — every \`.mdx\` or \`.tsx\` file is a route (\`index.mdx\` → \`/\`, \`about.mdx\` → \`/about\`)
+- \`src/layouts/default.tsx\` — the page frame
+- \`src/styles/global.css\` — global styles (auto-imported by the generated client entry)
+- \`ssg.config.ts\` — site metadata, search, markdown options
+
+Interactive components inside MDX hydrate with \`client:*\` directives, e.g. \`<Counter client:load />\`.
+
+## Styling
+
+Tailwind CSS 4 + daisyUI 5. Themes are declared in \`src/styles.css\` (\`@plugin "daisyui" { themes: … }\`); set \`data-theme\` on \`<html>\` to switch.
+
+## Deploy
+
+The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`, \`robots.txt\` and the search index). Upload \`dist/\` to any static host — Cloudflare Pages, Netlify, Vercel, GitHub Pages, S3.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "sigx dev",
+        "build": "sigx build",
+        "preview": "sigx preview"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/router": "^0.12.0",
+        "@sigx/server-renderer": "<core>",
+        "@sigx/ssg": "^0.21.0"
+    },
+    "devDependencies": {
+        "@sigx/cli": "^0.10.0",
+        "@sigx/vite": "<core>",
+        "@tailwindcss/vite": "^4.1.0",
+        "daisyui": "^5.0.0",
+        "tailwindcss": "^4.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** An island: server-rendered, hydrated in the browser via \`client:load\`. */
+export const Counter = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <div class="counter">
+                    <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                    <span class="badge badge-primary badge-lg">{state.count}</span>
+                    <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                </div>
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/layouts/default.tsx <==
+import { component } from 'sigx';
+import type { LayoutProps, LayoutSlots } from '@sigx/ssg';
+import { Link } from '@sigx/router';
+
+/** The page frame every route renders into. */
+export default component<LayoutProps, unknown, LayoutSlots>(({ slots }) => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <nav class="nav">
+                    <Link class="link" to="/">Home</Link>
+                    <Link class="link" to="/about">About</Link>
+                </nav>
+            </header>
+
+            <main class="app-main prose">{slots.default?.()}</main>
+
+            <footer class="app-footer muted">Built with @sigx/ssg</footer>
+        </div>
+    );
+});
+",
+    "==> src/pages/about.mdx <==
+---
+title: About
+description: About this site
+---
+
+# About
+
+Built with [@sigx/ssg](https://sigx.dev/ssg/):
+
+- File-based routing — \`src/pages/about.mdx\` is \`/about\`
+- MDX: Markdown with components
+- Syntax highlighting with Shiki
+- Islands: components hydrate only where you add \`client:*\`
+- Sitemap, robots and a search index out of the box
+",
+    "==> src/pages/index.mdx <==
+---
+title: Home
+description: A SignalX static site
+---
+
+import { Counter } from '../components/Counter';
+
+# Welcome to my-app
+
+This site is built with **@sigx/ssg** — every file in \`src/pages/\` is a route,
+Markdown and JSX mix freely, and interactive components hydrate on demand.
+
+<Counter client:load />
+
+Edit \`src/pages/index.mdx\` and save to see it update.
+",
+    "==> src/styles/global.css <==
+@import "tailwindcss";
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark, cupcake, synthwave, dracula, nord;
+}
+
+/* daisyUI provides .btn, .card, .badge, … — only the starter's layout
+   classes are defined here. */
+@layer components {
+    .app { @apply min-h-screen flex flex-col bg-base-200 text-base-content; }
+    .app-header { @apply navbar bg-base-100 shadow-sm px-6; justify-content: space-between; }
+    .brand { @apply font-bold text-lg; }
+    .nav { @apply flex gap-4; }
+    .link { @apply link link-primary no-underline hover:underline; }
+    .app-main { @apply flex-1 grid place-items-center px-4 py-8; }
+    .app-footer { @apply footer footer-center p-4 text-sm; }
+    .card { @apply w-full max-w-md bg-base-100 shadow-lg; }
+    .card-body { @apply items-center text-center; }
+    .muted { @apply text-base-content/60 mb-4; }
+    .counter { @apply flex items-center justify-center gap-4; }
+    .prose { @apply max-w-2xl w-full block; }
+    .prose h1 { @apply text-3xl font-bold mb-4; }
+    .prose p, .prose li { @apply mb-2; }
+    .prose ul { @apply list-disc pl-6; }
+    code { @apply rounded bg-base-300 px-1 py-0.5 text-[0.92em]; }
+}
+",
+    "==> ssg.config.ts <==
+import { defineSSGConfig } from '@sigx/ssg';
+
+export default defineSSGConfig({
+    site: {
+        title: 'my-app',
+        description: 'A SignalX static site',
+        url: 'https://example.com',
+        favicon: '/favicon.svg',
+    },
+    // Built-in search index over the rendered pages.
+    search: true,
+    markdown: {
+        shiki: {
+            light: 'github-light',
+            dark: 'github-dark',
+        },
+    },
+});
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "vite/client",
+            "@sigx/ssg/virtual"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { ssgPlugin } from '@sigx/ssg/vite';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx(),
+        ssgPlugin(),
+        tailwindcss()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+  ],
+  "layers": [
+    "base",
+    "ssg",
+    "styling:daisyui",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-node > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + hydrate + node).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Deploy (Node)
+
+\`pnpm build\` writes \`dist/client\` (static assets) and \`dist/server\` (the externalized server build). Run it with:
+
+\`\`\`sh
+NODE_ENV=production node --conditions production server.mjs
+\`\`\`
+
+Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json\` and install production dependencies. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "cross-env NODE_ENV=production node --conditions production server.mjs"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "cross-env": "^10.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { ssrClientPlugin } from '@sigx/server-renderer/client';
+import { App } from './App';
+
+// Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
+// ssrClientPlugin (declared optional on App, hence the \`!\`).
+defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+/**
+ * The per-request app factory. Both request handlers consume this export —
+ * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
+ * production — and each call builds a FRESH app, so nothing is shared
+ * between concurrent requests. \`url\` is the requested path, for routing.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />);
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "target:node",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-node-daisyui > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + hydrate + node + daisyui).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Styling
+
+Tailwind CSS 4 + daisyUI 5. Themes are declared in \`src/styles.css\` (\`@plugin "daisyui" { themes: … }\`); set \`data-theme\` on \`<html>\` to switch.
+
+\`@sigx/daisyui\` ships ready-made components (\`Button\`, \`Card\`, \`Modal\`, \`ThemeSelector\`, …) — see https://sigx.dev/daisyui/.
+
+## Deploy (Node)
+
+\`pnpm build\` writes \`dist/client\` (static assets) and \`dist/server\` (the externalized server build). Run it with:
+
+\`\`\`sh
+NODE_ENV=production node --conditions production server.mjs
+\`\`\`
+
+Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json\` and install production dependencies. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "cross-env NODE_ENV=production node --conditions production server.mjs"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/daisyui": "^0.12.0",
+        "@sigx/server-renderer": "<core>",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@tailwindcss/vite": "^4.1.0",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "cross-env": "^10.1.0",
+        "daisyui": "^5.0.0",
+        "tailwindcss": "^4.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { ssrClientPlugin } from '@sigx/server-renderer/client';
+import { App } from './App';
+
+// Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
+// ssrClientPlugin (declared optional on App, hence the \`!\`).
+defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+/**
+ * The per-request app factory. Both request handlers consume this export —
+ * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
+ * production — and each call builds a FRESH app, so nothing is shared
+ * between concurrent requests. \`url\` is the requested path, for routing.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />);
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/styles.css <==
+@import "tailwindcss";
+@source "../node_modules/@sigx/daisyui/dist/**/*.js";
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark, cupcake, synthwave, dracula, nord;
+}
+
+/* daisyUI provides .btn, .card, .badge, … — only the starter's layout
+   classes are defined here. */
+@layer components {
+    .app { @apply min-h-screen flex flex-col bg-base-200 text-base-content; }
+    .app-header { @apply navbar bg-base-100 shadow-sm px-6; justify-content: space-between; }
+    .brand { @apply font-bold text-lg; }
+    .nav { @apply flex gap-4; }
+    .link { @apply link link-primary no-underline hover:underline; }
+    .app-main { @apply flex-1 grid place-items-center px-4 py-8; }
+    .app-footer { @apply footer footer-center p-4 text-sm; }
+    .card { @apply w-full max-w-md bg-base-100 shadow-lg; }
+    .card-body { @apply items-center text-center; }
+    .muted { @apply text-base-content/60 mb-4; }
+    .counter { @apply flex items-center justify-center gap-4; }
+    .prose { @apply max-w-2xl w-full block; }
+    .prose h1 { @apply text-3xl font-bold mb-4; }
+    .prose p, .prose li { @apply mb-2; }
+    .prose ul { @apply list-disc pl-6; }
+    code { @apply rounded bg-base-300 px-1 py-0.5 text-[0.92em]; }
+}
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import tailwindcss from '@tailwindcss/vite';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        tailwindcss()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "target:node",
+    "styling:daisyui",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-node-tailwind-bun > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + hydrate + node + tailwind).
+
+## Getting started
+
+\`\`\`sh
+bun install
+bun run dev
+\`\`\`
+
+## Scripts
+
+- \`bun run build\` — production build
+- \`bun run start\` — run the production build
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Styling
+
+Tailwind CSS 4 via \`@tailwindcss/vite\` — no config file needed. \`src/styles.css\` imports Tailwind and defines the starter's component classes with \`@apply\`.
+
+## Deploy (Node)
+
+\`bun run build\` writes \`dist/client\` (static assets) and \`dist/server\` (the externalized server build). Run it with:
+
+\`\`\`sh
+NODE_ENV=production node --conditions production server.mjs
+\`\`\`
+
+Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json\` and install production dependencies. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "cross-env NODE_ENV=production node --conditions production server.mjs"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@tailwindcss/vite": "^4.1.0",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "cross-env": "^10.1.0",
+        "tailwindcss": "^4.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { ssrClientPlugin } from '@sigx/server-renderer/client';
+import { App } from './App';
+
+// Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
+// ssrClientPlugin (declared optional on App, hence the \`!\`).
+defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+/**
+ * The per-request app factory. Both request handlers consume this export —
+ * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
+ * production — and each call builds a FRESH app, so nothing is shared
+ * between concurrent requests. \`url\` is the requested path, for routing.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />);
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/styles.css <==
+@import "tailwindcss";
+
+/* The starter's component classes, expressed with Tailwind utilities. Replace
+   them with utilities in your markup as you go — nothing else depends on them. */
+@layer components {
+    .app { @apply min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100; }
+    .app-header { @apply flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800; }
+    .brand { @apply font-bold text-lg; }
+    .nav { @apply flex gap-4; }
+    .link { @apply text-indigo-600 hover:underline dark:text-indigo-400; }
+    .app-main { @apply flex-1 grid place-items-center px-4 py-8; }
+    .app-footer { @apply text-center text-sm py-4; }
+    .card { @apply w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-lg dark:bg-slate-900 dark:border-slate-800; }
+    .card-body { @apply p-8 text-center; }
+    .card-title { @apply text-2xl font-semibold mb-2; }
+    .muted { @apply text-slate-500 dark:text-slate-400 mb-6; }
+    .counter { @apply flex items-center justify-center gap-4; }
+    .btn { @apply cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 transition hover:brightness-95 dark:bg-slate-800 dark:border-slate-700; }
+    .btn-primary { @apply bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700; }
+    .btn-ghost { @apply bg-transparent; }
+    .badge { @apply inline-block min-w-14 rounded-full bg-indigo-100 px-3 py-1 font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300; }
+    .badge-lg { @apply text-xl; }
+    .prose { @apply max-w-2xl w-full block; }
+    .prose h1 { @apply text-3xl font-bold mb-4; }
+    .prose p, .prose li { @apply mb-2; }
+    .prose ul { @apply list-disc pl-6; }
+    code { @apply rounded bg-slate-200 px-1 py-0.5 text-[0.92em] dark:bg-slate-800; }
+}
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import tailwindcss from '@tailwindcss/vite';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        tailwindcss()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "target:node",
+    "styling:tailwind",
+  ],
+}
+`;
+
+exports[`composeProject > terminal > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A terminal UI built with \`@sigx/terminal\` — TSX and signals, with an HMR dev runner. Scaffolded by \`npm create @sigx\` (terminal).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm start\` — run the production build
+
+## Project layout
+
+- \`src/main.tsx\` — the mount module (\`defineApp(<App />).mount(…, terminalMount)\`)
+- \`src/App.tsx\` — the root component; save it and the running TUI updates in place
+
+Interactive apps need a real terminal (TTY). Piping the output (\`| cat\`) prints a single plain-text frame instead.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "sigx-terminal-dev src/main.tsx",
+        "start": "tsx src/main.tsx",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@sigx/terminal": "^0.12.0"
+    },
+    "devDependencies": {
+        "@sigx/terminal-dev": "^0.12.0",
+        "@types/node": "^22.0.0",
+        "tsx": "^4.20.0",
+        "typescript": "^5.9.3"
+    }
+}
+",
+    "==> pnpm-workspace.yaml <==
+# pnpm settings for this project (a single-package "workspace").
+# Dependencies allowed to run install scripts — pnpm ignores them otherwise
+# (and pnpm 11 fails the install). Both spellings: pnpm 11 reads allowBuilds,
+# older pnpm 10 reads onlyBuiltDependencies.
+allowBuilds:
+  esbuild: true
+onlyBuiltDependencies:
+  - esbuild
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/App.tsx <==
+import { component, onMounted, onUnmounted, onKey, exitTerminal, Box, Text, Heading } from '@sigx/terminal';
+
+/**
+ * The root component. Keys arrive through \`onKey\`; signals drive the
+ * re-render, the renderer diffs the terminal frame.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    let off: (() => void) | undefined;
+    onMounted(() => {
+        off = onKey((key) => {
+            if (key === '+' || key === '=' || key === 'k') state.count++;
+            else if (key === '-' || key === 'j') state.count--;
+            else if (key === 'q' || key === '\\x03') {
+                exitTerminal();
+                process.exit(0);
+            }
+            return true;
+        });
+    });
+    onUnmounted(() => off?.());
+
+    return () => (
+        <Box border="rounded" padX={2} label="my-app">
+            <Heading>Hello, SignalX</Heading>
+            <br />
+            <Text>Count: <Text color="info">{String(state.count)}</Text></Text>
+            <br />
+            <Text color="dim">+ / − to change · q to quit · edit src/App.tsx and save to see HMR</Text>
+        </Box>
+    );
+});
+",
+    "==> src/main.tsx <==
+// The mount module. \`sigx-terminal-dev src/main.tsx\` runs it with HMR;
+// \`tsx src/main.tsx\` runs it plainly. Pipe the output (\`| cat\`) and the
+// renderer prints one plain-text frame instead of taking over the terminal.
+import { defineApp, terminalMount } from '@sigx/terminal';
+import { App } from './App';
+
+defineApp(<App />).mount({ clearConsole: true, fullscreen: true }, terminalMount);
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "@sigx/terminal",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+  ],
+  "layers": [
+    "base",
+    "terminal",
+  ],
+}
+`;

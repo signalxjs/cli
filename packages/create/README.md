@@ -9,7 +9,11 @@ yarn create @sigx        my-app
 bunx create @sigx        my-app
 ```
 
-You'll be prompted to pick a template (basic / SSR / SSG / Lynx, with optional Tailwind or daisyUI).
+You'll be prompted for a project name, the kind of project (web SPA, SSR, static site, terminal app, or native Lynx) and styling (plain CSS, Tailwind, or Tailwind + daisyUI). Skip the prompts with flags:
+
+```bash
+npm create @sigx@latest my-app -- --type ssr --styling tailwind -y
+```
 
 ## 📚 Documentation
 

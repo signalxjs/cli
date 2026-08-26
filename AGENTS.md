@@ -109,7 +109,21 @@ pnpm typecheck    # tsgo --noEmit
 pnpm lint         # oxlint
 pnpm lint:fix     
 pnpm verify:pack  # verify npm pack output is sane
+pnpm verify:catalog  # core deps go through the catalog; versions.ts is not stale
+pnpm gen:versions    # regenerate packages/cli/src/create/versions.ts from the catalog
 ```
+
+Scaffolding templates are **composed**, not copied: `packages/cli/src/create/`
+turns a `ProjectSpec` into a file tree from layers (`base → kind → render →
+target → styling → features`). Overlay folders under `packages/cli/templates/`
+hold app files only — never `package.json`, `vite.config.ts`, `tsconfig.json`,
+`src/env.d.ts`, `.gitignore` or `README.md`, which the builders render from
+the layers' fragments (a test enforces this). Version ranges come from
+`dep('<pkg>')` (generated `versions.ts`); to add a package, add it to the
+catalog in `pnpm-workspace.yaml` or `scripts/lib/template-versions.json` and
+run `pnpm gen:versions`. Every spec combination is snapshot-tested in
+`packages/cli/__tests__/create/compose.test.ts` — update snapshots with
+`pnpm test -u` after an intentional template change.
 
 To run a package script: `pnpm --filter <package-name> <script>`.
 

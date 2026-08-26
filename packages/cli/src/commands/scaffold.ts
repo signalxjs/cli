@@ -1,80 +1,55 @@
 /**
- * Pure scaffolding helpers shared by the interactive and headless `create`
- * paths — template copy with `{{projectName}}` substitution, gitignore
- * rename, binary-safe asset copy, and workspace dependency patching.
+ * Scaffolding entry points shared by the interactive and headless `create`
+ * paths. The real work is `composeProject` (src/create/compose.ts): this
+ * module maps the command's `--type`/`--styling` vocabulary onto a
+ * `ProjectSpec`, writes the composed tree, and patches `@sigx/*` deps to
+ * `workspace:*` when scaffolding inside a pnpm workspace.
  */
-import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync, readFileSync } from 'fs';
-import { dirname, resolve, join } from 'path';
-import { fileURLToPath } from 'url';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { composeProject } from '../create/compose.js';
+import {
+    LEGACY_TYPE_MAP,
+    lynxStylingOptions,
+    normalizeSpec,
+    validateSpec,
+    webStylingOptions,
+    type Kind,
+    type Option,
+    type Styling,
+} from '../create/spec.js';
+import { readOverlay, writeTree } from '../create/tree.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+export { isTextExtension } from '../create/tree.js';
+export { webStylingOptions, lynxStylingOptions };
+export type { Styling };
 
-export type ProjectType = 'basic' | 'ssr' | 'ssg' | 'lynx';
-export type Styling = 'none' | 'tailwind' | 'daisyui';
+/** The `--type` vocabulary (`basic` is the pre-0.11 name for `spa`). */
+export type ProjectType = 'basic' | 'ssr' | 'ssg' | 'terminal' | 'lynx';
 
-export const projectTypeOptions = [
-    { value: 'basic' as ProjectType, label: 'Basic SPA', description: 'Simple single-page application (web)' },
-    { value: 'ssr' as ProjectType, label: 'SSR', description: 'Server-side rendering with Express (web)' },
-    { value: 'ssg' as ProjectType, label: 'SSG', description: 'Static site with file-based routing & MDX (web)' },
-    { value: 'lynx' as ProjectType, label: 'Lynx', description: 'Native mobile app with Lynx runtime' },
+export const projectTypeOptions: Option<ProjectType>[] = [
+    { value: 'basic', label: 'Web app (SPA)', description: 'Client-rendered single-page app on Vite' },
+    { value: 'ssr', label: 'Web app (SSR)', description: 'Server-rendered with Express, streaming + hydration' },
+    { value: 'ssg', label: 'Static site (SSG)', description: 'File-based routing, MDX, built-in search' },
+    { value: 'terminal', label: 'Terminal app (TUI)', description: 'Text UI with TSX + signals, HMR dev runner' },
+    { value: 'lynx', label: 'Native mobile (Lynx)', description: 'iOS & Android from one component tree' },
 ];
 
-export const webStylingOptions = [
-    { value: 'none' as Styling, label: 'None', description: 'No CSS framework' },
-    { value: 'tailwind' as Styling, label: 'Tailwind CSS', description: 'Utility-first CSS framework' },
-    { value: 'daisyui' as Styling, label: 'Tailwind + Daisy UI', description: 'Tailwind with component library' },
-];
-
-export const lynxStylingOptions = [
-    { value: 'none' as Styling, label: 'None', description: 'No CSS framework' },
-    { value: 'tailwind' as Styling, label: 'Tailwind CSS', description: 'Tailwind with Lynx preset' },
-    { value: 'daisyui' as Styling, label: 'Tailwind + Daisy UI', description: 'Lynx + @sigx/lynx-daisyui components' },
-];
-
-const TEXT_EXTS = new Set([
-    'ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'mts', 'cts',
-    'json', 'json5', 'jsonc',
-    'md', 'mdx', 'txt',
-    'html', 'htm', 'css', 'scss', 'sass', 'less',
-    'yml', 'yaml', 'toml', 'xml', 'svg',
-    'gitignore', 'gitattributes', 'editorconfig', 'npmrc', 'nvmrc', 'env',
-]);
-
-export function isTextExtension(filename: string): boolean {
-    // Dotfiles: name after leading dot (.gitignore → "gitignore").
-    const ext = filename.startsWith('.')
-        ? filename.slice(1).toLowerCase()
-        : filename.split('.').pop()?.toLowerCase() ?? '';
-    return TEXT_EXTS.has(ext);
+/** Copy a template folder to `dest` with `{{projectName}}` substitution and `gitignore` → `.gitignore`. */
+export function copyDirectory(src: string, dest: string, projectName: string): void {
+    writeTree(readOverlay(src, { projectName }), dest);
 }
 
-export function copyDirectory(src: string, dest: string, projectName: string) {
-    if (!existsSync(dest)) {
-        mkdirSync(dest, { recursive: true });
+/** True when an ancestor of `dir` (not `dir` itself) has a pnpm-workspace.yaml. */
+export function insidePnpmWorkspace(dir: string): boolean {
+    let current = dirname(dir);
+    for (let i = 0; i < 10; i++) {
+        if (existsSync(join(current, 'pnpm-workspace.yaml'))) return true;
+        const parent = dirname(current);
+        if (parent === current) break;
+        current = parent;
     }
-
-    const entries = readdirSync(src);
-    for (const entry of entries) {
-        const srcPath = join(src, entry);
-        // Templates ship `gitignore` (no leading dot) because npm strips
-        // `.gitignore` from the published tarball. Rename on copy so the
-        // generated project has a real `.gitignore`.
-        const destName = entry === 'gitignore' ? '.gitignore' : entry;
-        const destPath = join(dest, destName);
-        const stat = statSync(srcPath);
-
-        if (stat.isDirectory()) {
-            copyDirectory(srcPath, destPath, projectName);
-        } else if (isTextExtension(entry)) {
-            let content = readFileSync(srcPath, 'utf-8');
-            content = content.replace(/\{\{projectName\}\}/g, projectName);
-            writeFileSync(destPath, content);
-        } else {
-            // Binary asset — copy bytes verbatim. Reading as UTF-8 would corrupt
-            // non-ASCII bytes (e.g. PNG magic 0x89 → U+FFFD).
-            writeFileSync(destPath, readFileSync(srcPath));
-        }
-    }
+    return false;
 }
 
 /**
@@ -84,20 +59,7 @@ export function copyDirectory(src: string, dest: string, projectName: string) {
 export function patchWorkspaceDeps(targetDir: string) {
     const pkgPath = join(targetDir, 'package.json');
     if (!existsSync(pkgPath)) return;
-
-    // Walk up to find pnpm-workspace.yaml
-    let dir = dirname(targetDir);
-    let isWorkspace = false;
-    for (let i = 0; i < 10; i++) {
-        if (existsSync(join(dir, 'pnpm-workspace.yaml'))) {
-            isWorkspace = true;
-            break;
-        }
-        const parent = dirname(dir);
-        if (parent === dir) break;
-        dir = parent;
-    }
-    if (!isWorkspace) return;
+    if (!insidePnpmWorkspace(targetDir)) return;
 
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
     for (const section of ['dependencies', 'devDependencies'] as const) {
@@ -111,22 +73,34 @@ export function patchWorkspaceDeps(targetDir: string) {
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 4) + '\n');
 }
 
+export type ScaffoldResult =
+    | { ok: true; files: number; nextSteps: string[] }
+    | { ok: false; error: string };
+
 export function scaffoldProject(opts: {
     projectName: string;
     projectType: ProjectType;
     styling: Styling;
-}): { ok: true } | { ok: false; error: string } {
+}): ScaffoldResult {
+    const kind: Kind | undefined = LEGACY_TYPE_MAP[opts.projectType];
+    if (!kind) return { ok: false, error: `Unknown project type "${opts.projectType}"` };
+    const spec = normalizeSpec({ name: opts.projectName, kind, styling: opts.styling });
+    const problems = validateSpec(spec);
+    if (problems.length) return { ok: false, error: problems.join('; ') };
+
     const targetDir = resolve(process.cwd(), opts.projectName);
-    let templateName: string;
-    if (opts.projectType === 'lynx') {
-        templateName = opts.styling !== 'none' ? `lynx-${opts.styling}` : 'lynx';
-    } else {
-        templateName = opts.styling !== 'none' ? `${opts.projectType}-${opts.styling}` : opts.projectType;
-    }
-    const templateDir = resolve(__dirname, '..', 'templates', templateName);
     if (existsSync(targetDir)) return { ok: false, error: `Directory "${opts.projectName}" already exists!` };
-    if (!existsSync(templateDir)) return { ok: false, error: `Template "${templateName}" not found at ${templateDir}` };
-    copyDirectory(templateDir, targetDir, opts.projectName);
+
+    let composed;
+    try {
+        composed = composeProject(spec);
+    } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+    // Inside an existing workspace the parent owns pnpm settings — a nested
+    // pnpm-workspace.yaml would make the new project its own workspace root.
+    if (insidePnpmWorkspace(targetDir)) composed.tree.delete('pnpm-workspace.yaml');
+    const files = writeTree(composed.tree, targetDir);
     patchWorkspaceDeps(targetDir);
-    return { ok: true };
+    return { ok: true, files, nextSteps: composed.nextSteps };
 }

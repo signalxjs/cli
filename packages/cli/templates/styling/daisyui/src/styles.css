@@ -1,0 +1,28 @@
+@import "tailwindcss";
+/* @sigx:if !ssg */
+@source "../node_modules/@sigx/daisyui/dist/**/*.js";
+/* @sigx:endif */
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark, cupcake, synthwave, dracula, nord;
+}
+
+/* daisyUI provides .btn, .card, .badge, … — only the starter's layout
+   classes are defined here. */
+@layer components {
+    .app { @apply min-h-screen flex flex-col bg-base-200 text-base-content; }
+    .app-header { @apply navbar bg-base-100 shadow-sm px-6; justify-content: space-between; }
+    .brand { @apply font-bold text-lg; }
+    .nav { @apply flex gap-4; }
+    .link { @apply link link-primary no-underline hover:underline; }
+    .app-main { @apply flex-1 grid place-items-center px-4 py-8; }
+    .app-footer { @apply footer footer-center p-4 text-sm; }
+    .card { @apply w-full max-w-md bg-base-100 shadow-lg; }
+    .card-body { @apply items-center text-center; }
+    .muted { @apply text-base-content/60 mb-4; }
+    .counter { @apply flex items-center justify-center gap-4; }
+    .prose { @apply max-w-2xl w-full block; }
+    .prose h1 { @apply text-3xl font-bold mb-4; }
+    .prose p, .prose li { @apply mb-2; }
+    .prose ul { @apply list-disc pl-6; }
+    code { @apply rounded bg-base-300 px-1 py-0.5 text-[0.92em]; }
+}
