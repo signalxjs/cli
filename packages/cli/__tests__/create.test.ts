@@ -276,6 +276,21 @@ describe('runCreate', () => {
             expect(exitCode).toBe(0);
         });
 
+        it('rejects a --features value the chosen kind cannot take (exit 2)', async () => {
+            captureOutput();
+            const done = run(await importCreate(['--features', 'server-fn', '--no-install', '--no-git']));
+            await settle();
+            await press(ENTER); // name
+            await settle();
+            await press(ENTER); // kind: spa (initial) — server-fn needs ssr
+            await settle();
+            await press(ENTER); // styling
+            await settle(200);
+            await done;
+            expect(exitCode).toBe(2);
+            expect(scaffoldSpec).not.toHaveBeenCalled();
+        });
+
         it('Esc cancels with exit 130 and no scaffold', async () => {
             captureOutput();
             const done = run(await importCreate([]));
