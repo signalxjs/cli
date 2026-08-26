@@ -48,6 +48,12 @@ function bail(): never {
     process.exit(130);
 }
 
+/** A flag the wizard cannot honour: same exit code as headless validation. */
+function fail(message: string): never {
+    cancel(message);
+    process.exit(2);
+}
+
 /** Cancel (Esc / Ctrl+C) at any prompt exits 130; otherwise the answer. */
 function unwrap<T>(value: T): Exclude<T, symbol> {
     if (isCancel(value)) bail();
@@ -155,7 +161,14 @@ async function askShape(options: CreateOptions): Promise<Shape> {
     }
 
     let features: Feature[] = parseFeatures(options.features);
+    // Flags are validated like in headless mode: an unknown extra, or one the
+    // chosen kind/render/target cannot take, is an error — not silently dropped.
+    const validFeatures = extraOptions.map((o) => o.value);
     const available = extraOptions.filter((o) => featureSupported(o.value, { kind, render, target }));
+    for (const f of features) {
+        if (!validFeatures.includes(f)) fail(`--features must be a comma-separated list of ${validFeatures.join(', ')}`);
+        if (!available.some((o) => o.value === f)) fail(`feature "${f}" is not available for ${kind}${render ? ` (${render})` : ''}${target ? ` on ${target}` : ''}`);
+    }
     if (available.length) {
         features = unwrap(
             await multiselect<Feature>({
