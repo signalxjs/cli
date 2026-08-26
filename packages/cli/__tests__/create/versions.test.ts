@@ -13,18 +13,14 @@ import { composeProject } from '../../src/create/compose.js';
 import { dep } from '../../src/create/deps.js';
 import { normalizeSpec } from '../../src/create/spec.js';
 import { SIGX_CLI, SIGX_COMPANIONS, SIGX_CORE, SIGX_CORE_PACKAGES } from '../../src/create/versions.js';
+// The same parser the guard and the generator use, so the three cannot disagree.
+// @ts-expect-error — plain ESM script, no declarations.
+import { readCatalog } from '../../../../scripts/lib/catalog.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 
-function catalogEntries(): Record<string, string> {
-    const ws = readFileSync(join(repoRoot, 'pnpm-workspace.yaml'), 'utf8');
-    const out: Record<string, string> = {};
-    for (const m of ws.matchAll(/^\s+"?(@?[\w./-]+)"?\s*:\s*(\^[\d.]+)\s*$/gm)) out[m[1]] = m[2];
-    return out;
-}
-
 describe('versions', () => {
-    const catalog = catalogEntries();
+    const catalog: Record<string, string> = readCatalog(repoRoot);
 
     it('SIGX_CORE is the catalog core line', () => {
         expect(SIGX_CORE).toBe(catalog['@sigx/vite']);
