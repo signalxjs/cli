@@ -45,9 +45,11 @@ describe.skipIf(!enabled)('create e2e (SIGX_E2E=1)', () => {
         // makes rolldown compute asset names that escape the root.
         root = realpathSync.native(mkdtempSync(join(tmpdir(), 'sigx-e2e-')));
     });
+    // Removing five installed projects takes a while (and Windows holds
+    // handles briefly) — well past vitest's default 10 s hook timeout.
     afterAll(() => {
-        if (root) rmSync(root, { recursive: true, force: true });
-    });
+        if (root) rmSync(root, { recursive: true, force: true, maxRetries: 5 });
+    }, 120_000);
 
     it.each(SPECS)('%s: scaffold → install → typecheck → build', (name, flags, opts) => {
         const out = execFileSync(process.execPath, [cli, 'create', name, ...flags, '-y'], { cwd: root, encoding: 'utf8' });
