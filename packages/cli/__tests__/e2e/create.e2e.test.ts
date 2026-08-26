@@ -10,7 +10,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,7 +40,10 @@ describe.skipIf(!enabled)('create e2e (SIGX_E2E=1)', () => {
     let root: string;
     beforeAll(() => {
         expect(existsSync(cli), 'run `pnpm build` first').toBe(true);
-        root = mkdtempSync(join(tmpdir(), 'sigx-e2e-'));
+        // realpath: on Windows runners the temp dir is an 8.3 short path
+        // (RUNNER~1), and a build root that differs from its resolved form
+        // makes rolldown compute asset names that escape the root.
+        root = realpathSync.native(mkdtempSync(join(tmpdir(), 'sigx-e2e-')));
     });
     afterAll(() => {
         if (root) rmSync(root, { recursive: true, force: true });

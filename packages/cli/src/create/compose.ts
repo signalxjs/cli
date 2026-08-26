@@ -40,9 +40,8 @@ export interface ComposedProject {
 
 /**
  * The names `@sigx:if` markers can test: kind, render, target, styling-<x>,
- * each feature, and two derived ones — `server-fns` (the build carries a
- * server-function registry: resumable pages, the server-fn feature, actors)
- * and `fetch-entry` (the target runs a WinterCG `{ fetch }` entry).
+ * each feature, and one derived name — `server-fns`: the build carries a
+ * server-function registry (resumable pages, the server-fn feature, actors).
  */
 export function conditionsFor(spec: ProjectSpec): Set<string> {
     const set = new Set<string>([spec.kind, `styling-${spec.styling}`, ...spec.features]);
