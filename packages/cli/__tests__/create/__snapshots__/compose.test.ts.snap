@@ -1608,7 +1608,12 @@ pnpm-debug.log*
 yarn-error.log*
 ",
     "==> .oxlintrc.json <==
-<binary 185 bytes>",
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "categories": { "correctness": "error", "suspicious": "warn" },
+    "ignorePatterns": ["dist", "node_modules"]
+}
+",
     "==> README.md <==
 # my-app
 
@@ -2043,7 +2048,12 @@ pnpm-debug.log*
 yarn-error.log*
 ",
     "==> .oxlintrc.json <==
-<binary 185 bytes>",
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "categories": { "correctness": "error", "suspicious": "warn" },
+    "ignorePatterns": ["dist", "node_modules"]
+}
+",
     "==> README.md <==
 # my-app
 
@@ -3269,7 +3279,12 @@ pnpm-debug.log*
 yarn-error.log*
 ",
     "==> .oxlintrc.json <==
-<binary 185 bytes>",
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "categories": { "correctness": "error", "suspicious": "warn" },
+    "ignorePatterns": ["dist", "node_modules"]
+}
+",
     "==> README.md <==
 # my-app
 
@@ -7901,7 +7916,12 @@ pnpm-debug.log*
 yarn-error.log*
 ",
     "==> .oxlintrc.json <==
-<binary 185 bytes>",
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "categories": { "correctness": "error", "suspicious": "warn" },
+    "ignorePatterns": ["dist", "node_modules"]
+}
+",
     "==> README.md <==
 # my-app
 
@@ -9746,7 +9766,12 @@ pnpm-debug.log*
 yarn-error.log*
 ",
     "==> .oxlintrc.json <==
-<binary 185 bytes>",
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "categories": { "correctness": "error", "suspicious": "warn" },
+    "ignorePatterns": ["dist", "node_modules"]
+}
+",
     "==> README.md <==
 # my-app
 

@@ -23,10 +23,10 @@ const TEXT_EXTS = new Set([
 
 /** Text files get `{{projectName}}` substitution and conditionals; anything else is copied byte-for-byte. */
 export function isTextExtension(filename: string): boolean {
-    // Dotfiles: name after leading dot (.gitignore → "gitignore").
-    const ext = filename.startsWith('.')
-        ? filename.slice(1).toLowerCase()
-        : filename.split('.').pop()?.toLowerCase() ?? '';
+    // Dotfiles: the name after the leading dot (.gitignore → "gitignore"),
+    // unless there is a real extension too (.oxlintrc.json → "json").
+    const body = filename.startsWith('.') ? filename.slice(1) : filename;
+    const ext = (body.includes('.') ? body.split('.').pop()! : body).toLowerCase();
     return TEXT_EXTS.has(ext);
 }
 
