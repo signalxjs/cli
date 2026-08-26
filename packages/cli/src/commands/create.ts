@@ -15,8 +15,12 @@ import {
     projectTypeOptions,
     webStylingOptions,
     lynxStylingOptions,
+    renderModeOptions,
+    deployTargetOptions,
     type ProjectType,
     type Styling,
+    type Render,
+    type Target,
 } from './scaffold.js';
 
 export interface CreateOptions {
@@ -24,6 +28,10 @@ export interface CreateOptions {
     name?: string;
     type?: ProjectType;
     styling?: Styling;
+    /** SSR render mode (`--type ssr` only). */
+    render?: Render;
+    /** SSR deploy target (`--type ssr` only). */
+    target?: Target;
     /** Skip prompts (headless mode). */
     yes?: boolean;
 }
@@ -32,6 +40,8 @@ const shimArgsShape = {
     name: a.positional().describe('Project name'),
     type: a.string().describe('Project type'),
     styling: a.string().describe('Styling setup'),
+    render: a.string().describe('SSR render mode: hydrate | islands | resume'),
+    target: a.string().describe('SSR deploy target: node | cloudflare | bun | deno | vercel | vercel-edge | netlify'),
     yes: a.boolean().alias('y').default(false).describe('Skip prompts (headless mode)'),
 };
 
@@ -50,6 +60,8 @@ function parseArgvFallback(): CreateOptions {
             name: args.name,
             type: args.type as ProjectType | undefined,
             styling: args.styling as Styling | undefined,
+            render: args.render as Render | undefined,
+            target: args.target as Target | undefined,
             yes: args.yes,
         };
     } catch (err) {
@@ -77,12 +89,30 @@ function runHeadless(opts: CreateOptions): number {
         console.error(`Error: --styling must be one of ${validStyling.join(', ')}`);
         return 2;
     }
+    const validRenders = renderModeOptions.map((o) => o.value);
+    const validTargets = deployTargetOptions.map((o) => o.value);
+    if (opts.render !== undefined && !validRenders.includes(opts.render)) {
+        console.error(`Error: --render must be one of ${validRenders.join(', ')}`);
+        return 2;
+    }
+    if (opts.target !== undefined && !validTargets.includes(opts.target)) {
+        console.error(`Error: --target must be one of ${validTargets.join(', ')}`);
+        return 2;
+    }
+    if ((opts.render !== undefined || opts.target !== undefined) && projectType !== 'ssr') {
+        console.error('Error: --render and --target apply to --type ssr only');
+        return 2;
+    }
 
     console.log(`\n  ⚡ Creating SignalX app "${projectName}"`);
     console.log(`     type:    ${projectType}`);
+    if (projectType === 'ssr') {
+        console.log(`     render:  ${opts.render ?? 'hydrate'}`);
+        console.log(`     target:  ${opts.target ?? 'node'}`);
+    }
     console.log(`     styling: ${styling}\n`);
 
-    const result = scaffoldProject({ projectName, projectType, styling });
+    const result = scaffoldProject({ projectName, projectType, styling, render: opts.render, target: opts.target });
     if (!result.ok) {
         console.error(`Error: ${result.error}`);
         return 1;
@@ -126,6 +156,29 @@ export async function runCreate(opts?: CreateOptions): Promise<void> {
     });
     if (isCancel(projectType)) bail();
 
+    let render: Render | undefined;
+    let target: Target | undefined;
+    if (projectType === 'ssr') {
+        const pickedRender = await select<Render>({
+            message: 'Rendering',
+            initialValue: options.render ?? 'hydrate',
+            options: renderModeOptions,
+        });
+        if (isCancel(pickedRender)) bail();
+        render = pickedRender;
+
+        const pickedTarget = await select<Target>({
+            message: 'Deploy target',
+            initialValue: options.target ?? 'node',
+            options: deployTargetOptions,
+        });
+        if (isCancel(pickedTarget)) bail();
+        target = pickedTarget;
+        if (target === 'vercel-edge') {
+            note('Edge runtime: Web APIs only — no Node built-ins or filesystem in server code.', 'Heads-up');
+        }
+    }
+
     let styling: Styling = 'none';
     if (projectType !== 'terminal') {
         const picked = await select<Styling>({
@@ -139,12 +192,13 @@ export async function runCreate(opts?: CreateOptions): Promise<void> {
 
     const s = spinner();
     s.start(`Scaffolding ${projectName}`);
-    const result = scaffoldProject({ projectName, projectType, styling });
+    const result = scaffoldProject({ projectName, projectType, styling, render, target });
     if (!result.ok) {
         s.stop(result.error, 'error');
         process.exit(1);
     }
-    s.stop(`Created ${projectName} (${projectType}${styling !== 'none' ? ` + ${styling}` : ''}, ${result.files} files)`);
+    const summary = [projectType, ...(projectType === 'ssr' ? [render, target] : []), ...(styling !== 'none' ? [styling] : [])].join(' + ');
+    s.stop(`Created ${projectName} (${summary}, ${result.files} files)`);
 
     note(result.nextSteps.join('\n'), 'Next steps');
     outro('Happy hacking!');

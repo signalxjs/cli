@@ -1,5 +1,5 @@
 import type { Layer } from '../layer.js';
-import { deps } from '../deps.js';
+import { NODE_DEV_OVERLAY, nodeDevServer } from './node-dev.js';
 
 /**
  * Node target: `server.mjs` is Express in two modes — Vite middleware +
@@ -8,14 +8,13 @@ import { deps } from '../deps.js';
  */
 export const targetNode: Layer = {
     name: 'target:node',
-    overlay: 'targets/node',
-    packageJson: {
-        scripts: {
-            dev: 'node server.mjs',
-            start: 'cross-env NODE_ENV=production node --conditions production server.mjs',
-        },
-        dependencies: deps('express'),
-        devDependencies: deps('@types/express', 'cross-env'),
+    overlay: NODE_DEV_OVERLAY,
+    packageJson: () => {
+        const base = nodeDevServer({ production: true });
+        return {
+            ...base,
+            scripts: { ...base.scripts, start: 'cross-env NODE_ENV=production node --conditions production server.mjs' },
+        };
     },
     readme: ({ pm }) => [
         {

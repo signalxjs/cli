@@ -64,6 +64,8 @@ export function buildRootCommand(opts: RootCommandOptions): AnyCommand {
             name: a.positional().describe('Project name'),
             type: a.enum(['basic', 'ssr', 'ssg', 'terminal', 'lynx']).describe('Project type'),
             styling: a.enum(['none', 'tailwind', 'daisyui']).describe('Styling setup'),
+            render: a.enum(['hydrate', 'islands', 'resume']).describe('SSR render mode'),
+            target: a.enum(['node', 'cloudflare', 'bun', 'deno', 'vercel', 'vercel-edge', 'netlify']).describe('SSR deploy target'),
             yes: a.boolean().alias('y').describe('Skip prompts (headless mode)'),
         })
         .run(async ({ args }) => {

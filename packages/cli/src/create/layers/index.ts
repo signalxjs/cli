@@ -4,9 +4,8 @@
  *     base → kind → render → target → styling → features
  *
  * Order is the conflict rule: a later layer's file overrides an earlier
- * one's. Render modes and deploy targets beyond the defaults, and the
- * feature layers, land in follow-up PRs — asking for one before it exists
- * throws here rather than scaffolding something half-wired.
+ * one's. Feature layers land in a follow-up PR — asking for one before it
+ * exists throws here rather than scaffolding something half-wired.
  */
 import type { Layer } from '../layer.js';
 import type { Feature, ProjectSpec, Render, Target } from '../spec.js';
@@ -16,18 +15,37 @@ import { ssr } from './ssr.js';
 import { ssg } from './ssg.js';
 import { terminal } from './terminal.js';
 import { lynx } from './lynx.js';
+import { renderIslands } from './render-islands.js';
+import { renderResume } from './render-resume.js';
 import { targetNode } from './target-node.js';
+import { targetCloudflare } from './target-cloudflare.js';
+import { targetBun } from './target-bun.js';
+import { targetDeno } from './target-deno.js';
+import { targetVercel } from './target-vercel.js';
+import { targetNetlify } from './target-netlify.js';
 import { stylingTailwind } from './styling-tailwind.js';
 import { stylingDaisyui } from './styling-daisyui.js';
 
 const KIND_LAYERS = { spa, ssr, ssg, terminal, lynx } as const;
-const RENDER_LAYERS: Partial<Record<Render, Layer>> = { hydrate: undefined };
-const TARGET_LAYERS: Partial<Record<Target, Layer>> = { node: targetNode };
+const RENDER_LAYERS: Record<Render, Layer | undefined> = {
+    hydrate: undefined,
+    islands: renderIslands,
+    resume: renderResume,
+};
+const TARGET_LAYERS: Record<Target, Layer> = {
+    node: targetNode,
+    cloudflare: targetCloudflare,
+    bun: targetBun,
+    deno: targetDeno,
+    vercel: targetVercel('node'),
+    'vercel-edge': targetVercel('edge'),
+    netlify: targetNetlify,
+};
 const STYLING_LAYERS = { none: undefined, tailwind: stylingTailwind, daisyui: stylingDaisyui } as const;
 const FEATURE_LAYERS: Partial<Record<Feature, Layer>> = {};
 
 /** What this build of the CLI can actually generate. */
-export const availableRenders: Render[] = ['hydrate'];
+export const availableRenders: Render[] = Object.keys(RENDER_LAYERS) as Render[];
 export const availableTargets: Target[] = Object.keys(TARGET_LAYERS) as Target[];
 export const availableFeatures: Feature[] = Object.keys(FEATURE_LAYERS) as Feature[];
 
@@ -40,7 +58,7 @@ export function layersFor(spec: ProjectSpec): Layer[] {
     layers.push(base, KIND_LAYERS[spec.kind]);
     if (spec.kind === 'ssr') {
         const render = spec.render ?? 'hydrate';
-        if (!availableRenders.includes(render)) throw new Error(`render mode "${render}" is not available yet`);
+        if (!(render in RENDER_LAYERS)) throw new Error(`render mode "${render}" is not available yet`);
         const renderLayer = RENDER_LAYERS[render];
         if (renderLayer) layers.push(renderLayer);
         const target = spec.target ?? 'node';

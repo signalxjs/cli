@@ -49,6 +49,7 @@ export interface ViteConfigFragment {
 export interface TsconfigFragment {
     compilerOptions?: Record<string, unknown>;
     include?: string[];
+    exclude?: string[];
     types?: string[];
 }
 
@@ -73,8 +74,8 @@ export interface Layer {
      * `{{projectName}}`, and skip every builder.
      */
     raw?: boolean;
-    /** Overlay folder, relative to `templates/`. */
-    overlay?: string;
+    /** Overlay folder(s), relative to `templates/`, applied in order. */
+    overlay?: string | string[];
     /** Generated files: path → content. */
     files?: (ctx: LayerContext) => Record<string, string>;
     packageJson?: Resolvable<PackageJsonFragment>;

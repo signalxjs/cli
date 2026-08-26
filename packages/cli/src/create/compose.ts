@@ -38,11 +38,16 @@ export interface ComposedProject {
     nextSteps: string[];
 }
 
-/** The names `@sigx:if` markers can test: kind, render, target, styling-<x>, and each feature. */
+/**
+ * The names `@sigx:if` markers can test: kind, render, target, styling-<x>,
+ * each feature, and one derived name — `server-fns`: the build carries a
+ * server-function registry (resumable pages, the server-fn feature, actors).
+ */
 export function conditionsFor(spec: ProjectSpec): Set<string> {
     const set = new Set<string>([spec.kind, `styling-${spec.styling}`, ...spec.features]);
     if (spec.render) set.add(spec.render);
     if (spec.target) set.add(spec.target);
+    if (spec.render === 'resume' || spec.features.has('server-fn') || spec.features.has('actors')) set.add('server-fns');
     return set;
 }
 
@@ -94,13 +99,15 @@ export function composeProject(spec: ProjectSpec, opts: ComposeOptions = {}): Co
 }
 
 function applyOverlay(tree: VirtualFileTree, layer: Layer, root: string, projectName: string, conditions: Set<string>): void {
-    if (!layer.overlay) return;
-    const overlay = readOverlay(join(root, ...layer.overlay.split('/')), { projectName, conditions });
-    for (const [path, content] of overlay) {
-        if (!layer.raw && MANAGED_FILES.has(path)) {
-            throw new Error(`[sigx create] overlay "${layer.overlay}" ships managed file ${path}; contribute a fragment instead`);
+    const overlays = typeof layer.overlay === 'string' ? [layer.overlay] : (layer.overlay ?? []);
+    for (const dir of overlays) {
+        const overlay = readOverlay(join(root, ...dir.split('/')), { projectName, conditions });
+        for (const [path, content] of overlay) {
+            if (!layer.raw && MANAGED_FILES.has(path)) {
+                throw new Error(`[sigx create] overlay "${dir}" ships managed file ${path}; contribute a fragment instead`);
+            }
+            tree.set(path, content);
         }
-        tree.set(path, content);
     }
 }
 

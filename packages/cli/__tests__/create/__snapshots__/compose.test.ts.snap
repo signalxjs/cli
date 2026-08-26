@@ -2006,6 +2006,3210 @@ export default defineConfig({
 }
 `;
 
+exports[`composeProject > ssr-bun-islands > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + islands + bun).
+
+## Getting started
+
+\`\`\`sh
+bun install
+bun run dev
+\`\`\`
+
+## Scripts
+
+- \`bun run build\` — production build
+- \`bun run start\` — run the production build
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Islands
+
+The page is static HTML; only components used with a \`client:*\` directive ship JavaScript, each hydrating on its own schedule:
+
+\`\`\`tsx
+<Counter client:load />          // hydrate immediately
+<Counter client:visible />       // when scrolled into view
+<Counter client:idle />          // when the browser is idle
+<Counter client:interaction />   // on first pointer/key/focus
+<Counter client:media="(min-width: 768px)" />
+<Counter client:only />          // skip SSR, mount fresh on the client
+\`\`\`
+
+Island components live in \`src/islands/\`. Docs: https://sigx.dev/core/docs/islands/
+
+## Deploy (Bun)
+
+\`\`\`sh
+bun run build
+bun --conditions=production server.bun.ts
+\`\`\`
+
+Bun runs the same \`dist/\` build Node would (it resolves \`node_modules\` and honors export conditions). \`server.bun.ts\` serves \`dist/client\` with \`Bun.file\` and hands everything else to the fetch handler. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "bun --conditions=production server.bun.ts"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "@sigx/ssr-islands": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/bun": "^1.2.0",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.bun.ts <==
+// The Bun production server: Bun consumes the same external \`dist/\` build
+// Node does (it resolves node_modules and honors export conditions).
+//
+//     bun --conditions=production server.bun.ts
+//
+// Request order: static assets -> server functions -> document render.
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from './dist/server/sigx-app.js';
+import { createApp } from './dist/server/entry-server.js';
+import { join, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const clientDir = resolve(fileURLToPath(new URL('./dist/client/', import.meta.url)));
+const port = Number(process.env.PORT) || 3000;
+
+const handler = createFetchHandler({
+    template,
+    app: (url: string) => createApp(url),
+    document: { assets }
+});
+
+
+Bun.serve({
+    port,
+    async fetch(request: Request): Promise<Response> {
+        const { pathname } = new URL(request.url);
+
+        // Static tier: GET/HEAD only, exact file paths only (never index.html —
+        // the raw template must not shadow the document render). The resolved
+        // prefix check guards ../ traversal.
+        if (
+            (request.method === 'GET' || request.method === 'HEAD') &&
+            pathname !== '/' &&
+            pathname !== '/index.html' &&
+            !pathname.endsWith('/')
+        ) {
+            let decoded: string | undefined;
+            try {
+                decoded = decodeURIComponent(pathname);
+            } catch {
+                // Malformed encoding — not a file path.
+            }
+            if (decoded) {
+                const filePath = resolve(join(clientDir, decoded));
+                if (filePath.startsWith(clientDir + sep)) {
+                    const file = Bun.file(filePath);
+                    if (await file.exists()) return new Response(file);
+                }
+            }
+        }
+
+
+        return handler(request);
+    }
+});
+
+console.log(\`[my-app] bun production server on http://localhost:\${port}\`);
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './islands/Counter';
+
+/**
+ * The page is a server-only component: everything outside the islands is
+ * static HTML that is never hydrated. Each \`client:*\` directive decides
+ * when that one island's JavaScript loads and runs.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Static HTML from the server. Only the counter below ships JavaScript —
+                            edit <code>src/App.tsx</code> or <code>src/islands/Counter.tsx</code>.
+                        </p>
+                        <Counter client:load />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// Registers a lazy loader per island (code-split chunks load on demand when
+// each island's hydration strategy fires).
+import 'virtual:sigx-islands';
+import { hydrateIslands } from '@sigx/ssr-islands/client';
+
+// The page itself is server-only, so the client ships no page code — just
+// this bootstrap plus per-island chunks. The hydration core loads on the
+// first \`client:*\` strategy that fires.
+hydrateIslands();
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { islandsPlugin } from '@sigx/ssr-islands';
+import { islandsManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The per-request app factory. The islands pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where islands
+ * resolve through the virtual registry). A fresh app per request keeps
+ * concurrent renders independent.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(islandsPlugin({ manifest: islandsManifest }));
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/islands/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * An island: server-rendered with its initial count, hydrated when the
+ * \`client:*\` directive on its use fires (\`client:load\` on the home page).
+ * Island state transfers automatically — the signal is keyed by its
+ * declaration name per island instance.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+}, { name: 'Counter' });
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node",
+            "bun"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxIslands } from '@sigx/vite/islands';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/ssr-islands'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        sigxIslands()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:islands",
+    "target:bun",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-bun-resume > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + resume + bun).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Resumability
+
+The page ships **no JavaScript** except a <1 kB event loader. A click loads only the handler chunk for that event; a write to a signal then loads the component chunk and hydrates that one boundary ("upgrade-on-write").
+
+- \`src/resume/\` — resumable components. Handlers may capture only named signals, props and imports (the transform extracts them into chunks).
+- \`*.server.ts\` — server functions (\`serverFn\`), callable from handlers and during SSR; the module never ships to the browser.
+- \`src/entry-server.tsx\` — \`refreshComponents\`, the registry for single-flight boundary refresh after a mutation.
+
+Docs: https://sigx.dev/core/docs/resume/
+
+## Deploy (Bun)
+
+\`\`\`sh
+pnpm build
+bun --conditions=production server.bun.ts
+\`\`\`
+
+Bun runs the same \`dist/\` build Node would (it resolves \`node_modules\` and honors export conditions). \`server.bun.ts\` serves \`dist/client\` with \`Bun.file\` and hands everything else to the fetch handler. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "bun --conditions=production server.bun.ts"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/resume": "<core>",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/bun": "^1.2.0",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.bun.ts <==
+// The Bun production server: Bun consumes the same external \`dist/\` build
+// Node does (it resolves node_modules and honors export conditions).
+//
+//     bun --conditions=production server.bun.ts
+//
+// Request order: static assets -> server functions -> document render.
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { handleServerFnRequest, matchesServerFn } from '@sigx/server/server';
+import { serverFns } from './dist/server/sigx-server-fns.js';
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { template, assets, resumeManifest } from './dist/server/sigx-app.js';
+import { createApp, refreshComponents } from './dist/server/entry-server.js';
+import { join, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const clientDir = resolve(fileURLToPath(new URL('./dist/client/', import.meta.url)));
+const port = Number(process.env.PORT) || 3000;
+
+const handler = createFetchHandler({
+    template,
+    app: (url: string) => createApp(url),
+    document: { assets }
+});
+
+// Single-flight boundary refresh: a mutation's response carries the
+// re-rendered HTML of every boundary whose data it invalidates.
+const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin({ manifest: resumeManifest })],
+    components: refreshComponents
+});
+
+Bun.serve({
+    port,
+    async fetch(request: Request): Promise<Response> {
+        const { pathname } = new URL(request.url);
+
+        // Static tier: GET/HEAD only, exact file paths only (never index.html —
+        // the raw template must not shadow the document render). The resolved
+        // prefix check guards ../ traversal.
+        if (
+            (request.method === 'GET' || request.method === 'HEAD') &&
+            pathname !== '/' &&
+            pathname !== '/index.html' &&
+            !pathname.endsWith('/')
+        ) {
+            let decoded: string | undefined;
+            try {
+                decoded = decodeURIComponent(pathname);
+            } catch {
+                // Malformed encoding — not a file path.
+            }
+            if (decoded) {
+                const filePath = resolve(join(clientDir, decoded));
+                if (filePath.startsWith(clientDir + sep)) {
+                    const file = Bun.file(filePath);
+                    if (await file.exists()) return new Response(file);
+                }
+            }
+        }
+
+        if (matchesServerFn(request)) {
+            return handleServerFnRequest(request, {
+                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                renderBoundaries
+            });
+        }
+
+        return handler(request);
+    }
+});
+
+console.log(\`[my-app] bun production server on http://localhost:\${port}\`);
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    const { createBoundaryRefresh } = await import('@sigx/resume/server');
+    const { resumePlugin } = await import('@sigx/resume');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets, resumeManifest } = await import('./dist/server/sigx-app.js');
+    const { createApp, refreshComponents } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+        // Single-flight boundary refresh: a mutation's response carries the
+        // re-rendered HTML of every boundary whose data it invalidates.
+        renderBoundaries: createBoundaryRefresh({
+            plugins: [resumePlugin({ manifest: resumeManifest })],
+            components: refreshComponents
+        })
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './resume/Counter';
+
+/**
+ * A server-only page. The browser receives HTML plus a <1 kB event loader
+ * — no page code, no component code, no framework runtime — until the
+ * first interaction.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Zero JavaScript on load. Open the network panel, then click:
+                            the handler chunk loads, the write upgrades this one component.
+                        </p>
+                        <Counter initial={0} />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/dev-refresh.ts <==
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { refreshComponents } from './entry-server';
+
+/**
+ * Dev half of single-flight boundary refresh: \`sigxServer({ renderBoundaries })\`
+ * in vite.config.ts forwards this export to the dev server-function
+ * endpoint — the same registry the production entry wires by hand.
+ */
+export const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin()],
+    components: refreshComponents
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// The ONLY script a resumable page ships: the generated loader — delegation
+// listeners for the build's event union plus lazy references to the handler
+// registry and the resume runtime, both loading on first interaction.
+import 'virtual:sigx-resume/entry';
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { resumePlugin } from '@sigx/resume';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The boundary-refresh registry: components the server re-renders after a
+ * mutation whose \`invalidates\` names data they read (single-flight
+ * boundary refresh). Add a component here to let its HTML refresh without
+ * its chunk ever loading in the browser.
+ */
+export const refreshComponents = {};
+
+/**
+ * The per-request app factory. The resume pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where QRLs
+ * resolve through the virtual registry).
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(resumePlugin({ manifest: resumeManifest }));
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/resume/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * Fully resumable: each click handler captures only the named signal, so
+ * the transform extracts it into a QRL chunk. The first click loads that
+ * tiny chunk (not this file), the write triggers upgrade-on-write, and only
+ * then does this component's chunk load and hydrate.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node",
+            "bun"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxResume } from '@sigx/vite/resume';
+import { sigxServer } from '@sigx/vite/server';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/resume', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        sigxResume(),
+        sigxServer({ renderBoundaries: '/src/dev-refresh.ts' })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:resume",
+    "target:bun",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-cloudflare > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# target:cloudflare
+.wrangler
+.dev.vars
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + hydrate + cloudflare).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+- \`pnpm deploy\` — deploy
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Deploy (Cloudflare Workers)
+
+\`\`\`sh
+pnpm build      # dist/server/entry.cloudflare.js + dist/client
+pnpm preview    # wrangler dev — run the built worker locally
+pnpm deploy     # wrangler deploy (run \`pnpm exec wrangler login\` once)
+\`\`\`
+
+\`wrangler.jsonc\` is yours: add bindings (KV, D1, R2, Durable Objects) there and read them from \`env\` in \`src/entry.cloudflare.ts\`. Day-to-day development uses the Vite dev server (\`pnpm dev\`); \`wrangler dev\` runs the real worker over the production build.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "preview": "wrangler dev",
+        "deploy": "wrangler deploy"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server-renderer": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/cloudflare": "<core>",
+        "@sigx/vite": "<core>",
+        "@cloudflare/workers-types": "^4.20250801.0",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12",
+        "wrangler": "^4.0.0"
+    }
+}
+",
+    "==> pnpm-workspace.yaml <==
+# pnpm settings for this project (a single-package "workspace").
+# Dependencies allowed to run install scripts — pnpm ignores them otherwise
+# (and pnpm 11 fails the install). Both spellings: pnpm 11 reads allowBuilds,
+# older pnpm 10 reads onlyBuiltDependencies.
+allowBuilds:
+  esbuild: true
+  workerd: true
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { ssrClientPlugin } from '@sigx/server-renderer/client';
+import { App } from './App';
+
+// Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
+// ssrClientPlugin (declared optional on App, hence the \`!\`).
+defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+/**
+ * The per-request app factory. Both request handlers consume this export —
+ * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
+ * production — and each call builds a FRESH app, so nothing is shared
+ * between concurrent requests. \`url\` is the requested path, for routing.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />);
+}
+",
+    "==> src/entry.cloudflare.ts <==
+// The Cloudflare Worker entry. Static assets never reach this code —
+// wrangler's \`assets\` config (wrangler.jsonc) serves matching files before
+// the worker runs. What is left, in order:
+//
+//     server functions  ->  document render
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from 'virtual:sigx-app';
+import { createApp } from './entry-server';
+
+const handler = createFetchHandler({
+    template,
+    app: (url) => createApp(url),
+    document: { assets }
+});
+
+
+export default {
+    async fetch(request: Request): Promise<Response> {
+        return handler(request);
+    }
+};
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node",
+            "@cloudflare/workers-types"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { cloudflare } from '@sigx/cloudflare';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: cloudflare() } })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+    "==> wrangler.jsonc <==
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "my-app",
+    "main": "dist/server/entry.cloudflare.js",
+    "compatibility_date": "2026-08-01",
+    // node:async_hooks carries the request into server functions called during SSR.
+    "compatibility_flags": ["nodejs_compat"],
+    "assets": {
+        "directory": "dist/client",
+        // Never serve the raw index.html template — the worker renders the document.
+        "html_handling": "none"
+    }
+}
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "target:cloudflare",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-cloudflare-resume-tailwind > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# target:cloudflare
+.wrangler
+.dev.vars
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + resume + cloudflare + tailwind).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+- \`pnpm deploy\` — deploy
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Resumability
+
+The page ships **no JavaScript** except a <1 kB event loader. A click loads only the handler chunk for that event; a write to a signal then loads the component chunk and hydrates that one boundary ("upgrade-on-write").
+
+- \`src/resume/\` — resumable components. Handlers may capture only named signals, props and imports (the transform extracts them into chunks).
+- \`*.server.ts\` — server functions (\`serverFn\`), callable from handlers and during SSR; the module never ships to the browser.
+- \`src/entry-server.tsx\` — \`refreshComponents\`, the registry for single-flight boundary refresh after a mutation.
+
+Docs: https://sigx.dev/core/docs/resume/
+
+## Styling
+
+Tailwind CSS 4 via \`@tailwindcss/vite\` — no config file needed. \`src/styles.css\` imports Tailwind and defines the starter's component classes with \`@apply\`.
+
+## Deploy (Cloudflare Workers)
+
+\`\`\`sh
+pnpm build      # dist/server/entry.cloudflare.js + dist/client
+pnpm preview    # wrangler dev — run the built worker locally
+pnpm deploy     # wrangler deploy (run \`pnpm exec wrangler login\` once)
+\`\`\`
+
+\`wrangler.jsonc\` is yours: add bindings (KV, D1, R2, Durable Objects) there and read them from \`env\` in \`src/entry.cloudflare.ts\`. Day-to-day development uses the Vite dev server (\`pnpm dev\`); \`wrangler dev\` runs the real worker over the production build.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "preview": "wrangler dev",
+        "deploy": "wrangler deploy"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/resume": "<core>",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/cloudflare": "<core>",
+        "@sigx/vite": "<core>",
+        "@cloudflare/workers-types": "^4.20250801.0",
+        "@tailwindcss/vite": "^4.1.0",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "tailwindcss": "^4.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12",
+        "wrangler": "^4.0.0"
+    }
+}
+",
+    "==> pnpm-workspace.yaml <==
+# pnpm settings for this project (a single-package "workspace").
+# Dependencies allowed to run install scripts — pnpm ignores them otherwise
+# (and pnpm 11 fails the install). Both spellings: pnpm 11 reads allowBuilds,
+# older pnpm 10 reads onlyBuiltDependencies.
+allowBuilds:
+  esbuild: true
+  workerd: true
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    const { createBoundaryRefresh } = await import('@sigx/resume/server');
+    const { resumePlugin } = await import('@sigx/resume');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets, resumeManifest } = await import('./dist/server/sigx-app.js');
+    const { createApp, refreshComponents } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+        // Single-flight boundary refresh: a mutation's response carries the
+        // re-rendered HTML of every boundary whose data it invalidates.
+        renderBoundaries: createBoundaryRefresh({
+            plugins: [resumePlugin({ manifest: resumeManifest })],
+            components: refreshComponents
+        })
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './resume/Counter';
+
+/**
+ * A server-only page. The browser receives HTML plus a <1 kB event loader
+ * — no page code, no component code, no framework runtime — until the
+ * first interaction.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Zero JavaScript on load. Open the network panel, then click:
+                            the handler chunk loads, the write upgrades this one component.
+                        </p>
+                        <Counter initial={0} />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/dev-refresh.ts <==
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { refreshComponents } from './entry-server';
+
+/**
+ * Dev half of single-flight boundary refresh: \`sigxServer({ renderBoundaries })\`
+ * in vite.config.ts forwards this export to the dev server-function
+ * endpoint — the same registry the production entry wires by hand.
+ */
+export const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin()],
+    components: refreshComponents
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// The ONLY script a resumable page ships: the generated loader — delegation
+// listeners for the build's event union plus lazy references to the handler
+// registry and the resume runtime, both loading on first interaction.
+import 'virtual:sigx-resume/entry';
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { resumePlugin } from '@sigx/resume';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The boundary-refresh registry: components the server re-renders after a
+ * mutation whose \`invalidates\` names data they read (single-flight
+ * boundary refresh). Add a component here to let its HTML refresh without
+ * its chunk ever loading in the browser.
+ */
+export const refreshComponents = {};
+
+/**
+ * The per-request app factory. The resume pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where QRLs
+ * resolve through the virtual registry).
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(resumePlugin({ manifest: resumeManifest }));
+}
+",
+    "==> src/entry.cloudflare.ts <==
+// The Cloudflare Worker entry. Static assets never reach this code —
+// wrangler's \`assets\` config (wrangler.jsonc) serves matching files before
+// the worker runs. What is left, in order:
+//
+//     server functions  ->  document render
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from 'virtual:sigx-app';
+import { handleServerFnRequest, matchesServerFn } from '@sigx/server/server';
+import { serverFns, serverFnBase } from 'virtual:sigx-server-fns';
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { createApp, refreshComponents } from './entry-server';
+
+const handler = createFetchHandler({
+    template,
+    app: (url) => createApp(url),
+    document: { assets }
+});
+
+// Single-flight boundary refresh: a mutation's response carries the
+// re-rendered HTML of every boundary whose data it invalidates. Built once
+// per isolate with the same plugin set the page rendered with.
+const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin({ manifest: resumeManifest })],
+    components: refreshComponents
+});
+
+export default {
+    async fetch(request: Request): Promise<Response> {
+        if (matchesServerFn(request, serverFnBase)) {
+            return handleServerFnRequest(request, {
+                // The build's own mount path, so router and handler cannot disagree.
+                base: serverFnBase,
+                // The registry is passed explicitly, never ambient.
+                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                renderBoundaries
+            });
+        }
+        return handler(request);
+    }
+};
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/resume/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * Fully resumable: each click handler captures only the named signal, so
+ * the transform extracts it into a QRL chunk. The first click loads that
+ * tiny chunk (not this file), the write triggers upgrade-on-write, and only
+ * then does this component's chunk load and hydrate.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/styles.css <==
+@import "tailwindcss";
+
+/* The starter's component classes, expressed with Tailwind utilities. Replace
+   them with utilities in your markup as you go — nothing else depends on them. */
+@layer components {
+    .app { @apply min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100; }
+    .app-header { @apply flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800; }
+    .brand { @apply font-bold text-lg; }
+    .nav { @apply flex gap-4; }
+    .link { @apply text-indigo-600 hover:underline dark:text-indigo-400; }
+    .app-main { @apply flex-1 grid place-items-center px-4 py-8; }
+    .app-footer { @apply text-center text-sm py-4; }
+    .card { @apply w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-lg dark:bg-slate-900 dark:border-slate-800; }
+    .card-body { @apply p-8 text-center; }
+    .card-title { @apply text-2xl font-semibold mb-2; }
+    .muted { @apply text-slate-500 dark:text-slate-400 mb-6; }
+    .counter { @apply flex items-center justify-center gap-4; }
+    .btn { @apply cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 transition hover:brightness-95 dark:bg-slate-800 dark:border-slate-700; }
+    .btn-primary { @apply bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700; }
+    .btn-ghost { @apply bg-transparent; }
+    .badge { @apply inline-block min-w-14 rounded-full bg-indigo-100 px-3 py-1 font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300; }
+    .badge-lg { @apply text-xl; }
+    .prose { @apply max-w-2xl w-full block; }
+    .prose h1 { @apply text-3xl font-bold mb-4; }
+    .prose p, .prose li { @apply mb-2; }
+    .prose ul { @apply list-disc pl-6; }
+    code { @apply rounded bg-slate-200 px-1 py-0.5 text-[0.92em] dark:bg-slate-800; }
+}
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node",
+            "@cloudflare/workers-types"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxResume } from '@sigx/vite/resume';
+import { sigxServer } from '@sigx/vite/server';
+import tailwindcss from '@tailwindcss/vite';
+import { cloudflare } from '@sigx/cloudflare';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/resume', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: cloudflare() } }),
+        sigxResume(),
+        sigxServer({ renderBoundaries: '/src/dev-refresh.ts' }),
+        tailwindcss()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+    "==> wrangler.jsonc <==
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "my-app",
+    "main": "dist/server/entry.cloudflare.js",
+    "compatibility_date": "2026-08-01",
+    // node:async_hooks carries the request into server functions called during SSR.
+    "compatibility_flags": ["nodejs_compat"],
+    "assets": {
+        "directory": "dist/client",
+        // Never serve the raw index.html template — the worker renders the document.
+        "html_handling": "none"
+    }
+}
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:resume",
+    "target:cloudflare",
+    "styling:tailwind",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-deno > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + hydrate + deno).
+
+## Getting started
+
+\`\`\`sh
+deno install
+deno task dev
+\`\`\`
+
+## Scripts
+
+- \`deno task build\` — production build
+- \`deno task start\` — run the production build
+- \`deno task deploy\` — deploy
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Deploy (Deno / Deno Deploy)
+
+\`\`\`sh
+deno task build
+deno run --allow-net --allow-read --allow-env dist/server/entry.deno.js
+deno deploy      # Deno Deploy
+\`\`\`
+
+The server build is fully bundled with the \`deno\` condition; only \`jsr:\` imports stay external and resolve at runtime. \`deno.json\` carries the same tasks for Deno users; day-to-day development runs on the Vite dev server (\`deno task dev\`).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> deno.json <==
+{
+    "nodeModulesDir": "auto",
+    "tasks": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "deno run --allow-net --allow-read --allow-env dist/server/entry.deno.js",
+        "deploy": "deno deploy"
+    }
+}
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "deno run --allow-net --allow-read --allow-env dist/server/entry.deno.js",
+        "deploy": "deno deploy"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server-renderer": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { ssrClientPlugin } from '@sigx/server-renderer/client';
+import { App } from './App';
+
+// Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
+// ssrClientPlugin (declared optional on App, hence the \`!\`).
+defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+/**
+ * The per-request app factory. Both request handlers consume this export —
+ * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
+ * production — and each call builds a FRESH app, so nothing is shared
+ * between concurrent requests. \`url\` is the requested path, for routing.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />);
+}
+",
+    "==> src/entry.deno.ts <==
+// The Deno entry — bundled by the build (deno.json / package.json \`start\`):
+//
+//     deno run --allow-net --allow-read --allow-env dist/server/entry.deno.js
+//
+// Request order: static assets -> server functions -> document render.
+import { serveDir } from 'jsr:@std/http@^1.0.0/file-server';
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from 'virtual:sigx-app';
+import { createApp } from './entry-server';
+
+const handler = createFetchHandler({
+    template,
+    app: (url) => createApp(url),
+    document: { assets }
+});
+
+
+Deno.serve({ port: Number(Deno.env.get('PORT')) || 8000 }, async (request: Request): Promise<Response> => {
+    const { pathname } = new URL(request.url);
+    // Static tier: GET/HEAD only, never the raw index.html template.
+    if ((request.method === 'GET' || request.method === 'HEAD') && pathname !== '/index.html') {
+        const res = await serveDir(request, { fsRoot: 'dist/client', quiet: true, showIndex: false });
+        if (res.status !== 404) return res;
+    }
+    return handler(request);
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+
+declare module 'jsr:@std/http@^1.0.0/file-server' {
+    export function serveDir(
+        request: Request,
+        options?: { fsRoot?: string; urlRoot?: string; quiet?: boolean; showIndex?: boolean }
+    ): Promise<Response>;
+}
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "src/entry.deno.ts"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: {
+                    name: 'deno',
+                    serverBuild: 'bundled',
+                    conditions: ['deno'],
+                    runtimeExternal: [/^jsr:/],
+                    entry: 'src/entry.deno.ts'
+                } } })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "target:deno",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-deno-resume > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + resume + deno).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+- \`pnpm deploy\` — deploy
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Resumability
+
+The page ships **no JavaScript** except a <1 kB event loader. A click loads only the handler chunk for that event; a write to a signal then loads the component chunk and hydrates that one boundary ("upgrade-on-write").
+
+- \`src/resume/\` — resumable components. Handlers may capture only named signals, props and imports (the transform extracts them into chunks).
+- \`*.server.ts\` — server functions (\`serverFn\`), callable from handlers and during SSR; the module never ships to the browser.
+- \`src/entry-server.tsx\` — \`refreshComponents\`, the registry for single-flight boundary refresh after a mutation.
+
+Docs: https://sigx.dev/core/docs/resume/
+
+## Deploy (Deno / Deno Deploy)
+
+\`\`\`sh
+pnpm build
+deno run --allow-net --allow-read --allow-env dist/server/entry.deno.js
+deno deploy      # Deno Deploy
+\`\`\`
+
+The server build is fully bundled with the \`deno\` condition; only \`jsr:\` imports stay external and resolve at runtime. \`deno.json\` carries the same tasks for Deno users; day-to-day development runs on the Vite dev server (\`pnpm dev\`).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> deno.json <==
+{
+    "nodeModulesDir": "auto",
+    "tasks": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "deno run --allow-net --allow-read --allow-env dist/server/entry.deno.js",
+        "deploy": "deno deploy"
+    }
+}
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "deno run --allow-net --allow-read --allow-env dist/server/entry.deno.js",
+        "deploy": "deno deploy"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/resume": "<core>",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    const { createBoundaryRefresh } = await import('@sigx/resume/server');
+    const { resumePlugin } = await import('@sigx/resume');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets, resumeManifest } = await import('./dist/server/sigx-app.js');
+    const { createApp, refreshComponents } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+        // Single-flight boundary refresh: a mutation's response carries the
+        // re-rendered HTML of every boundary whose data it invalidates.
+        renderBoundaries: createBoundaryRefresh({
+            plugins: [resumePlugin({ manifest: resumeManifest })],
+            components: refreshComponents
+        })
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './resume/Counter';
+
+/**
+ * A server-only page. The browser receives HTML plus a <1 kB event loader
+ * — no page code, no component code, no framework runtime — until the
+ * first interaction.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Zero JavaScript on load. Open the network panel, then click:
+                            the handler chunk loads, the write upgrades this one component.
+                        </p>
+                        <Counter initial={0} />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/dev-refresh.ts <==
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { refreshComponents } from './entry-server';
+
+/**
+ * Dev half of single-flight boundary refresh: \`sigxServer({ renderBoundaries })\`
+ * in vite.config.ts forwards this export to the dev server-function
+ * endpoint — the same registry the production entry wires by hand.
+ */
+export const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin()],
+    components: refreshComponents
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// The ONLY script a resumable page ships: the generated loader — delegation
+// listeners for the build's event union plus lazy references to the handler
+// registry and the resume runtime, both loading on first interaction.
+import 'virtual:sigx-resume/entry';
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { resumePlugin } from '@sigx/resume';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The boundary-refresh registry: components the server re-renders after a
+ * mutation whose \`invalidates\` names data they read (single-flight
+ * boundary refresh). Add a component here to let its HTML refresh without
+ * its chunk ever loading in the browser.
+ */
+export const refreshComponents = {};
+
+/**
+ * The per-request app factory. The resume pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where QRLs
+ * resolve through the virtual registry).
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(resumePlugin({ manifest: resumeManifest }));
+}
+",
+    "==> src/entry.deno.ts <==
+// The Deno entry — bundled by the build (deno.json / package.json \`start\`):
+//
+//     deno run --allow-net --allow-read --allow-env dist/server/entry.deno.js
+//
+// Request order: static assets -> server functions -> document render.
+import { serveDir } from 'jsr:@std/http@^1.0.0/file-server';
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from 'virtual:sigx-app';
+import { handleServerFnRequest, matchesServerFn } from '@sigx/server/server';
+import { serverFns, serverFnBase } from 'virtual:sigx-server-fns';
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { createApp, refreshComponents } from './entry-server';
+
+const handler = createFetchHandler({
+    template,
+    app: (url) => createApp(url),
+    document: { assets }
+});
+
+const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin({ manifest: resumeManifest })],
+    components: refreshComponents
+});
+
+Deno.serve({ port: Number(Deno.env.get('PORT')) || 8000 }, async (request: Request): Promise<Response> => {
+    const { pathname } = new URL(request.url);
+    // Static tier: GET/HEAD only, never the raw index.html template.
+    if ((request.method === 'GET' || request.method === 'HEAD') && pathname !== '/index.html') {
+        const res = await serveDir(request, { fsRoot: 'dist/client', quiet: true, showIndex: false });
+        if (res.status !== 404) return res;
+    }
+    if (matchesServerFn(request, serverFnBase)) {
+        return handleServerFnRequest(request, {
+            base: serverFnBase,
+            resolve: (symbol) => serverFns[symbol]?.() ?? null,
+            renderBoundaries
+        });
+    }
+    return handler(request);
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+
+declare module 'jsr:@std/http@^1.0.0/file-server' {
+    export function serveDir(
+        request: Request,
+        options?: { fsRoot?: string; urlRoot?: string; quiet?: boolean; showIndex?: boolean }
+    ): Promise<Response>;
+}
+",
+    "==> src/resume/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * Fully resumable: each click handler captures only the named signal, so
+ * the transform extracts it into a QRL chunk. The first click loads that
+ * tiny chunk (not this file), the write triggers upgrade-on-write, and only
+ * then does this component's chunk load and hydrate.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "src/entry.deno.ts"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxResume } from '@sigx/vite/resume';
+import { sigxServer } from '@sigx/vite/server';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/resume', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: {
+                    name: 'deno',
+                    serverBuild: 'bundled',
+                    conditions: ['deno'],
+                    runtimeExternal: [/^jsr:/],
+                    entry: 'src/entry.deno.ts'
+                } } }),
+        sigxResume(),
+        sigxServer({ renderBoundaries: '/src/dev-refresh.ts' })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:resume",
+    "target:deno",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-netlify-islands > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# target:netlify
+.netlify
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + islands + netlify).
+
+## Getting started
+
+\`\`\`sh
+npm install
+npm run dev
+\`\`\`
+
+## Scripts
+
+- \`npm run build\` — production build
+- \`npm run deploy\` — deploy
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Islands
+
+The page is static HTML; only components used with a \`client:*\` directive ship JavaScript, each hydrating on its own schedule:
+
+\`\`\`tsx
+<Counter client:load />          // hydrate immediately
+<Counter client:visible />       // when scrolled into view
+<Counter client:idle />          // when the browser is idle
+<Counter client:interaction />   // on first pointer/key/focus
+<Counter client:media="(min-width: 768px)" />
+<Counter client:only />          // skip SSR, mount fresh on the client
+\`\`\`
+
+Island components live in \`src/islands/\`. Docs: https://sigx.dev/core/docs/islands/
+
+## Deploy (Netlify)
+
+\`\`\`sh
+npm run build                # dist/client + .netlify/v1/functions/sigx-ssr
+npx netlify link        # once
+npm run deploy               # netlify deploy --prod --no-build
+\`\`\`
+
+Or connect the repository in Netlify — \`netlify.toml\` already sets the build command and publish directory. Day-to-day development runs on the Vite dev server (\`npm run dev\`).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> netlify.toml <==
+# The SSR function needs no entry here: it ships through the Frameworks API
+# channel (.netlify/v1/functions, written by the build).
+[build]
+  publish = "dist/client"
+  command = "npm run build"
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "deploy": "netlify deploy --prod --no-build"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "@sigx/ssr-islands": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/netlify": "<core>",
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './islands/Counter';
+
+/**
+ * The page is a server-only component: everything outside the islands is
+ * static HTML that is never hydrated. Each \`client:*\` directive decides
+ * when that one island's JavaScript loads and runs.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Static HTML from the server. Only the counter below ships JavaScript —
+                            edit <code>src/App.tsx</code> or <code>src/islands/Counter.tsx</code>.
+                        </p>
+                        <Counter client:load />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// Registers a lazy loader per island (code-split chunks load on demand when
+// each island's hydration strategy fires).
+import 'virtual:sigx-islands';
+import { hydrateIslands } from '@sigx/ssr-islands/client';
+
+// The page itself is server-only, so the client ships no page code — just
+// this bootstrap plus per-island chunks. The hydration core loads on the
+// first \`client:*\` strategy that fires.
+hydrateIslands();
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { islandsPlugin } from '@sigx/ssr-islands';
+import { islandsManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The per-request app factory. The islands pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where islands
+ * resolve through the virtual registry). A fresh app per request keeps
+ * concurrent renders independent.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(islandsPlugin({ manifest: islandsManifest }));
+}
+",
+    "==> src/entry.netlify.ts <==
+// The Netlify function entry. Static assets never reach this code —
+// the generated function config sets preferStatic, so CDN files win before
+// the catch-all runs. What is left, in order:
+//
+//     server functions  ->  document render
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from 'virtual:sigx-app';
+import { createApp } from './entry-server';
+
+const handler = createFetchHandler({
+    template,
+    app: (url) => createApp(url),
+    document: { assets }
+});
+
+
+export default {
+    async fetch(request: Request): Promise<Response> {
+        return handler(request);
+    }
+};
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/islands/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * An island: server-rendered with its initial count, hydrated when the
+ * \`client:*\` directive on its use fires (\`client:load\` on the home page).
+ * Island state transfers automatically — the signal is keyed by its
+ * declaration name per island instance.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+}, { name: 'Counter' });
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxIslands } from '@sigx/vite/islands';
+import { netlify } from '@sigx/netlify';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/ssr-islands'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: netlify() } }),
+        sigxIslands()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:islands",
+    "target:netlify",
+  ],
+}
+`;
+
 exports[`composeProject > ssr-node > matches the snapshot 1`] = `
 {
   "files": [
@@ -2136,6 +5340,7 @@ if (!isProd) {
         server: { middlewareMode: true },
         appType: 'custom'
     });
+    // In dev, Vite's middleware also carries the server-function endpoint.
     app.use(vite.middlewares);
     app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
 } else {
@@ -2507,6 +5712,7 @@ if (!isProd) {
         server: { middlewareMode: true },
         appType: 'custom'
     });
+    // In dev, Vite's middleware also carries the server-function endpoint.
     app.use(vite.middlewares);
     app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
 } else {
@@ -2676,6 +5882,839 @@ export default defineConfig(({ command }) => ({
 }
 `;
 
+exports[`composeProject > ssr-node-islands > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + islands + node).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Islands
+
+The page is static HTML; only components used with a \`client:*\` directive ship JavaScript, each hydrating on its own schedule:
+
+\`\`\`tsx
+<Counter client:load />          // hydrate immediately
+<Counter client:visible />       // when scrolled into view
+<Counter client:idle />          // when the browser is idle
+<Counter client:interaction />   // on first pointer/key/focus
+<Counter client:media="(min-width: 768px)" />
+<Counter client:only />          // skip SSR, mount fresh on the client
+\`\`\`
+
+Island components live in \`src/islands/\`. Docs: https://sigx.dev/core/docs/islands/
+
+## Deploy (Node)
+
+\`pnpm build\` writes \`dist/client\` (static assets) and \`dist/server\` (the externalized server build). Run it with:
+
+\`\`\`sh
+NODE_ENV=production node --conditions production server.mjs
+\`\`\`
+
+Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json\` and install production dependencies. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "cross-env NODE_ENV=production node --conditions production server.mjs"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "@sigx/ssr-islands": "<core>",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "cross-env": "^10.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './islands/Counter';
+
+/**
+ * The page is a server-only component: everything outside the islands is
+ * static HTML that is never hydrated. Each \`client:*\` directive decides
+ * when that one island's JavaScript loads and runs.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Static HTML from the server. Only the counter below ships JavaScript —
+                            edit <code>src/App.tsx</code> or <code>src/islands/Counter.tsx</code>.
+                        </p>
+                        <Counter client:load />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// Registers a lazy loader per island (code-split chunks load on demand when
+// each island's hydration strategy fires).
+import 'virtual:sigx-islands';
+import { hydrateIslands } from '@sigx/ssr-islands/client';
+
+// The page itself is server-only, so the client ships no page code — just
+// this bootstrap plus per-island chunks. The hydration core loads on the
+// first \`client:*\` strategy that fires.
+hydrateIslands();
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { islandsPlugin } from '@sigx/ssr-islands';
+import { islandsManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The per-request app factory. The islands pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where islands
+ * resolve through the virtual registry). A fresh app per request keeps
+ * concurrent renders independent.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(islandsPlugin({ manifest: islandsManifest }));
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/islands/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * An island: server-rendered with its initial count, hydrated when the
+ * \`client:*\` directive on its use fires (\`client:load\` on the home page).
+ * Island state transfers automatically — the signal is keyed by its
+ * declaration name per island instance.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+}, { name: 'Counter' });
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxIslands } from '@sigx/vite/islands';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/ssr-islands'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        sigxIslands()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:islands",
+    "target:node",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-node-resume > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + resume + node).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Resumability
+
+The page ships **no JavaScript** except a <1 kB event loader. A click loads only the handler chunk for that event; a write to a signal then loads the component chunk and hydrates that one boundary ("upgrade-on-write").
+
+- \`src/resume/\` — resumable components. Handlers may capture only named signals, props and imports (the transform extracts them into chunks).
+- \`*.server.ts\` — server functions (\`serverFn\`), callable from handlers and during SSR; the module never ships to the browser.
+- \`src/entry-server.tsx\` — \`refreshComponents\`, the registry for single-flight boundary refresh after a mutation.
+
+Docs: https://sigx.dev/core/docs/resume/
+
+## Deploy (Node)
+
+\`pnpm build\` writes \`dist/client\` (static assets) and \`dist/server\` (the externalized server build). Run it with:
+
+\`\`\`sh
+NODE_ENV=production node --conditions production server.mjs
+\`\`\`
+
+Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json\` and install production dependencies. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "cross-env NODE_ENV=production node --conditions production server.mjs"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/resume": "<core>",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "cross-env": "^10.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    const { createBoundaryRefresh } = await import('@sigx/resume/server');
+    const { resumePlugin } = await import('@sigx/resume');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets, resumeManifest } = await import('./dist/server/sigx-app.js');
+    const { createApp, refreshComponents } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+        // Single-flight boundary refresh: a mutation's response carries the
+        // re-rendered HTML of every boundary whose data it invalidates.
+        renderBoundaries: createBoundaryRefresh({
+            plugins: [resumePlugin({ manifest: resumeManifest })],
+            components: refreshComponents
+        })
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './resume/Counter';
+
+/**
+ * A server-only page. The browser receives HTML plus a <1 kB event loader
+ * — no page code, no component code, no framework runtime — until the
+ * first interaction.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Zero JavaScript on load. Open the network panel, then click:
+                            the handler chunk loads, the write upgrades this one component.
+                        </p>
+                        <Counter initial={0} />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/dev-refresh.ts <==
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { refreshComponents } from './entry-server';
+
+/**
+ * Dev half of single-flight boundary refresh: \`sigxServer({ renderBoundaries })\`
+ * in vite.config.ts forwards this export to the dev server-function
+ * endpoint — the same registry the production entry wires by hand.
+ */
+export const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin()],
+    components: refreshComponents
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// The ONLY script a resumable page ships: the generated loader — delegation
+// listeners for the build's event union plus lazy references to the handler
+// registry and the resume runtime, both loading on first interaction.
+import 'virtual:sigx-resume/entry';
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { resumePlugin } from '@sigx/resume';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The boundary-refresh registry: components the server re-renders after a
+ * mutation whose \`invalidates\` names data they read (single-flight
+ * boundary refresh). Add a component here to let its HTML refresh without
+ * its chunk ever loading in the browser.
+ */
+export const refreshComponents = {};
+
+/**
+ * The per-request app factory. The resume pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where QRLs
+ * resolve through the virtual registry).
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(resumePlugin({ manifest: resumeManifest }));
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/resume/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * Fully resumable: each click handler captures only the named signal, so
+ * the transform extracts it into a QRL chunk. The first click loads that
+ * tiny chunk (not this file), the write triggers upgrade-on-write, and only
+ * then does this component's chunk load and hydrate.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxResume } from '@sigx/vite/resume';
+import { sigxServer } from '@sigx/vite/server';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/resume', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        sigxResume(),
+        sigxServer({ renderBoundaries: '/src/dev-refresh.ts' })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:resume",
+    "target:node",
+  ],
+}
+`;
+
 exports[`composeProject > ssr-node-tailwind-bun > matches the snapshot 1`] = `
 {
   "files": [
@@ -2812,6 +6851,7 @@ if (!isProd) {
         server: { middlewareMode: true },
         appType: 'custom'
     });
+    // In dev, Vite's middleware also carries the server-function endpoint.
     app.use(vite.middlewares);
     app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
 } else {
@@ -2979,6 +7019,878 @@ export default defineConfig(({ command }) => ({
     "ssr",
     "target:node",
     "styling:tailwind",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-vercel > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# target:vercel
+.vercel
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + hydrate + vercel).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm deploy\` — deploy
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Deploy (Vercel)
+
+\`\`\`sh
+pnpm build                # writes .vercel/output (Build Output API v3)
+pnpm exec vercel link          # once
+pnpm deploy               # vercel deploy --prebuilt
+\`\`\`
+
+The function runs on the Node runtime; switch to \`vercel({ runtime: 'edge' })\` in \`vite.config.ts\` for the Edge runtime.
+
+Day-to-day development runs on the Vite dev server (\`pnpm dev\`).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "deploy": "vercel deploy --prebuilt"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server-renderer": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/vercel": "<core>",
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <div class="counter">
+                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                            <span class="badge badge-primary badge-lg">{state.count}</span>
+                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { ssrClientPlugin } from '@sigx/server-renderer/client';
+import { App } from './App';
+
+// Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
+// ssrClientPlugin (declared optional on App, hence the \`!\`).
+defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+/**
+ * The per-request app factory. Both request handlers consume this export —
+ * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
+ * production — and each call builds a FRESH app, so nothing is shared
+ * between concurrent requests. \`url\` is the requested path, for routing.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />);
+}
+",
+    "==> src/entry.vercel.ts <==
+// The Vercel function entry. Static assets never reach this code —
+// the generated Build Output config serves \`static/\` before the function
+// runs. What is left, in order:
+//
+//     server functions  ->  document render
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from 'virtual:sigx-app';
+import { createApp } from './entry-server';
+
+const handler = createFetchHandler({
+    template,
+    app: (url) => createApp(url),
+    document: { assets }
+});
+
+
+export default {
+    async fetch(request: Request): Promise<Response> {
+        return handler(request);
+    }
+};
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { vercel } from '@sigx/vercel';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: vercel() } })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "target:vercel",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-vercel-edge-resume > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# target:vercel-edge
+.vercel
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + resume + vercel-edge).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm deploy\` — deploy
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Resumability
+
+The page ships **no JavaScript** except a <1 kB event loader. A click loads only the handler chunk for that event; a write to a signal then loads the component chunk and hydrates that one boundary ("upgrade-on-write").
+
+- \`src/resume/\` — resumable components. Handlers may capture only named signals, props and imports (the transform extracts them into chunks).
+- \`*.server.ts\` — server functions (\`serverFn\`), callable from handlers and during SSR; the module never ships to the browser.
+- \`src/entry-server.tsx\` — \`refreshComponents\`, the registry for single-flight boundary refresh after a mutation.
+
+Docs: https://sigx.dev/core/docs/resume/
+
+## Deploy (Vercel, Edge runtime)
+
+\`\`\`sh
+pnpm build                # writes .vercel/output (Build Output API v3)
+pnpm exec vercel link          # once
+pnpm deploy               # vercel deploy --prebuilt
+\`\`\`
+
+The function runs on the Edge runtime (\`edge-light\` + \`worker\` conditions): no Node built-ins, no filesystem — keep server code to Web APIs.
+
+Day-to-day development runs on the Vite dev server (\`pnpm dev\`).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "deploy": "vercel deploy --prebuilt"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/resume": "<core>",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/vercel": "<core>",
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    const { createBoundaryRefresh } = await import('@sigx/resume/server');
+    const { resumePlugin } = await import('@sigx/resume');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets, resumeManifest } = await import('./dist/server/sigx-app.js');
+    const { createApp, refreshComponents } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+        // Single-flight boundary refresh: a mutation's response carries the
+        // re-rendered HTML of every boundary whose data it invalidates.
+        renderBoundaries: createBoundaryRefresh({
+            plugins: [resumePlugin({ manifest: resumeManifest })],
+            components: refreshComponents
+        })
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './resume/Counter';
+
+/**
+ * A server-only page. The browser receives HTML plus a <1 kB event loader
+ * — no page code, no component code, no framework runtime — until the
+ * first interaction.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Zero JavaScript on load. Open the network panel, then click:
+                            the handler chunk loads, the write upgrades this one component.
+                        </p>
+                        <Counter initial={0} />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/dev-refresh.ts <==
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { refreshComponents } from './entry-server';
+
+/**
+ * Dev half of single-flight boundary refresh: \`sigxServer({ renderBoundaries })\`
+ * in vite.config.ts forwards this export to the dev server-function
+ * endpoint — the same registry the production entry wires by hand.
+ */
+export const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin()],
+    components: refreshComponents
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// The ONLY script a resumable page ships: the generated loader — delegation
+// listeners for the build's event union plus lazy references to the handler
+// registry and the resume runtime, both loading on first interaction.
+import 'virtual:sigx-resume/entry';
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { resumePlugin } from '@sigx/resume';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The boundary-refresh registry: components the server re-renders after a
+ * mutation whose \`invalidates\` names data they read (single-flight
+ * boundary refresh). Add a component here to let its HTML refresh without
+ * its chunk ever loading in the browser.
+ */
+export const refreshComponents = {};
+
+/**
+ * The per-request app factory. The resume pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where QRLs
+ * resolve through the virtual registry).
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(resumePlugin({ manifest: resumeManifest }));
+}
+",
+    "==> src/entry.vercel.ts <==
+// The Vercel function entry. Static assets never reach this code —
+// the generated Build Output config serves \`static/\` before the function
+// runs. What is left, in order:
+//
+//     server functions  ->  document render
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from 'virtual:sigx-app';
+import { handleServerFnRequest, matchesServerFn } from '@sigx/server/server';
+import { serverFns, serverFnBase } from 'virtual:sigx-server-fns';
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { createApp, refreshComponents } from './entry-server';
+
+const handler = createFetchHandler({
+    template,
+    app: (url) => createApp(url),
+    document: { assets }
+});
+
+// Single-flight boundary refresh: a mutation's response carries the
+// re-rendered HTML of every boundary whose data it invalidates. Built once
+// per isolate with the same plugin set the page rendered with.
+const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin({ manifest: resumeManifest })],
+    components: refreshComponents
+});
+
+export default {
+    async fetch(request: Request): Promise<Response> {
+        if (matchesServerFn(request, serverFnBase)) {
+            return handleServerFnRequest(request, {
+                // The build's own mount path, so router and handler cannot disagree.
+                base: serverFnBase,
+                // The registry is passed explicitly, never ambient.
+                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                renderBoundaries
+            });
+        }
+        return handler(request);
+    }
+};
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/resume/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * Fully resumable: each click handler captures only the named signal, so
+ * the transform extracts it into a QRL chunk. The first click loads that
+ * tiny chunk (not this file), the write triggers upgrade-on-write, and only
+ * then does this component's chunk load and hydrate.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxResume } from '@sigx/vite/resume';
+import { sigxServer } from '@sigx/vite/server';
+import { vercel } from '@sigx/vercel';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/resume', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: vercel({ runtime: 'edge' }) } }),
+        sigxResume(),
+        sigxServer({ renderBoundaries: '/src/dev-refresh.ts' })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:resume",
+    "target:vercel-edge",
   ],
 }
 `;
