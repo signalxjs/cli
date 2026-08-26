@@ -20,11 +20,11 @@ const cliDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = join(cliDir, 'dist', 'cli.js');
 const isWin = process.platform === 'win32';
 
-const SPECS: Array<[string, string[], { build?: boolean; artifacts: string[] }]> = [
-    ['spa-tailwind', ['--type', 'basic', '--styling', 'tailwind'], { build: true, artifacts: ['dist/index.html'] }],
-    ['ssr-node', ['--type', 'ssr'], { build: true, artifacts: ['dist/server/sigx-app.js', 'dist/server/entry-server.js', 'dist/client/index.html'] }],
+const SPECS: Array<[string, string[], { build?: boolean; test?: boolean; artifacts: string[] }]> = [
+    ['spa-tailwind', ['--type', 'basic', '--styling', 'tailwind', '--features', 'router,i18n,testing'], { build: true, test: true, artifacts: ['dist/index.html'] }],
+    ['ssr-node', ['--type', 'ssr', '--features', 'router,i18n,testing,server-fn'], { build: true, test: true, artifacts: ['dist/server/sigx-app.js', 'dist/server/entry-server.js', 'dist/server/sigx-server-fns.js', 'dist/client/index.html'] }],
     ['ssr-cloudflare-resume', ['--type', 'ssr', '--target', 'cloudflare', '--render', 'resume'], { build: true, artifacts: ['dist/server/entry.cloudflare.js', 'dist/client/index.html'] }],
-    ['ssg', ['--type', 'ssg'], { build: true, artifacts: ['dist/index.html', 'dist/sitemap.xml'] }],
+    ['ssg', ['--type', 'ssg', '--features', 'testing'], { build: true, test: true, artifacts: ['dist/index.html', 'dist/sitemap.xml'] }],
     ['terminal', ['--type', 'terminal'], { build: false, artifacts: [] }],
 ];
 
@@ -59,6 +59,7 @@ describe.skipIf(!enabled)('create e2e (SIGX_E2E=1)', () => {
 
         run('pnpm', ['install', '--reporter=silent'], dir);
         run('npx', ['tsc', '--noEmit', '-p', 'tsconfig.json'], dir);
+        if (opts.test) run('pnpm', ['test'], dir);
         if (opts.build) run('pnpm', ['build'], dir);
         for (const artifact of opts.artifacts) {
             expect(existsSync(join(dir, artifact)), `${name}: ${artifact}`).toBe(true);

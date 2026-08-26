@@ -42,7 +42,9 @@ describe('validateSpec', () => {
     it('rejects features outside their support matrix', () => {
         expect(validateSpec(normalizeSpec({ name: 'x', kind: 'ssg', features: ['router'] }))[0]).toMatch(/"router" is not available for ssg/);
         expect(validateSpec(normalizeSpec({ name: 'x', kind: 'ssr', target: 'vercel-edge', features: ['actors'] }))[0])
-            .toMatch(/"actors" is not available for ssr on vercel-edge/);
+            .toMatch(/"actors" is not available for ssr \(hydrate\) on vercel-edge/);
+        expect(validateSpec(normalizeSpec({ name: 'x', kind: 'ssr', render: 'islands', features: ['router'] }))[0])
+            .toMatch(/"router" is not available for ssr \(islands\)/);
         expect(validateSpec(normalizeSpec({ name: 'x', kind: 'spa', features: ['nope' as never] }))[0]).toMatch(/unknown feature/);
     });
 
@@ -57,7 +59,10 @@ describe('featureSupported / describeSpec', () => {
         expect(featureSupported('server-fn', { kind: 'ssr', target: 'netlify' })).toBe(true);
         expect(featureSupported('server-fn', { kind: 'spa' })).toBe(false);
         expect(featureSupported('actors', { kind: 'ssr', target: 'deno' })).toBe(false);
-        expect(featureSupported('actors', { kind: 'spa' })).toBe(true);
+        expect(featureSupported('actors', { kind: 'ssr', target: 'bun' })).toBe(true);
+        expect(featureSupported('actors', { kind: 'spa' })).toBe(false);
+        expect(featureSupported('router', { kind: 'ssr', render: 'resume' })).toBe(false);
+        expect(featureSupported('testing', { kind: 'terminal' })).toBe(false);
     });
 
     it('describes a spec in one line', () => {

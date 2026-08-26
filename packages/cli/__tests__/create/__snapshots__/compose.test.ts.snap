@@ -807,19 +807,21 @@ pnpm dev
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -829,14 +831,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -849,7 +863,8 @@ import './styles.css';
 import { defineApp } from 'sigx';
 import { App } from './App';
 
-defineApp(<App />).mount('#app');
+const app = defineApp(<App />);
+app.mount('#app');
 ",
     "==> src/styles.css <==
 /* Plain CSS starter — the class names match daisyUI's, so swapping in
@@ -1082,19 +1097,21 @@ Tailwind CSS 4 + daisyUI 5. Themes are declared in \`src/styles.css\` (\`@plugin
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -1104,14 +1121,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -1124,7 +1153,8 @@ import './styles.css';
 import { defineApp } from 'sigx';
 import { App } from './App';
 
-defineApp(<App />).mount('#app');
+const app = defineApp(<App />);
+app.mount('#app');
 ",
     "==> src/styles.css <==
 @import "tailwindcss";
@@ -1195,6 +1225,1206 @@ export default defineConfig({
     "base",
     "spa",
     "styling:daisyui",
+  ],
+}
+`;
+
+exports[`composeProject > spa-i18n > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A client-rendered SignalX app on Vite. Scaffolded by \`npm create @sigx\` (spa + i18n).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+
+## Project layout
+
+- \`src/main.tsx\` — mounts the app (\`defineApp(<App />).mount('#app')\`)
+- \`src/App.tsx\` — the root component; edit it and watch HMR update the page
+- \`src/styles.css\` — global styles
+
+## Internationalization
+
+\`src/i18n.ts\` configures \`@sigx/i18n\`; catalogs live in \`src/locales/<locale>/<namespace>.json\` and load lazily per namespace. In a component: \`const t = useTranslation('app'); t('greeting')\`. Switch with \`useLocale().setLocale('sv')\` or \`?lang=sv\`.
+
+Docs: https://sigx.dev/i18n/
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/i18n": "^0.3.0",
+        "@sigx/store": "^0.13.0"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { useTranslation, useLocale } from '@sigx/i18n';
+import { Counter } from './components/Counter';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(() => {
+    const t = useTranslation('app');
+    const locale = useLocale();
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <nav class="nav">
+                    <button class="btn btn-ghost" onClick={() => locale.setLocale(locale.locale === 'en' ? 'sv' : 'en')}>
+                        {t('switch')}
+                    </button>
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">{t('greeting')}</h1>
+                        <p class="muted">{t('hint')}</p>
+                        <Counter />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/i18n.ts <==
+import { createI18n, type DetectionContext, type LocaleLoader, type MessageTree } from '@sigx/i18n';
+
+/**
+ * Catalogs: \`src/locales/<locale>/<namespace>.json\`, each its own lazy
+ * chunk — a namespace loads only when a component that uses it renders.
+ */
+const catalogs = import.meta.glob('./locales/*/*.json');
+const loadCatalog: LocaleLoader = (locale, ns) => {
+    const loader = catalogs[\`./locales/\${locale}/\${ns}.json\`];
+    return (loader ? loader() : Promise.resolve({})) as ReturnType<LocaleLoader>;
+};
+
+export const SUPPORTED = ['en', 'sv'] as const;
+export const NAMESPACES = ['app'] as const;
+
+/**
+ * Preload every catalog into a \`messages[locale][namespace]\` tree. The
+ * server passes it as \`initialMessages\` so the render resolves every
+ * translation synchronously (no async boundary, hydration matches).
+ */
+export async function preloadCatalogs(): Promise<MessageTree> {
+    const tree: MessageTree = {};
+    await Promise.all(
+        SUPPORTED.flatMap((locale) =>
+            NAMESPACES.map(async (ns) => {
+                const mod = (await loadCatalog(locale, ns)) as Record<string, unknown> & { default?: unknown };
+                (tree[locale] ??= {})[ns] = (mod.default ?? mod) as MessageTree[string][string];
+            }),
+        ),
+    );
+    return tree;
+}
+
+/**
+ * The i18n plugin, shared by every entry so they agree on the loader, the
+ * supported set and the detection chain (\`?lang=\`, cookie, browser).
+ * The server passes request data as \`context\` plus preloaded messages; the
+ * client omits both and seeds from the transferred SSR state.
+ */
+export function i18nPlugin(opts: { context?: DetectionContext; initialMessages?: MessageTree } = {}) {
+    return createI18n({
+        fallbackLocale: 'en',
+        supported: [...SUPPORTED],
+        defaultNamespace: 'app',
+        namespaces: ['app'],
+        detection: { order: ['url', 'cookie', 'browser'], urlParam: 'lang', context: opts.context },
+        initialMessages: opts.initialMessages,
+        load: loadCatalog,
+    });
+}
+",
+    "==> src/locales/en/app.json <==
+{
+    "greeting": "Hello, SignalX",
+    "hint": "Edit src/locales/en/app.json — or switch language with the button above.",
+    "switch": "Svenska"
+}
+",
+    "==> src/locales/sv/app.json <==
+{
+    "greeting": "Hej, SignalX",
+    "hint": "Redigera src/locales/sv/app.json — eller byt språk med knappen ovan.",
+    "switch": "English"
+}
+",
+    "==> src/main.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { App } from './App';
+import { i18nPlugin } from './i18n';
+
+const app = defineApp(<App />);
+app.use(i18nPlugin());
+app.mount('#app');
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+  ],
+  "layers": [
+    "base",
+    "spa",
+    "feature:i18n",
+  ],
+}
+`;
+
+exports[`composeProject > spa-router-i18n-testing-tailwind > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> .oxlintrc.json <==
+<binary 185 bytes>",
+    "==> README.md <==
+# my-app
+
+A client-rendered SignalX app on Vite. Scaffolded by \`npm create @sigx\` (spa + tailwind + router + i18n + testing).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+- \`pnpm test\` — run tests
+- \`pnpm lint\` — lint
+
+## Project layout
+
+- \`src/main.tsx\` — mounts the app (\`defineApp(<App />).mount('#app')\`)
+- \`src/App.tsx\` — the root component; edit it and watch HMR update the page
+- \`src/styles.css\` — global styles
+
+## Routing
+
+\`src/router.ts\` declares the routes; \`src/pages/\` holds one component per route. \`<Link to="/about">\` navigates, \`<RouterView />\` renders the matched page, \`useRoute()\` reads the current one.
+
+Docs: https://sigx.dev/router/
+
+## Internationalization
+
+\`src/i18n.ts\` configures \`@sigx/i18n\`; catalogs live in \`src/locales/<locale>/<namespace>.json\` and load lazily per namespace. In a component: \`const t = useTranslation('app'); t('greeting')\`. Switch with \`useLocale().setLocale('sv')\` or \`?lang=sv\`.
+
+Docs: https://sigx.dev/i18n/
+
+## Styling
+
+Tailwind CSS 4 via \`@tailwindcss/vite\` — no config file needed. \`src/styles.css\` imports Tailwind and defines the starter's component classes with \`@apply\`.
+
+## Testing & linting
+
+\`pnpm test\` runs Vitest in a happy-dom environment (\`vitest.config.ts\`); components mount into a real DOM and you assert on it — see the sample test under \`src/\`. \`pnpm lint\` runs oxlint (\`.oxlintrc.json\`).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "oxlint src"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/i18n": "^0.3.0",
+        "@sigx/router": "^0.12.0",
+        "@sigx/store": "^0.13.0"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@tailwindcss/vite": "^4.1.0",
+        "happy-dom": "^20.0.0",
+        "oxlint": "^1.47.0",
+        "tailwindcss": "^4.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12",
+        "vitest": "^4.1.0"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/App.test.tsx <==
+import { describe, it, expect, afterEach } from 'vitest';
+import { defineApp } from 'sigx';
+import { App } from './App';
+import { createServerRouter } from './router';
+import { i18nPlugin, preloadCatalogs } from './i18n';
+
+/**
+ * Mounts the App into happy-dom's document — the same plugin set the entry
+ * installs — and asserts on the rendered DOM.
+ */
+describe('App', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let app: ReturnType<typeof defineApp> | undefined;
+
+    afterEach(() => {
+        app?.unmount();
+        host.innerHTML = '';
+    });
+
+    it('renders the greeting', async () => {
+        app = defineApp(<App />);
+        app.use(createServerRouter('/'));
+        app.use(i18nPlugin({ initialMessages: await preloadCatalogs() }));
+        app.mount(host);
+        expect(host.textContent).toContain('SignalX');
+    });
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { RouterView, Link } from '@sigx/router';
+import { useTranslation, useLocale } from '@sigx/i18n';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(() => {
+    const t = useTranslation('app');
+    const locale = useLocale();
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <nav class="nav">
+                    <Link class="link" to="/">Home</Link>
+                    <Link class="link" to="/about">About</Link>
+                    <button class="btn btn-ghost" onClick={() => locale.setLocale(locale.locale === 'en' ? 'sv' : 'en')}>
+                        {t('switch')}
+                    </button>
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
+            </header>
+
+            <main class="app-main">
+                <RouterView />
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/i18n.ts <==
+import { createI18n, type DetectionContext, type LocaleLoader, type MessageTree } from '@sigx/i18n';
+
+/**
+ * Catalogs: \`src/locales/<locale>/<namespace>.json\`, each its own lazy
+ * chunk — a namespace loads only when a component that uses it renders.
+ */
+const catalogs = import.meta.glob('./locales/*/*.json');
+const loadCatalog: LocaleLoader = (locale, ns) => {
+    const loader = catalogs[\`./locales/\${locale}/\${ns}.json\`];
+    return (loader ? loader() : Promise.resolve({})) as ReturnType<LocaleLoader>;
+};
+
+export const SUPPORTED = ['en', 'sv'] as const;
+export const NAMESPACES = ['app'] as const;
+
+/**
+ * Preload every catalog into a \`messages[locale][namespace]\` tree. The
+ * server passes it as \`initialMessages\` so the render resolves every
+ * translation synchronously (no async boundary, hydration matches).
+ */
+export async function preloadCatalogs(): Promise<MessageTree> {
+    const tree: MessageTree = {};
+    await Promise.all(
+        SUPPORTED.flatMap((locale) =>
+            NAMESPACES.map(async (ns) => {
+                const mod = (await loadCatalog(locale, ns)) as Record<string, unknown> & { default?: unknown };
+                (tree[locale] ??= {})[ns] = (mod.default ?? mod) as MessageTree[string][string];
+            }),
+        ),
+    );
+    return tree;
+}
+
+/**
+ * The i18n plugin, shared by every entry so they agree on the loader, the
+ * supported set and the detection chain (\`?lang=\`, cookie, browser).
+ * The server passes request data as \`context\` plus preloaded messages; the
+ * client omits both and seeds from the transferred SSR state.
+ */
+export function i18nPlugin(opts: { context?: DetectionContext; initialMessages?: MessageTree } = {}) {
+    return createI18n({
+        fallbackLocale: 'en',
+        supported: [...SUPPORTED],
+        defaultNamespace: 'app',
+        namespaces: ['app'],
+        detection: { order: ['url', 'cookie', 'browser'], urlParam: 'lang', context: opts.context },
+        initialMessages: opts.initialMessages,
+        load: loadCatalog,
+    });
+}
+",
+    "==> src/locales/en/app.json <==
+{
+    "greeting": "Hello, SignalX",
+    "hint": "Edit src/locales/en/app.json — or switch language with the button above.",
+    "switch": "Svenska"
+}
+",
+    "==> src/locales/sv/app.json <==
+{
+    "greeting": "Hej, SignalX",
+    "hint": "Redigera src/locales/sv/app.json — eller byt språk med knappen ovan.",
+    "switch": "English"
+}
+",
+    "==> src/main.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { App } from './App';
+import { createAppRouter } from './router';
+import { i18nPlugin } from './i18n';
+
+const app = defineApp(<App />);
+app.use(createAppRouter());
+app.use(i18nPlugin());
+app.mount('#app');
+",
+    "==> src/pages/About.tsx <==
+import { component } from 'sigx';
+import { useRoute } from '@sigx/router';
+
+export const About = component(() => {
+    const route = useRoute();
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">About</h1>
+                <p class="muted">
+                    This page is the <code>{route.path}</code> route, declared in <code>src/router.ts</code>.
+                    Add a component under <code>src/pages/</code> and a record to the table to add another.
+                </p>
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/pages/Home.tsx <==
+import { component } from 'sigx';
+import { useTranslation } from '@sigx/i18n';
+import { Counter } from '../components/Counter';
+
+export const Home = component(() => {
+    const t = useTranslation('app');
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">{t('greeting')}</h1>
+                <p class="muted">{t('hint')}</p>
+                <Counter />
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/router.ts <==
+import { createRouter, createWebHistory, createMemoryHistory, type RouteRecordRaw } from '@sigx/router';
+import { Home } from './pages/Home';
+import { About } from './pages/About';
+
+/** One route table for the browser and the server. */
+export const routes: RouteRecordRaw[] = [
+    { path: '/', name: 'home', component: Home },
+    { path: '/about', name: 'about', component: About },
+];
+
+/** Browser: history API navigation. */
+export function createAppRouter() {
+    return createRouter({ history: createWebHistory(), routes });
+}
+
+/** Server: a fresh in-memory history per request, positioned at the requested URL. */
+export function createServerRouter(url: string) {
+    return createRouter({ history: createMemoryHistory({ initialLocation: url }), routes });
+}
+",
+    "==> src/styles.css <==
+@import "tailwindcss";
+
+/* The starter's component classes, expressed with Tailwind utilities. Replace
+   them with utilities in your markup as you go — nothing else depends on them. */
+@layer components {
+    .app { @apply min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100; }
+    .app-header { @apply flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800; }
+    .brand { @apply font-bold text-lg; }
+    .nav { @apply flex gap-4; }
+    .link { @apply text-indigo-600 hover:underline dark:text-indigo-400; }
+    .app-main { @apply flex-1 grid place-items-center px-4 py-8; }
+    .app-footer { @apply text-center text-sm py-4; }
+    .card { @apply w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-lg dark:bg-slate-900 dark:border-slate-800; }
+    .card-body { @apply p-8 text-center; }
+    .card-title { @apply text-2xl font-semibold mb-2; }
+    .muted { @apply text-slate-500 dark:text-slate-400 mb-6; }
+    .counter { @apply flex items-center justify-center gap-4; }
+    .btn { @apply cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 transition hover:brightness-95 dark:bg-slate-800 dark:border-slate-700; }
+    .btn-primary { @apply bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700; }
+    .btn-ghost { @apply bg-transparent; }
+    .badge { @apply inline-block min-w-14 rounded-full bg-indigo-100 px-3 py-1 font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300; }
+    .badge-lg { @apply text-xl; }
+    .prose { @apply max-w-2xl w-full block; }
+    .prose h1 { @apply text-3xl font-bold mb-4; }
+    .prose p, .prose li { @apply mb-2; }
+    .prose ul { @apply list-disc pl-6; }
+    code { @apply rounded bg-slate-200 px-1 py-0.5 text-[0.92em] dark:bg-slate-800; }
+}
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true
+    },
+    "include": [
+        "src",
+        "vitest.config.ts"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx(),
+        tailwindcss()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+    "==> vitest.config.ts <==
+import { defineConfig, mergeConfig, type ConfigEnv } from 'vitest/config';
+import viteConfig from './vite.config';
+
+// Tests run through the same Vite plugins as the app (JSX runtime, and the
+// sigx transforms that server functions and islands rely on).
+export default defineConfig(async (env) => {
+    const base = typeof viteConfig === 'function'
+        ? await (viteConfig as (env: ConfigEnv) => Promise<object> | object)(env)
+        : viteConfig;
+    return mergeConfig(base as Record<string, unknown>, {
+        test: {
+            environment: 'happy-dom',
+            include: ['src/**/*.test.{ts,tsx}']
+        }
+    });
+});
+",
+  ],
+  "layers": [
+    "base",
+    "spa",
+    "styling:tailwind",
+    "feature:router",
+    "feature:i18n",
+    "feature:testing",
+  ],
+}
+`;
+
+exports[`composeProject > spa-router-testing > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> .oxlintrc.json <==
+<binary 185 bytes>",
+    "==> README.md <==
+# my-app
+
+A client-rendered SignalX app on Vite. Scaffolded by \`npm create @sigx\` (spa + router + testing).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+- \`pnpm test\` — run tests
+- \`pnpm lint\` — lint
+
+## Project layout
+
+- \`src/main.tsx\` — mounts the app (\`defineApp(<App />).mount('#app')\`)
+- \`src/App.tsx\` — the root component; edit it and watch HMR update the page
+- \`src/styles.css\` — global styles
+
+## Routing
+
+\`src/router.ts\` declares the routes; \`src/pages/\` holds one component per route. \`<Link to="/about">\` navigates, \`<RouterView />\` renders the matched page, \`useRoute()\` reads the current one.
+
+Docs: https://sigx.dev/router/
+
+## Testing & linting
+
+\`pnpm test\` runs Vitest in a happy-dom environment (\`vitest.config.ts\`); components mount into a real DOM and you assert on it — see the sample test under \`src/\`. \`pnpm lint\` runs oxlint (\`.oxlintrc.json\`).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "oxlint src"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/router": "^0.12.0"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "happy-dom": "^20.0.0",
+        "oxlint": "^1.47.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12",
+        "vitest": "^4.1.0"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/App.test.tsx <==
+import { describe, it, expect, afterEach } from 'vitest';
+import { defineApp } from 'sigx';
+import { App } from './App';
+import { createServerRouter } from './router';
+
+/**
+ * Mounts the App into happy-dom's document — the same plugin set the entry
+ * installs — and asserts on the rendered DOM.
+ */
+describe('App', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let app: ReturnType<typeof defineApp> | undefined;
+
+    afterEach(() => {
+        app?.unmount();
+        host.innerHTML = '';
+    });
+
+    it('renders the greeting', async () => {
+        app = defineApp(<App />);
+        app.use(createServerRouter('/'));
+        app.mount(host);
+        expect(host.textContent).toContain('SignalX');
+    });
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { RouterView, Link } from '@sigx/router';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(() => {
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <nav class="nav">
+                    <Link class="link" to="/">Home</Link>
+                    <Link class="link" to="/about">About</Link>
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
+            </header>
+
+            <main class="app-main">
+                <RouterView />
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/main.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { App } from './App';
+import { createAppRouter } from './router';
+
+const app = defineApp(<App />);
+app.use(createAppRouter());
+app.mount('#app');
+",
+    "==> src/pages/About.tsx <==
+import { component } from 'sigx';
+import { useRoute } from '@sigx/router';
+
+export const About = component(() => {
+    const route = useRoute();
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">About</h1>
+                <p class="muted">
+                    This page is the <code>{route.path}</code> route, declared in <code>src/router.ts</code>.
+                    Add a component under <code>src/pages/</code> and a record to the table to add another.
+                </p>
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/pages/Home.tsx <==
+import { component } from 'sigx';
+import { Counter } from '../components/Counter';
+
+export const Home = component(() => {
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">Hello, SignalX</h1>
+                <p class="muted">
+                    Edit <code>src/pages/Home.tsx</code> and save — the page updates in place.
+                </p>
+                <Counter />
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/router.ts <==
+import { createRouter, createWebHistory, createMemoryHistory, type RouteRecordRaw } from '@sigx/router';
+import { Home } from './pages/Home';
+import { About } from './pages/About';
+
+/** One route table for the browser and the server. */
+export const routes: RouteRecordRaw[] = [
+    { path: '/', name: 'home', component: Home },
+    { path: '/about', name: 'about', component: About },
+];
+
+/** Browser: history API navigation. */
+export function createAppRouter() {
+    return createRouter({ history: createWebHistory(), routes });
+}
+
+/** Server: a fresh in-memory history per request, positioned at the requested URL. */
+export function createServerRouter(url: string) {
+    return createRouter({ history: createMemoryHistory({ initialLocation: url }), routes });
+}
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true
+    },
+    "include": [
+        "src",
+        "vitest.config.ts"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+    "==> vitest.config.ts <==
+import { defineConfig, mergeConfig, type ConfigEnv } from 'vitest/config';
+import viteConfig from './vite.config';
+
+// Tests run through the same Vite plugins as the app (JSX runtime, and the
+// sigx transforms that server functions and islands rely on).
+export default defineConfig(async (env) => {
+    const base = typeof viteConfig === 'function'
+        ? await (viteConfig as (env: ConfigEnv) => Promise<object> | object)(env)
+        : viteConfig;
+    return mergeConfig(base as Record<string, unknown>, {
+        test: {
+            environment: 'happy-dom',
+            include: ['src/**/*.test.{ts,tsx}']
+        }
+    });
+});
+",
+  ],
+  "layers": [
+    "base",
+    "spa",
+    "feature:router",
+    "feature:testing",
   ],
 }
 `;
@@ -1291,19 +2521,21 @@ Tailwind CSS 4 via \`@tailwindcss/vite\` — no config file needed. \`src/styles
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -1313,14 +2545,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -1333,7 +2577,8 @@ import './styles.css';
 import { defineApp } from 'sigx';
 import { App } from './App';
 
-defineApp(<App />).mount('#app');
+const app = defineApp(<App />);
+app.mount('#app');
 ",
     "==> src/styles.css <==
 @import "tailwindcss";
@@ -2006,6 +3251,395 @@ export default defineConfig({
 }
 `;
 
+exports[`composeProject > ssg-testing > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> .oxlintrc.json <==
+<binary 185 bytes>",
+    "==> README.md <==
+# my-app
+
+A static site built with \`@sigx/ssg\` — file-based routing, MDX pages, built-in search. Scaffolded by \`npm create @sigx\` (ssg + testing).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+- \`pnpm test\` — run tests
+- \`pnpm lint\` — lint
+
+## Project layout
+
+- \`src/pages/\` — every \`.mdx\` or \`.tsx\` file is a route (\`index.mdx\` → \`/\`, \`about.mdx\` → \`/about\`)
+- \`src/layouts/default.tsx\` — the page frame
+- \`src/styles/global.css\` — global styles (auto-imported by the generated client entry)
+- \`ssg.config.ts\` — site metadata, search, markdown options
+
+Interactive components inside MDX hydrate with \`client:*\` directives, e.g. \`<Counter client:load />\`.
+
+## Testing & linting
+
+\`pnpm test\` runs Vitest in a happy-dom environment (\`vitest.config.ts\`); components mount into a real DOM and you assert on it — see the sample test under \`src/\`. \`pnpm lint\` runs oxlint (\`.oxlintrc.json\`).
+
+## Deploy
+
+The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`, \`robots.txt\` and the search index). Upload \`dist/\` to any static host — Cloudflare Pages, Netlify, Vercel, GitHub Pages, S3.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "sigx dev",
+        "build": "sigx build",
+        "preview": "sigx preview",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "oxlint src"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/router": "^0.12.0",
+        "@sigx/server-renderer": "<core>",
+        "@sigx/ssg": "^0.21.0"
+    },
+    "devDependencies": {
+        "@sigx/cli": "^0.10.0",
+        "@sigx/vite": "<core>",
+        "happy-dom": "^20.0.0",
+        "oxlint": "^1.47.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12",
+        "vitest": "^4.1.0"
+    }
+}
+",
+    "==> pnpm-workspace.yaml <==
+# pnpm settings for this project (a single-package "workspace").
+# Dependencies allowed to run install scripts — pnpm ignores them otherwise
+# (and pnpm 11 fails the install). Both spellings: pnpm 11 reads allowBuilds,
+# older pnpm 10 reads onlyBuiltDependencies.
+allowBuilds:
+  esbuild: true
+onlyBuiltDependencies:
+  - esbuild
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> src/components/Counter.test.tsx <==
+import { describe, it, expect, afterEach } from 'vitest';
+import { defineApp } from 'sigx';
+import { Counter } from './Counter';
+
+/** Mounts the island into happy-dom's document and clicks it. */
+describe('Counter', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let app: ReturnType<typeof defineApp> | undefined;
+
+    afterEach(() => {
+        app?.unmount();
+        host.innerHTML = '';
+    });
+
+    it('increments on click', () => {
+        app = defineApp(<Counter />);
+        app.mount(host);
+        expect(host.querySelector('.badge')?.textContent).toBe('0');
+        host.querySelector<HTMLButtonElement>('button[aria-label="Increment"]')!.click();
+        expect(host.querySelector('.badge')?.textContent).toBe('1');
+    });
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** An island: server-rendered, hydrated in the browser via \`client:load\`. */
+export const Counter = component(({ signal }) => {
+    const state = signal({ count: 0 });
+
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <div class="counter">
+                    <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
+                    <span class="badge badge-primary badge-lg">{state.count}</span>
+                    <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
+                </div>
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+",
+    "==> src/layouts/default.tsx <==
+import { component } from 'sigx';
+import type { LayoutProps, LayoutSlots } from '@sigx/ssg';
+import { Link } from '@sigx/router';
+
+/** The page frame every route renders into. */
+export default component<LayoutProps, unknown, LayoutSlots>(({ slots }) => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <nav class="nav">
+                    <Link class="link" to="/">Home</Link>
+                    <Link class="link" to="/about">About</Link>
+                </nav>
+            </header>
+
+            <main class="app-main prose">{slots.default?.()}</main>
+
+            <footer class="app-footer muted">Built with @sigx/ssg</footer>
+        </div>
+    );
+});
+",
+    "==> src/pages/about.mdx <==
+---
+title: About
+description: About this site
+---
+
+# About
+
+Built with [@sigx/ssg](https://sigx.dev/ssg/):
+
+- File-based routing — \`src/pages/about.mdx\` is \`/about\`
+- MDX: Markdown with components
+- Syntax highlighting with Shiki
+- Islands: components hydrate only where you add \`client:*\`
+- Sitemap, robots and a search index out of the box
+",
+    "==> src/pages/index.mdx <==
+---
+title: Home
+description: A SignalX static site
+---
+
+import { Counter } from '../components/Counter';
+
+# Welcome to my-app
+
+This site is built with **@sigx/ssg** — every file in \`src/pages/\` is a route,
+Markdown and JSX mix freely, and interactive components hydrate on demand.
+
+<Counter client:load />
+
+Edit \`src/pages/index.mdx\` and save to see it update.
+",
+    "==> src/styles/global.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> ssg.config.ts <==
+import { defineSSGConfig } from '@sigx/ssg';
+
+export default defineSSGConfig({
+    site: {
+        title: 'my-app',
+        description: 'A SignalX static site',
+        url: 'https://example.com',
+        favicon: '/favicon.svg',
+    },
+    // Built-in search index over the rendered pages.
+    search: true,
+    markdown: {
+        shiki: {
+            light: 'github-light',
+            dark: 'github-dark',
+        },
+    },
+});
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "vite/client",
+            "@sigx/ssg/virtual"
+        ]
+    },
+    "include": [
+        "src",
+        "vitest.config.ts"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { ssgPlugin } from '@sigx/ssg/vite';
+
+export default defineConfig({
+    plugins: [
+        sigx(),
+        ssgPlugin()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    }
+});
+",
+    "==> vitest.config.ts <==
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+    // Vite 8 transforms JSX with oxc; point it at sigx's runtime like vite.config.ts does.
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    test: {
+        environment: 'happy-dom',
+        include: ['src/**/*.test.{ts,tsx}']
+    }
+});
+",
+  ],
+  "layers": [
+    "base",
+    "ssg",
+    "feature:testing",
+  ],
+}
+`;
+
 exports[`composeProject > ssr-bun-islands > matches the snapshot 1`] = `
 {
   "files": [
@@ -2261,6 +3895,22 @@ export const App = component(() => {
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -2752,6 +4402,22 @@ export const App = component(() => {
     );
 });
 ",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
     "==> src/dev-refresh.ts <==
 import { resumePlugin } from '@sigx/resume';
 import { createBoundaryRefresh } from '@sigx/resume/server';
@@ -3147,19 +4813,21 @@ app.listen(port, () => {
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -3169,14 +4837,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -3189,7 +4869,8 @@ import { App } from './App';
 
 // Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
 // ssrClientPlugin (declared optional on App, hence the \`!\`).
-defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+const app = defineApp(<App />);
+app.use(ssrClientPlugin).hydrate!('#app');
 ",
     "==> src/entry-server.tsx <==
 import { defineApp } from 'sigx';
@@ -3199,10 +4880,12 @@ import { App } from './App';
  * The per-request app factory. Both request handlers consume this export —
  * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
  * production — and each call builds a FRESH app, so nothing is shared
- * between concurrent requests. \`url\` is the requested path, for routing.
+ * between concurrent requests. \`url\` is the requested path.
  */
-export function createApp(_url: string) {
-    return defineApp(<App />);
+export function createApp(url: string) {
+    void url;
+    const app = defineApp(<App />);
+    return app;
 }
 ",
     "==> src/entry.cloudflare.ts <==
@@ -3391,6 +5074,552 @@ export default defineConfig(({ command }) => ({
     "base",
     "ssr",
     "target:cloudflare",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-cloudflare-islands-server-fn > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# target:cloudflare
+.wrangler
+.dev.vars
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + islands + cloudflare + server-fn).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm preview\` — preview the production build
+- \`pnpm deploy\` — deploy
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Islands
+
+The page is static HTML; only components used with a \`client:*\` directive ship JavaScript, each hydrating on its own schedule:
+
+\`\`\`tsx
+<Counter client:load />          // hydrate immediately
+<Counter client:visible />       // when scrolled into view
+<Counter client:idle />          // when the browser is idle
+<Counter client:interaction />   // on first pointer/key/focus
+<Counter client:media="(min-width: 768px)" />
+<Counter client:only />          // skip SSR, mount fresh on the client
+\`\`\`
+
+Island components live in \`src/islands/\`. Docs: https://sigx.dev/core/docs/islands/
+
+## Server functions
+
+A \`*.server.ts\` module only ever runs on the server — the client build swaps it for typed fetch stubs, so database clients and secrets never ship. \`src/api/hello.server.ts\` declares one with \`serverFn({ allowAnonymous: true, handler })\`; \`src/components/ServerGreeting.tsx\` reads it with \`useData\`. Every server function is a public endpoint: validate inputs and declare \`authorize\` (or \`allowAnonymous\`) on each.
+
+Docs: https://sigx.dev/core/docs/server-functions/
+
+## Deploy (Cloudflare Workers)
+
+\`\`\`sh
+pnpm build      # dist/server/entry.cloudflare.js + dist/client
+pnpm preview    # wrangler dev — run the built worker locally
+pnpm deploy     # wrangler deploy (run \`pnpm exec wrangler login\` once)
+\`\`\`
+
+\`wrangler.jsonc\` is yours: add bindings (KV, D1, R2, Durable Objects) there and read them from \`env\` in \`src/entry.cloudflare.ts\`. Day-to-day development uses the Vite dev server (\`pnpm dev\`); \`wrangler dev\` runs the real worker over the production build.
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "preview": "wrangler dev",
+        "deploy": "wrangler deploy"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "@sigx/ssr-islands": "<core>"
+    },
+    "devDependencies": {
+        "@sigx/cloudflare": "<core>",
+        "@sigx/vite": "<core>",
+        "@cloudflare/workers-types": "^4.20250801.0",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "express": "^5.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12",
+        "wrangler": "^4.0.0"
+    }
+}
+",
+    "==> pnpm-workspace.yaml <==
+# pnpm settings for this project (a single-package "workspace").
+# Dependencies allowed to run install scripts — pnpm ignores them otherwise
+# (and pnpm 11 fails the install). Both spellings: pnpm 11 reads allowBuilds,
+# older pnpm 10 reads onlyBuiltDependencies.
+allowBuilds:
+  esbuild: true
+  workerd: true
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './islands/Counter';
+import { ServerGreeting } from './components/ServerGreeting';
+
+/**
+ * The page is a server-only component: everything outside the islands is
+ * static HTML that is never hydrated. Each \`client:*\` directive decides
+ * when that one island's JavaScript loads and runs.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Static HTML from the server. Only the counter below ships JavaScript —
+                            edit <code>src/App.tsx</code> or <code>src/islands/Counter.tsx</code>.
+                        </p>
+                        <Counter client:load />
+                        <ServerGreeting />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/api/hello.server.ts <==
+import { serverFn } from '@sigx/server';
+
+/**
+ * A server module: this whole file only ever runs on the server. The client
+ * build swaps it for typed fetch stubs, so anything imported here (database
+ * clients, secrets, \`node:\` builtins) never reaches the browser.
+ *
+ * Every server function is a public endpoint. \`allowAnonymous: true\` is an
+ * explicit choice — the runtime is fail-closed, so a function that declares
+ * nothing refuses anonymous callers. Real apps configure \`authenticate\`
+ * once and declare \`authorize\` where a function needs more.
+ */
+export const serverTime = serverFn({
+    allowAnonymous: true,
+    handler: async () => ({
+        now: new Date().toISOString(),
+        // Called in-process during SSR; over the wire from the browser.
+        via: 'server function',
+    }),
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/components/ServerGreeting.tsx <==
+import { component, useData } from 'sigx';
+import { serverTime } from '../api/hello.server';
+
+/**
+ * Reads a server function with \`useData\`. During SSR the call is direct
+ * (no HTTP) and its result transfers with the page; in the browser the same
+ * import is a fetch stub.
+ */
+export const ServerGreeting = component(() => {
+    const info = useData(serverTime);
+    return () => (
+        <p class="muted">
+            {info.value ? \`Server time \${info.value.now} — \${info.value.via}\` : 'Asking the server…'}
+        </p>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// Registers a lazy loader per island (code-split chunks load on demand when
+// each island's hydration strategy fires).
+import 'virtual:sigx-islands';
+import { hydrateIslands } from '@sigx/ssr-islands/client';
+
+// The page itself is server-only, so the client ships no page code — just
+// this bootstrap plus per-island chunks. The hydration core loads on the
+// first \`client:*\` strategy that fires.
+hydrateIslands();
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { islandsPlugin } from '@sigx/ssr-islands';
+import { islandsManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The per-request app factory. The islands pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where islands
+ * resolve through the virtual registry). A fresh app per request keeps
+ * concurrent renders independent.
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(islandsPlugin({ manifest: islandsManifest }));
+}
+",
+    "==> src/entry.cloudflare.ts <==
+// The Cloudflare Worker entry. Static assets never reach this code —
+// wrangler's \`assets\` config (wrangler.jsonc) serves matching files before
+// the worker runs. What is left, in order:
+//
+//     server functions  ->  document render
+import { createFetchHandler } from '@sigx/server-renderer/server';
+import { template, assets } from 'virtual:sigx-app';
+import { handleServerFnRequest, matchesServerFn } from '@sigx/server/server';
+import { serverFns, serverFnBase } from 'virtual:sigx-server-fns';
+import { createApp } from './entry-server';
+
+const handler = createFetchHandler({
+    template,
+    app: (url) => createApp(url),
+    document: { assets }
+});
+
+
+export default {
+    async fetch(request: Request): Promise<Response> {
+        if (matchesServerFn(request, serverFnBase)) {
+            return handleServerFnRequest(request, {
+                // The build's own mount path, so router and handler cannot disagree.
+                base: serverFnBase,
+                // The registry is passed explicitly, never ambient.
+                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+            });
+        }
+        return handler(request);
+    }
+};
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/islands/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * An island: server-rendered with its initial count, hydrated when the
+ * \`client:*\` directive on its use fires (\`client:load\` on the home page).
+ * Island state transfers automatically — the signal is keyed by its
+ * declaration name per island instance.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+}, { name: 'Counter' });
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node",
+            "@cloudflare/workers-types"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxIslands } from '@sigx/vite/islands';
+import { sigxServer } from '@sigx/vite/server';
+import { cloudflare } from '@sigx/cloudflare';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/ssr-islands', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx', adapter: cloudflare() } }),
+        sigxIslands(),
+        sigxServer()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+    "==> wrangler.jsonc <==
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "my-app",
+    "main": "dist/server/entry.cloudflare.js",
+    "compatibility_date": "2026-08-01",
+    // node:async_hooks carries the request into server functions called during SSR.
+    "compatibility_flags": ["nodejs_compat"],
+    "assets": {
+        "directory": "dist/client",
+        // Never serve the raw index.html template — the worker renders the document.
+        "html_handling": "none"
+    }
+}
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:islands",
+    "target:cloudflare",
+    "feature:server-fn",
   ],
 }
 `;
@@ -3628,6 +5857,22 @@ export const App = component(() => {
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -4019,19 +6264,21 @@ app.listen(port, () => {
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -4041,14 +6288,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -4061,7 +6320,8 @@ import { App } from './App';
 
 // Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
 // ssrClientPlugin (declared optional on App, hence the \`!\`).
-defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+const app = defineApp(<App />);
+app.use(ssrClientPlugin).hydrate!('#app');
 ",
     "==> src/entry-server.tsx <==
 import { defineApp } from 'sigx';
@@ -4071,10 +6331,12 @@ import { App } from './App';
  * The per-request app factory. Both request handlers consume this export —
  * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
  * production — and each call builds a FRESH app, so nothing is shared
- * between concurrent requests. \`url\` is the requested path, for routing.
+ * between concurrent requests. \`url\` is the requested path.
  */
-export function createApp(_url: string) {
-    return defineApp(<App />);
+export function createApp(url: string) {
+    void url;
+    const app = defineApp(<App />);
+    return app;
 }
 ",
     "==> src/entry.deno.ts <==
@@ -4490,6 +6752,22 @@ export const App = component(() => {
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -4985,6 +7263,22 @@ export const App = component(() => {
     );
 });
 ",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
     "==> src/entry-client.tsx <==
 import './styles.css';
 // Registers a lazy loader per island (code-split chunks load on demand when
@@ -5364,19 +7658,21 @@ app.listen(port, () => {
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -5386,14 +7682,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -5406,7 +7714,8 @@ import { App } from './App';
 
 // Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
 // ssrClientPlugin (declared optional on App, hence the \`!\`).
-defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+const app = defineApp(<App />);
+app.use(ssrClientPlugin).hydrate!('#app');
 ",
     "==> src/entry-server.tsx <==
 import { defineApp } from 'sigx';
@@ -5416,10 +7725,12 @@ import { App } from './App';
  * The per-request app factory. Both request handlers consume this export —
  * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
  * production — and each call builds a FRESH app, so nothing is shared
- * between concurrent requests. \`url\` is the requested path, for routing.
+ * between concurrent requests. \`url\` is the requested path.
  */
-export function createApp(_url: string) {
-    return defineApp(<App />);
+export function createApp(url: string) {
+    void url;
+    const app = defineApp(<App />);
+    return app;
 }
 ",
     "==> src/env.d.ts <==
@@ -5568,6 +7879,659 @@ export default defineConfig(({ command }) => ({
     "base",
     "ssr",
     "target:node",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-node-all-extras > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> .oxlintrc.json <==
+<binary 185 bytes>",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + hydrate + node + router + i18n + testing + server-fn).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+- \`pnpm test\` — run tests
+- \`pnpm lint\` — lint
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Routing
+
+\`src/router.ts\` declares the routes; \`src/pages/\` holds one component per route. \`<Link to="/about">\` navigates, \`<RouterView />\` renders the matched page, \`useRoute()\` reads the current one.
+
+Docs: https://sigx.dev/router/
+
+## Internationalization
+
+\`src/i18n.ts\` configures \`@sigx/i18n\`; catalogs live in \`src/locales/<locale>/<namespace>.json\` and load lazily per namespace. In a component: \`const t = useTranslation('app'); t('greeting')\`. Switch with \`useLocale().setLocale('sv')\` or \`?lang=sv\`.
+
+Docs: https://sigx.dev/i18n/
+
+## Server functions
+
+A \`*.server.ts\` module only ever runs on the server — the client build swaps it for typed fetch stubs, so database clients and secrets never ship. \`src/api/hello.server.ts\` declares one with \`serverFn({ allowAnonymous: true, handler })\`; \`src/components/ServerGreeting.tsx\` reads it with \`useData\`. Every server function is a public endpoint: validate inputs and declare \`authorize\` (or \`allowAnonymous\`) on each.
+
+Docs: https://sigx.dev/core/docs/server-functions/
+
+## Testing & linting
+
+\`pnpm test\` runs Vitest in a happy-dom environment (\`vitest.config.ts\`); components mount into a real DOM and you assert on it — see the sample test under \`src/\`. \`pnpm lint\` runs oxlint (\`.oxlintrc.json\`).
+
+## Deploy (Node)
+
+\`pnpm build\` writes \`dist/client\` (static assets) and \`dist/server\` (the externalized server build). Run it with:
+
+\`\`\`sh
+NODE_ENV=production node --conditions production server.mjs
+\`\`\`
+
+Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json\` and install production dependencies. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "cross-env NODE_ENV=production node --conditions production server.mjs",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "oxlint src"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/i18n": "^0.3.0",
+        "@sigx/router": "^0.12.0",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "@sigx/store": "^0.13.0",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "cross-env": "^10.1.0",
+        "happy-dom": "^20.0.0",
+        "oxlint": "^1.47.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12",
+        "vitest": "^4.1.0"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.test.tsx <==
+import { describe, it, expect, afterEach } from 'vitest';
+import { defineApp } from 'sigx';
+import { App } from './App';
+import { createServerRouter } from './router';
+import { i18nPlugin, preloadCatalogs } from './i18n';
+
+/**
+ * Mounts the App into happy-dom's document — the same plugin set the entry
+ * installs — and asserts on the rendered DOM.
+ */
+describe('App', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let app: ReturnType<typeof defineApp> | undefined;
+
+    afterEach(() => {
+        app?.unmount();
+        host.innerHTML = '';
+    });
+
+    it('renders the greeting', async () => {
+        app = defineApp(<App />);
+        app.use(createServerRouter('/'));
+        app.use(i18nPlugin({ initialMessages: await preloadCatalogs() }));
+        app.mount(host);
+        expect(host.textContent).toContain('SignalX');
+    });
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { RouterView, Link } from '@sigx/router';
+import { useTranslation, useLocale } from '@sigx/i18n';
+import { ServerGreeting } from './components/ServerGreeting';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(() => {
+    const t = useTranslation('app');
+    const locale = useLocale();
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <nav class="nav">
+                    <Link class="link" to="/">Home</Link>
+                    <Link class="link" to="/about">About</Link>
+                    <button class="btn btn-ghost" onClick={() => locale.setLocale(locale.locale === 'en' ? 'sv' : 'en')}>
+                        {t('switch')}
+                    </button>
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
+            </header>
+
+            <main class="app-main">
+                <RouterView />
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/api/hello.server.ts <==
+import { serverFn } from '@sigx/server';
+
+/**
+ * A server module: this whole file only ever runs on the server. The client
+ * build swaps it for typed fetch stubs, so anything imported here (database
+ * clients, secrets, \`node:\` builtins) never reaches the browser.
+ *
+ * Every server function is a public endpoint. \`allowAnonymous: true\` is an
+ * explicit choice — the runtime is fail-closed, so a function that declares
+ * nothing refuses anonymous callers. Real apps configure \`authenticate\`
+ * once and declare \`authorize\` where a function needs more.
+ */
+export const serverTime = serverFn({
+    allowAnonymous: true,
+    handler: async () => ({
+        now: new Date().toISOString(),
+        // Called in-process during SSR; over the wire from the browser.
+        via: 'server function',
+    }),
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/components/ServerGreeting.tsx <==
+import { component, useData } from 'sigx';
+import { serverTime } from '../api/hello.server';
+
+/**
+ * Reads a server function with \`useData\`. During SSR the call is direct
+ * (no HTTP) and its result transfers with the page; in the browser the same
+ * import is a fetch stub.
+ */
+export const ServerGreeting = component(() => {
+    const info = useData(serverTime);
+    return () => (
+        <p class="muted">
+            {info.value ? \`Server time \${info.value.now} — \${info.value.via}\` : 'Asking the server…'}
+        </p>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { ssrClientPlugin } from '@sigx/server-renderer/client';
+import { App } from './App';
+import { createAppRouter } from './router';
+import { i18nPlugin } from './i18n';
+
+// Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
+// ssrClientPlugin (declared optional on App, hence the \`!\`).
+const app = defineApp(<App />);
+app.use(createAppRouter());
+// Seeds locale + catalogs from the transferred SSR state — no refetch, no flash.
+app.use(i18nPlugin());
+app.use(ssrClientPlugin).hydrate!('#app');
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { App } from './App';
+import { createServerRouter } from './router';
+import { i18nPlugin, preloadCatalogs } from './i18n';
+
+/**
+ * The per-request app factory. Both request handlers consume this export —
+ * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
+ * production — and each call builds a FRESH app, so nothing is shared
+ * between concurrent requests. \`url\` is the requested path.
+ */
+export async function createApp(url: string) {
+    const app = defineApp(<App />);
+    app.use(createServerRouter(url));
+    // The server picks the locale (from \`?lang=\`) and preloads its catalogs so
+    // the render is synchronous; the tree transfers to the client as SSR state.
+    app.use(i18nPlugin({ context: { url }, initialMessages: await preloadCatalogs() }));
+    return app;
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/i18n.ts <==
+import { createI18n, type DetectionContext, type LocaleLoader, type MessageTree } from '@sigx/i18n';
+
+/**
+ * Catalogs: \`src/locales/<locale>/<namespace>.json\`, each its own lazy
+ * chunk — a namespace loads only when a component that uses it renders.
+ */
+const catalogs = import.meta.glob('./locales/*/*.json');
+const loadCatalog: LocaleLoader = (locale, ns) => {
+    const loader = catalogs[\`./locales/\${locale}/\${ns}.json\`];
+    return (loader ? loader() : Promise.resolve({})) as ReturnType<LocaleLoader>;
+};
+
+export const SUPPORTED = ['en', 'sv'] as const;
+export const NAMESPACES = ['app'] as const;
+
+/**
+ * Preload every catalog into a \`messages[locale][namespace]\` tree. The
+ * server passes it as \`initialMessages\` so the render resolves every
+ * translation synchronously (no async boundary, hydration matches).
+ */
+export async function preloadCatalogs(): Promise<MessageTree> {
+    const tree: MessageTree = {};
+    await Promise.all(
+        SUPPORTED.flatMap((locale) =>
+            NAMESPACES.map(async (ns) => {
+                const mod = (await loadCatalog(locale, ns)) as Record<string, unknown> & { default?: unknown };
+                (tree[locale] ??= {})[ns] = (mod.default ?? mod) as MessageTree[string][string];
+            }),
+        ),
+    );
+    return tree;
+}
+
+/**
+ * The i18n plugin, shared by every entry so they agree on the loader, the
+ * supported set and the detection chain (\`?lang=\`, cookie, browser).
+ * The server passes request data as \`context\` plus preloaded messages; the
+ * client omits both and seeds from the transferred SSR state.
+ */
+export function i18nPlugin(opts: { context?: DetectionContext; initialMessages?: MessageTree } = {}) {
+    return createI18n({
+        fallbackLocale: 'en',
+        supported: [...SUPPORTED],
+        defaultNamespace: 'app',
+        namespaces: ['app'],
+        detection: { order: ['url', 'cookie', 'browser'], urlParam: 'lang', context: opts.context },
+        initialMessages: opts.initialMessages,
+        load: loadCatalog,
+    });
+}
+",
+    "==> src/locales/en/app.json <==
+{
+    "greeting": "Hello, SignalX",
+    "hint": "Edit src/locales/en/app.json — or switch language with the button above.",
+    "switch": "Svenska"
+}
+",
+    "==> src/locales/sv/app.json <==
+{
+    "greeting": "Hej, SignalX",
+    "hint": "Redigera src/locales/sv/app.json — eller byt språk med knappen ovan.",
+    "switch": "English"
+}
+",
+    "==> src/pages/About.tsx <==
+import { component } from 'sigx';
+import { useRoute } from '@sigx/router';
+
+export const About = component(() => {
+    const route = useRoute();
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">About</h1>
+                <p class="muted">
+                    This page is the <code>{route.path}</code> route, declared in <code>src/router.ts</code>.
+                    Add a component under <code>src/pages/</code> and a record to the table to add another.
+                </p>
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/pages/Home.tsx <==
+import { component } from 'sigx';
+import { useTranslation } from '@sigx/i18n';
+import { Counter } from '../components/Counter';
+import { ServerGreeting } from '../components/ServerGreeting';
+
+export const Home = component(() => {
+    const t = useTranslation('app');
+    return () => (
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title">{t('greeting')}</h1>
+                <p class="muted">{t('hint')}</p>
+                <Counter />
+                <ServerGreeting />
+            </div>
+        </div>
+    );
+});
+",
+    "==> src/router.ts <==
+import { createRouter, createWebHistory, createMemoryHistory, type RouteRecordRaw } from '@sigx/router';
+import { Home } from './pages/Home';
+import { About } from './pages/About';
+
+/** One route table for the browser and the server. */
+export const routes: RouteRecordRaw[] = [
+    { path: '/', name: 'home', component: Home },
+    { path: '/about', name: 'about', component: About },
+];
+
+/** Browser: history API navigation. */
+export function createAppRouter() {
+    return createRouter({ history: createWebHistory(), routes });
+}
+
+/** Server: a fresh in-memory history per request, positioned at the requested URL. */
+export function createServerRouter(url: string) {
+    return createRouter({ history: createMemoryHistory({ initialLocation: url }), routes });
+}
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src",
+        "vitest.config.ts"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxServer } from '@sigx/vite/server';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        sigxServer()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+    "==> vitest.config.ts <==
+import { defineConfig, mergeConfig, type ConfigEnv } from 'vitest/config';
+import viteConfig from './vite.config';
+
+// Tests run through the same Vite plugins as the app (JSX runtime, and the
+// sigx transforms that server functions and islands rely on).
+export default defineConfig(async (env) => {
+    const base = typeof viteConfig === 'function'
+        ? await (viteConfig as (env: ConfigEnv) => Promise<object> | object)(env)
+        : viteConfig;
+    return mergeConfig(base as Record<string, unknown>, {
+        test: {
+            environment: 'happy-dom',
+            include: ['src/**/*.test.{ts,tsx}']
+        }
+    });
+});
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "target:node",
+    "feature:router",
+    "feature:i18n",
+    "feature:testing",
+    "feature:server-fn",
   ],
 }
 `;
@@ -5736,19 +8700,21 @@ app.listen(port, () => {
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -5758,14 +8724,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -5778,7 +8756,8 @@ import { App } from './App';
 
 // Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
 // ssrClientPlugin (declared optional on App, hence the \`!\`).
-defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+const app = defineApp(<App />);
+app.use(ssrClientPlugin).hydrate!('#app');
 ",
     "==> src/entry-server.tsx <==
 import { defineApp } from 'sigx';
@@ -5788,10 +8767,12 @@ import { App } from './App';
  * The per-request app factory. Both request handlers consume this export —
  * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
  * production — and each call builds a FRESH app, so nothing is shared
- * between concurrent requests. \`url\` is the requested path, for routing.
+ * between concurrent requests. \`url\` is the requested path.
  */
-export function createApp(_url: string) {
-    return defineApp(<App />);
+export function createApp(url: string) {
+    void url;
+    const app = defineApp(<App />);
+    return app;
 }
 ",
     "==> src/env.d.ts <==
@@ -6079,6 +9060,22 @@ export const App = component(() => {
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -6495,6 +9492,22 @@ export const App = component(() => {
     );
 });
 ",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
     "==> src/dev-refresh.ts <==
 import { resumePlugin } from '@sigx/resume';
 import { createBoundaryRefresh } from '@sigx/resume/server';
@@ -6715,6 +9728,999 @@ export default defineConfig(({ command }) => ({
 }
 `;
 
+exports[`composeProject > ssr-node-resume-server-fn-testing > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> .oxlintrc.json <==
+<binary 185 bytes>",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + resume + node + server-fn + testing).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+- \`pnpm test\` — run tests
+- \`pnpm lint\` — lint
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Resumability
+
+The page ships **no JavaScript** except a <1 kB event loader. A click loads only the handler chunk for that event; a write to a signal then loads the component chunk and hydrates that one boundary ("upgrade-on-write").
+
+- \`src/resume/\` — resumable components. Handlers may capture only named signals, props and imports (the transform extracts them into chunks).
+- \`*.server.ts\` — server functions (\`serverFn\`), callable from handlers and during SSR; the module never ships to the browser.
+- \`src/entry-server.tsx\` — \`refreshComponents\`, the registry for single-flight boundary refresh after a mutation.
+
+Docs: https://sigx.dev/core/docs/resume/
+
+## Server functions
+
+A \`*.server.ts\` module only ever runs on the server — the client build swaps it for typed fetch stubs, so database clients and secrets never ship. \`src/api/hello.server.ts\` declares one with \`serverFn({ allowAnonymous: true, handler })\`; \`src/components/ServerGreeting.tsx\` reads it with \`useData\`. Every server function is a public endpoint: validate inputs and declare \`authorize\` (or \`allowAnonymous\`) on each.
+
+Docs: https://sigx.dev/core/docs/server-functions/
+
+## Testing & linting
+
+\`pnpm test\` runs Vitest in a happy-dom environment (\`vitest.config.ts\`); components mount into a real DOM and you assert on it — see the sample test under \`src/\`. \`pnpm lint\` runs oxlint (\`.oxlintrc.json\`).
+
+## Deploy (Node)
+
+\`pnpm build\` writes \`dist/client\` (static assets) and \`dist/server\` (the externalized server build). Run it with:
+
+\`\`\`sh
+NODE_ENV=production node --conditions production server.mjs
+\`\`\`
+
+Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json\` and install production dependencies. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "cross-env NODE_ENV=production node --conditions production server.mjs",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "oxlint src"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/resume": "<core>",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "cross-env": "^10.1.0",
+        "happy-dom": "^20.0.0",
+        "oxlint": "^1.47.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12",
+        "vitest": "^4.1.0"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    const { createBoundaryRefresh } = await import('@sigx/resume/server');
+    const { resumePlugin } = await import('@sigx/resume');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets, resumeManifest } = await import('./dist/server/sigx-app.js');
+    const { createApp, refreshComponents } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+        // Single-flight boundary refresh: a mutation's response carries the
+        // re-rendered HTML of every boundary whose data it invalidates.
+        renderBoundaries: createBoundaryRefresh({
+            plugins: [resumePlugin({ manifest: resumeManifest })],
+            components: refreshComponents
+        })
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.test.tsx <==
+import { describe, it, expect, afterEach } from 'vitest';
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+/**
+ * Mounts the App into happy-dom's document — the same plugin set the entry
+ * installs — and asserts on the rendered DOM.
+ */
+describe('App', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let app: ReturnType<typeof defineApp> | undefined;
+
+    afterEach(() => {
+        app?.unmount();
+        host.innerHTML = '';
+    });
+
+    it('renders the greeting', async () => {
+        app = defineApp(<App />);
+        app.mount(host);
+        expect(host.textContent).toContain('SignalX');
+    });
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './resume/Counter';
+import { ServerGreeting } from './components/ServerGreeting';
+
+/**
+ * A server-only page. The browser receives HTML plus a <1 kB event loader
+ * — no page code, no component code, no framework runtime — until the
+ * first interaction.
+ */
+export const App = component(() => {
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Zero JavaScript on load. Open the network panel, then click:
+                            the handler chunk loads, the write upgrades this one component.
+                        </p>
+                        <Counter initial={0} />
+                        <ServerGreeting />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/api/hello.server.ts <==
+import { serverFn } from '@sigx/server';
+
+/**
+ * A server module: this whole file only ever runs on the server. The client
+ * build swaps it for typed fetch stubs, so anything imported here (database
+ * clients, secrets, \`node:\` builtins) never reaches the browser.
+ *
+ * Every server function is a public endpoint. \`allowAnonymous: true\` is an
+ * explicit choice — the runtime is fail-closed, so a function that declares
+ * nothing refuses anonymous callers. Real apps configure \`authenticate\`
+ * once and declare \`authorize\` where a function needs more.
+ */
+export const serverTime = serverFn({
+    allowAnonymous: true,
+    handler: async () => ({
+        now: new Date().toISOString(),
+        // Called in-process during SSR; over the wire from the browser.
+        via: 'server function',
+    }),
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/components/ServerGreeting.tsx <==
+import { component, useData } from 'sigx';
+import { serverTime } from '../api/hello.server';
+
+/**
+ * Reads a server function with \`useData\`. During SSR the call is direct
+ * (no HTTP) and its result transfers with the page; in the browser the same
+ * import is a fetch stub.
+ */
+export const ServerGreeting = component(() => {
+    const info = useData(serverTime);
+    return () => (
+        <p class="muted">
+            {info.value ? \`Server time \${info.value.now} — \${info.value.via}\` : 'Asking the server…'}
+        </p>
+    );
+});
+",
+    "==> src/dev-refresh.ts <==
+import { resumePlugin } from '@sigx/resume';
+import { createBoundaryRefresh } from '@sigx/resume/server';
+import { refreshComponents } from './entry-server';
+
+/**
+ * Dev half of single-flight boundary refresh: \`sigxServer({ renderBoundaries })\`
+ * in vite.config.ts forwards this export to the dev server-function
+ * endpoint — the same registry the production entry wires by hand.
+ */
+export const renderBoundaries = createBoundaryRefresh({
+    plugins: [resumePlugin()],
+    components: refreshComponents
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+// The ONLY script a resumable page ships: the generated loader — delegation
+// listeners for the build's event union plus lazy references to the handler
+// registry and the resume runtime, both loading on first interaction.
+import 'virtual:sigx-resume/entry';
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { resumePlugin } from '@sigx/resume';
+import { resumeManifest } from 'virtual:sigx-manifests';
+import { App } from './App';
+
+/**
+ * The boundary-refresh registry: components the server re-renders after a
+ * mutation whose \`invalidates\` names data they read (single-flight
+ * boundary refresh). Add a component here to let its HTML refresh without
+ * its chunk ever loading in the browser.
+ */
+export const refreshComponents = {};
+
+/**
+ * The per-request app factory. The resume pack installs here — its
+ * manifest comes from the build (undefined under \`vite\` dev, where QRLs
+ * resolve through the virtual registry).
+ */
+export function createApp(_url: string) {
+    return defineApp(<App />).use(resumePlugin({ manifest: resumeManifest }));
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/resume/Counter.tsx <==
+import { component } from 'sigx';
+
+/**
+ * Fully resumable: each click handler captures only the named signal, so
+ * the transform extracts it into a QRL chunk. The first click loads that
+ * tiny chunk (not this file), the write triggers upgrade-on-write, and only
+ * then does this component's chunk load and hydrate.
+ */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src",
+        "vitest.config.ts"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxResume } from '@sigx/vite/resume';
+import { sigxServer } from '@sigx/vite/server';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/resume', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        sigxResume(),
+        sigxServer({ renderBoundaries: '/src/dev-refresh.ts' })
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+    "==> vitest.config.ts <==
+import { defineConfig, mergeConfig, type ConfigEnv } from 'vitest/config';
+import viteConfig from './vite.config';
+
+// Tests run through the same Vite plugins as the app (JSX runtime, and the
+// sigx transforms that server functions and islands rely on).
+export default defineConfig(async (env) => {
+    const base = typeof viteConfig === 'function'
+        ? await (viteConfig as (env: ConfigEnv) => Promise<object> | object)(env)
+        : viteConfig;
+    return mergeConfig(base as Record<string, unknown>, {
+        test: {
+            environment: 'happy-dom',
+            include: ['src/**/*.test.{ts,tsx}']
+        }
+    });
+});
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "render:resume",
+    "target:node",
+    "feature:testing",
+    "feature:server-fn",
+  ],
+}
+`;
+
+exports[`composeProject > ssr-node-server-fn > matches the snapshot 1`] = `
+{
+  "files": [
+    "==> .gitignore <==
+# base
+node_modules
+dist
+dist-*
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+",
+    "==> README.md <==
+# my-app
+
+A server-rendered SignalX app — one \`vite build --app\` produces the client and server builds. Scaffolded by \`npm create @sigx\` (ssr + hydrate + node + server-fn).
+
+## Getting started
+
+\`\`\`sh
+pnpm install
+pnpm dev
+\`\`\`
+
+## Scripts
+
+- \`pnpm build\` — production build
+- \`pnpm start\` — run the production build
+
+## Project layout
+
+- \`src/App.tsx\` — the root component, rendered on the server and hydrated in the browser
+- \`src/entry-server.tsx\` — \`createApp(url)\`, the per-request app factory (no shared state between requests)
+- \`src/entry-client.tsx\` — hydrates the server HTML
+- \`src/styles.css\` — global styles
+
+## Server functions
+
+A \`*.server.ts\` module only ever runs on the server — the client build swaps it for typed fetch stubs, so database clients and secrets never ship. \`src/api/hello.server.ts\` declares one with \`serverFn({ allowAnonymous: true, handler })\`; \`src/components/ServerGreeting.tsx\` reads it with \`useData\`. Every server function is a public endpoint: validate inputs and declare \`authorize\` (or \`allowAnonymous\`) on each.
+
+Docs: https://sigx.dev/core/docs/server-functions/
+
+## Deploy (Node)
+
+\`pnpm build\` writes \`dist/client\` (static assets) and \`dist/server\` (the externalized server build). Run it with:
+
+\`\`\`sh
+NODE_ENV=production node --conditions production server.mjs
+\`\`\`
+
+Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json\` and install production dependencies. \`PORT\` sets the port (default 3000).
+
+## Learn more
+
+- [SignalX docs](https://sigx.dev)
+- [GitHub](https://github.com/signalxjs)
+",
+    "==> index.html <==
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>my-app</title>
+  </head>
+  <body>
+    <div id="app"><!--ssr-outlet--></div>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>
+",
+    "==> package.json <==
+{
+    "name": "my-app",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "node server.mjs",
+        "build": "vite build --app",
+        "start": "cross-env NODE_ENV=production node --conditions production server.mjs"
+    },
+    "dependencies": {
+        "sigx": "<core>",
+        "@sigx/server": "<core>",
+        "@sigx/server-renderer": "<core>",
+        "express": "^5.2.1"
+    },
+    "devDependencies": {
+        "@sigx/vite": "<core>",
+        "@types/express": "^5.0.6",
+        "@types/node": "^22.0.0",
+        "cross-env": "^10.1.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.12"
+    }
+}
+",
+    "==> public/favicon.svg <==
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#1e1b4b"/><path d="M38 10 20 36h12l-6 18 18-26H32z" fill="#a5b4fc"/></svg>
+",
+    "==> server.mjs <==
+// The server — plain Node, no transpiler. Two modes, one handler each:
+//   dev   Vite middleware + createDevRequestHandler (HMR, per-request entry load)
+//   prod  static assets + createRequestHandler over the \`dist/\` build
+//
+//     node server.mjs                                         # dev
+//     NODE_ENV=production node --conditions production server.mjs   # prod
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const port = Number(process.env.PORT) || 3000;
+
+// Crawlers and AI agents get the blocking document: complete content inline,
+// nothing for the client to execute.
+const isBot = (ua) => /bot|crawl|spider|slurp|gptbot|claudebot|perplexity|headless/i.test(ua);
+
+const app = express();
+
+if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const { createDevRequestHandler } = await import('@sigx/vite/ssr');
+
+    const vite = await createViteServer({
+        root: __dirname,
+        server: { middlewareMode: true },
+        appType: 'custom'
+    });
+    // In dev, Vite's middleware also carries the server-function endpoint.
+    app.use(vite.middlewares);
+    app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
+} else {
+    const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    // The build materializes the document template and asset links as one module.
+    const { template, assets } = await import('./dist/server/sigx-app.js');
+    const { createApp } = await import('./dist/server/entry-server.js');
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+
+    app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    app.use(createServerFnHandler({
+        functions: serverFns,
+    }));
+    app.use(createRequestHandler({
+        template,
+        app: (url) => createApp(url),
+        isBot,
+        document: { assets }
+    }));
+}
+
+app.listen(port, () => {
+    console.log(\`[my-app] \${isProd ? 'production' : 'dev'} server on http://localhost:\${port}\`);
+});
+",
+    "==> src/App.tsx <==
+import { component } from 'sigx';
+import { Counter } from './components/Counter';
+import { ServerGreeting } from './components/ServerGreeting';
+
+/**
+ * The root component. \`signal\` creates reactive state; the render function
+ * re-runs only for the parts of the DOM that read what changed.
+ */
+export const App = component(() => {
+
+    return () => (
+        <div class="app">
+            <header class="app-header">
+                <span class="brand">⚡ my-app</span>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
+            </header>
+
+            <main class="app-main">
+                <div class="card">
+                    <div class="card-body">
+                        <h1 class="card-title">Hello, SignalX</h1>
+                        <p class="muted">
+                            Edit <code>src/App.tsx</code> and save — the page updates in place.
+                        </p>
+                        <Counter />
+                        <ServerGreeting />
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+});
+",
+    "==> src/api/hello.server.ts <==
+import { serverFn } from '@sigx/server';
+
+/**
+ * A server module: this whole file only ever runs on the server. The client
+ * build swaps it for typed fetch stubs, so anything imported here (database
+ * clients, secrets, \`node:\` builtins) never reaches the browser.
+ *
+ * Every server function is a public endpoint. \`allowAnonymous: true\` is an
+ * explicit choice — the runtime is fail-closed, so a function that declares
+ * nothing refuses anonymous callers. Real apps configure \`authenticate\`
+ * once and declare \`authorize\` where a function needs more.
+ */
+export const serverTime = serverFn({
+    allowAnonymous: true,
+    handler: async () => ({
+        now: new Date().toISOString(),
+        // Called in-process during SSR; over the wire from the browser.
+        via: 'server function',
+    }),
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
+        </div>
+    );
+});
+",
+    "==> src/components/ServerGreeting.tsx <==
+import { component, useData } from 'sigx';
+import { serverTime } from '../api/hello.server';
+
+/**
+ * Reads a server function with \`useData\`. During SSR the call is direct
+ * (no HTTP) and its result transfers with the page; in the browser the same
+ * import is a fetch stub.
+ */
+export const ServerGreeting = component(() => {
+    const info = useData(serverTime);
+    return () => (
+        <p class="muted">
+            {info.value ? \`Server time \${info.value.now} — \${info.value.via}\` : 'Asking the server…'}
+        </p>
+    );
+});
+",
+    "==> src/entry-client.tsx <==
+import './styles.css';
+import { defineApp } from 'sigx';
+import { ssrClientPlugin } from '@sigx/server-renderer/client';
+import { App } from './App';
+
+// Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
+// ssrClientPlugin (declared optional on App, hence the \`!\`).
+const app = defineApp(<App />);
+app.use(ssrClientPlugin).hydrate!('#app');
+",
+    "==> src/entry-server.tsx <==
+import { defineApp } from 'sigx';
+import { App } from './App';
+
+/**
+ * The per-request app factory. Both request handlers consume this export —
+ * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
+ * production — and each call builds a FRESH app, so nothing is shared
+ * between concurrent requests. \`url\` is the requested path.
+ */
+export function createApp(url: string) {
+    void url;
+    const app = defineApp(<App />);
+    return app;
+}
+",
+    "==> src/env.d.ts <==
+/// <reference types="vite/client" />
+/// <reference types="@sigx/vite/client" />
+",
+    "==> src/styles.css <==
+/* Plain CSS starter — the class names match daisyUI's, so swapping in
+   Tailwind + daisyUI later keeps the markup as-is. */
+:root {
+    color-scheme: light dark;
+    --bg: #f6f7fb;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1020;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --card: #181a33;
+        --border: #2a2d4d;
+        --primary: #818cf8;
+        --primary-fg: #0f1020;
+    }
+}
+
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--fg);
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+}
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.brand { font-weight: 700; font-size: 1.1rem; }
+.link { color: var(--primary); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.app-main { flex: 1; display: grid; place-items: center; padding: 2rem 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: min(100%, 26rem);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 0.06);
+}
+.card-body { padding: 2rem; text-align: center; }
+.card-title { margin: 0 0 0.5rem; font-size: 1.6rem; }
+.muted { color: var(--muted); margin: 0 0 1.5rem; }
+
+.counter { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.btn {
+    font: inherit; cursor: pointer;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    transition: filter 120ms;
+}
+.btn:hover { filter: brightness(0.95); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+.btn-ghost { background: transparent; }
+.badge {
+    display: inline-block; min-width: 3.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+}
+.badge-lg { font-size: 1.4rem; }
+
+.nav { display: flex; gap: 1rem; }
+.app-footer { text-align: center; padding: 1rem; font-size: 0.9rem; }
+.prose { max-width: 42rem; width: 100%; }
+.prose h1 { font-size: 2rem; margin: 0 0 1rem; }
+.prose ul { padding-left: 1.5rem; }
+",
+    "==> tsconfig.json <==
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "jsxImportSource": "sigx",
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "src"
+    ]
+}
+",
+    "==> vite.config.ts <==
+import { defineConfig } from 'vite';
+import sigx from '@sigx/vite';
+import { sigxServer } from '@sigx/vite/server';
+
+// Externalized from the dev-server module graph so the app, the request
+// handler and the render plugins share one set of @sigx module instances.
+const SIGX_FAMILY = ['sigx', '@sigx/server-renderer', '@sigx/runtime-core', '@sigx/runtime-dom', '@sigx/reactivity', '@sigx/server'];
+
+export default defineConfig(({ command }) => ({
+    plugins: [
+        sigx({ ssr: { entry: 'src/entry-server.tsx' } }),
+        sigxServer()
+    ],
+    oxc: {
+        jsx: {
+            runtime: 'automatic',
+            importSource: 'sigx'
+        }
+    },
+    ...(command === 'serve' && {
+        ssr: { external: SIGX_FAMILY }
+    })
+}));
+",
+  ],
+  "layers": [
+    "base",
+    "ssr",
+    "target:node",
+    "feature:server-fn",
+  ],
+}
+`;
+
 exports[`composeProject > ssr-node-tailwind-bun > matches the snapshot 1`] = `
 {
   "files": [
@@ -6875,19 +10881,21 @@ app.listen(port, () => {
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -6897,14 +10905,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -6917,7 +10937,8 @@ import { App } from './App';
 
 // Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
 // ssrClientPlugin (declared optional on App, hence the \`!\`).
-defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+const app = defineApp(<App />);
+app.use(ssrClientPlugin).hydrate!('#app');
 ",
     "==> src/entry-server.tsx <==
 import { defineApp } from 'sigx';
@@ -6927,10 +10948,12 @@ import { App } from './App';
  * The per-request app factory. Both request handlers consume this export —
  * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
  * production — and each call builds a FRESH app, so nothing is shared
- * between concurrent requests. \`url\` is the requested path, for routing.
+ * between concurrent requests. \`url\` is the requested path.
  */
-export function createApp(_url: string) {
-    return defineApp(<App />);
+export function createApp(url: string) {
+    void url;
+    const app = defineApp(<App />);
+    return app;
 }
 ",
     "==> src/env.d.ts <==
@@ -7182,19 +11205,21 @@ app.listen(port, () => {
 ",
     "==> src/App.tsx <==
 import { component } from 'sigx';
+import { Counter } from './components/Counter';
 
 /**
  * The root component. \`signal\` creates reactive state; the render function
  * re-runs only for the parts of the DOM that read what changed.
  */
-export const App = component(({ signal }) => {
-    const state = signal({ count: 0 });
+export const App = component(() => {
 
     return () => (
         <div class="app">
             <header class="app-header">
                 <span class="brand">⚡ my-app</span>
-                <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                <nav class="nav">
+                    <a class="link" href="https://sigx.dev" target="_blank" rel="noreferrer">Docs</a>
+                </nav>
             </header>
 
             <main class="app-main">
@@ -7204,14 +11229,26 @@ export const App = component(({ signal }) => {
                         <p class="muted">
                             Edit <code>src/App.tsx</code> and save — the page updates in place.
                         </p>
-                        <div class="counter">
-                            <button class="btn btn-ghost" onClick={() => state.count--} aria-label="Decrement">−</button>
-                            <span class="badge badge-primary badge-lg">{state.count}</span>
-                            <button class="btn btn-primary" onClick={() => state.count++} aria-label="Increment">+</button>
-                        </div>
+                        <Counter />
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });
@@ -7224,7 +11261,8 @@ import { App } from './App';
 
 // Hydrate the server-rendered HTML in place. \`hydrate()\` is installed by
 // ssrClientPlugin (declared optional on App, hence the \`!\`).
-defineApp(<App />).use(ssrClientPlugin).hydrate!('#app');
+const app = defineApp(<App />);
+app.use(ssrClientPlugin).hydrate!('#app');
 ",
     "==> src/entry-server.tsx <==
 import { defineApp } from 'sigx';
@@ -7234,10 +11272,12 @@ import { App } from './App';
  * The per-request app factory. Both request handlers consume this export —
  * \`createDevRequestHandler\` under \`vite\` and \`createRequestHandler\` in
  * production — and each call builds a FRESH app, so nothing is shared
- * between concurrent requests. \`url\` is the requested path, for routing.
+ * between concurrent requests. \`url\` is the requested path.
  */
-export function createApp(_url: string) {
-    return defineApp(<App />);
+export function createApp(url: string) {
+    void url;
+    const app = defineApp(<App />);
+    return app;
 }
 ",
     "==> src/entry.vercel.ts <==
@@ -7626,6 +11666,22 @@ export const App = component(() => {
                     </div>
                 </div>
             </main>
+        </div>
+    );
+});
+",
+    "==> src/components/Counter.tsx <==
+import { component } from 'sigx';
+
+/** A reactive counter — \`signal\` state, fine-grained DOM updates. */
+export const Counter = component<{ initial?: number }>((ctx) => {
+    const count = ctx.signal(ctx.props.initial ?? 0);
+
+    return () => (
+        <div class="counter">
+            <button class="btn btn-ghost" onClick={() => count.value--} aria-label="Decrement">−</button>
+            <span class="badge badge-primary badge-lg">{count.value}</span>
+            <button class="btn btn-primary" onClick={() => count.value++} aria-label="Increment">+</button>
         </div>
     );
 });

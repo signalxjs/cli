@@ -55,8 +55,17 @@ SSR projects also choose how they render and where they deploy:
 
 Every target develops on the same Vite dev server (`dev` runs `server.mjs`); the platform entry is what `build` bundles and `deploy` ships.
 
+Extras (`--features`, comma-separated; the interactive flow offers the ones your choices support):
+
+| Feature | Adds | Available for |
+|---|---|---|
+| `router` | `@sigx/router`, `src/router.ts`, Home/About pages | SPA, SSR (hydrate) |
+| `i18n` | `@sigx/i18n`, `src/i18n.ts`, `src/locales/{en,sv}/app.json`, a language switch | SPA, SSR (hydrate) |
+| `testing` | Vitest (happy-dom) + oxlint, `test`/`lint` scripts, a sample test | SPA, SSR, SSG |
+| `server-fn` | `@sigx/server`, `src/api/hello.server.ts` + a component reading it with `useData` | SSR (any render mode / target) |
+
 ```bash
-sigx create my-app --type ssr --render resume --target cloudflare --styling tailwind -y
+sigx create my-app --type ssr --render resume --target cloudflare --styling tailwind --features server-fn,testing -y
 ```
 
 Generated projects pin the `@sigx/*` set this CLI was released against, so a scaffolded app never resolves two copies of `@sigx/reactivity`. Every project ships a README describing its layout and how to deploy.

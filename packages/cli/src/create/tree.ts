@@ -45,11 +45,12 @@ export function substitute(content: string, projectName: string): string {
  *     …kept only when "server-fn" is an active condition…
  *     // @sigx:endif
  *
- * `!name` negates. The marker may sit behind `//`, `#`, `<!-- -->` or
- * `/* *\/` so the overlay stays a valid file of its type (and typechecks in
- * this repo). Blocks nest. Marker lines are always removed.
+ * `!name` negates. The marker may sit behind `//`, `#`, `<!-- -->`,
+ * `/* *\/` or a JSX comment `{/* *\/}` so the overlay stays a valid file of
+ * its type (and typechecks in this repo). Blocks nest. Marker lines are
+ * always removed.
  */
-const MARKER = /^[ \t]*(?:\/\/|#|<!--|\/\*)\s*@sigx:(if\s+(!?)([\w:-]+)|endif)\s*(?:-->|\*\/)?[ \t]*$/;
+const MARKER = /^[ \t]*(?:\/\/|#|<!--|\{\s*\/\*|\/\*)\s*@sigx:(if\s+(!?)([\w:-]+)|endif)\s*(?:-->|\*\/\s*\}|\*\/)?[ \t]*$/;
 
 export function applyConditionals(content: string, conditions: ReadonlySet<string>): string {
     const out: string[] = [];
