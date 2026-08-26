@@ -9,7 +9,9 @@ import { spawnSync } from 'node:child_process';
 import type { RunResult } from './install.js';
 
 function git(args: string[], cwd: string): { ok: boolean; stdout: string; stderr: string } {
-    const r = spawnSync('git', args, { cwd, encoding: 'utf8', shell: process.platform === 'win32' });
+    // No shell: git is a real executable everywhere, and a shell would split
+    // the quoted commit message on Windows.
+    const r = spawnSync('git', args, { cwd, encoding: 'utf8' });
     return { ok: r.status === 0, stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
 }
 
