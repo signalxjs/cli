@@ -27,7 +27,9 @@ export async function createApp(url: string) {
 // @sigx:endif
 // @sigx:if !i18n
 export function createApp(url: string) {
+    // @sigx:if !router
     void url;
+    // @sigx:endif
     const app = defineApp(<App />);
     // @sigx:if router
     app.use(createServerRouter(url));

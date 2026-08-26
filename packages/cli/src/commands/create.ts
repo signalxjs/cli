@@ -218,9 +218,22 @@ export async function runCreate(opts?: CreateOptions): Promise<void> {
     }
 
     let features: Feature[] = parseFeatures(options.features);
+    // Flags are validated like in headless mode: an unknown extra, or one the
+    // chosen kind/render/target cannot take, is an error — not silently dropped.
+    const validFeatures = extraOptions.map((o) => o.value);
     const available = extraOptions.filter((o) =>
         featureSupported(o.value, { kind: LEGACY_TYPE_MAP[projectType], render, target }),
     );
+    for (const f of features) {
+        if (!validFeatures.includes(f)) {
+            cancel(`--features must be a comma-separated list of ${validFeatures.join(', ')}`);
+            process.exit(2);
+        }
+        if (!available.some((o) => o.value === f)) {
+            cancel(`feature "${f}" is not available for this project type / render mode / target`);
+            process.exit(2);
+        }
+    }
     if (available.length) {
         const picked = await multiselect<Feature>({
             message: 'Extras',

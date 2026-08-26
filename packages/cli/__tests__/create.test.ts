@@ -197,3 +197,29 @@ describe('runCreate', () => {
         expect(exitCode).toBe(130);
     });
 });
+
+describe('interactive --features validation', () => {
+    it('rejects an unknown or unsupported extra with exit 2 instead of dropping it', async () => {
+        vi.useFakeTimers();
+        let code: number | undefined;
+        const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((c?: number) => { code = c ?? 0; throw new Error('__exit__'); }) as never);
+        for (const stream of [process.stdout, process.stdin] as const) Object.defineProperty(stream, 'isTTY', { value: true, configurable: true });
+        captureOutput();
+        vi.resetModules();
+        process.argv = ['node', 'sigx', 'create', '--features', 'server-fn'];
+        const mod = await import('../src/commands/create.js');
+        const done = mod.runCreate().catch((e: Error) => { if (e.message !== '__exit__') throw e; });
+        await settle();
+        await press(ENTER); // name
+        await settle();
+        await press(ENTER); // type: basic — server-fn needs ssr
+        await settle();
+        await press(ENTER); // styling
+        await settle(200);
+        await done;
+        expect(code).toBe(2);
+        exitSpy.mockRestore();
+        setOutputTarget(undefined);
+        vi.useRealTimers();
+    });
+});

@@ -2,15 +2,16 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { defineApp } from 'sigx';
 import { App } from './App';
 // @sigx:if router
-import { createServerRouter } from './router';
+import { createAppRouter } from './router';
 // @sigx:endif
 // @sigx:if i18n
 import { i18nPlugin, preloadCatalogs } from './i18n';
 // @sigx:endif
 
 /**
- * Mounts the App into happy-dom's document — the same plugin set the entry
- * installs — and asserts on the rendered DOM.
+ * Mounts the App into happy-dom's document with the same plugins the
+ * browser entry installs (happy-dom provides `location`/`history`, so the
+ * web-history router works as in the app) and asserts on the rendered DOM.
  */
 describe('App', () => {
     const host = document.createElement('div');
@@ -25,7 +26,7 @@ describe('App', () => {
     it('renders the greeting', async () => {
         app = defineApp(<App />);
         // @sigx:if router
-        app.use(createServerRouter('/'));
+        app.use(createAppRouter());
         // @sigx:endif
         // @sigx:if i18n
         app.use(i18nPlugin({ initialMessages: await preloadCatalogs() }));
