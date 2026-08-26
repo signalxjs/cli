@@ -22,6 +22,26 @@ sigx build            # production build
 
 Run `sigx --help` for the full live list (varies by what plugins are installed in your project).
 
+## Scaffolding
+
+`sigx create` (and `npm create @sigx`) composes a project from your choices rather than copying a fixed template:
+
+| `--type` | What you get |
+|---|---|
+| `basic` | Web app (SPA) on Vite |
+| `ssr` | Server-rendered web app — `vite build --app`, Express `server.mjs`, streaming + hydration |
+| `ssg` | Static site with `@sigx/ssg` — file-based routing, MDX, search |
+| `terminal` | Terminal UI with `@sigx/terminal` — HMR via `sigx-terminal-dev` |
+| `lynx` | Native iOS/Android app with SignalX Lynx |
+
+`--styling none|tailwind|daisyui` picks the stylesheet (Tailwind 4 via `@tailwindcss/vite`; daisyUI 5 adds `@sigx/daisyui` components on web apps). `-y` skips the prompts; any non-TTY run is headless too.
+
+```bash
+sigx create my-app --type ssr --styling tailwind -y
+```
+
+Generated projects pin the `@sigx/*` set this CLI was released against, so a scaffolded app never resolves two copies of `@sigx/reactivity`. Every project ships a README describing its layout and how to deploy.
+
 ## Writing a plugin
 
 Declare a top-level `sigx-cli` field in your package.json pointing at your plugin module:

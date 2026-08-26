@@ -48,7 +48,7 @@ describe('runCreate', () => {
 
     beforeEach(() => {
         exitCode = undefined;
-        scaffoldProject.mockReset().mockReturnValue({ ok: true });
+        scaffoldProject.mockReset().mockReturnValue({ ok: true, files: 7, nextSteps: ['cd my-app', 'pnpm install', 'pnpm dev'] });
         exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
             exitCode = code ?? 0;
             throw new Error('__exit__');

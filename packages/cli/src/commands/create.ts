@@ -88,11 +88,10 @@ function runHeadless(opts: CreateOptions): number {
         return 1;
     }
 
-    console.log(`  ✓ Project created\n`);
+    console.log(`  ✓ Project created (${result.files} files)\n`);
     console.log(`  Next steps:`);
-    console.log(`    cd ${projectName}`);
-    console.log(`    pnpm install`);
-    console.log(`    ${projectType === 'lynx' ? 'sigx dev' : 'pnpm dev'}\n`);
+    for (const step of result.nextSteps) console.log(`    ${step}`);
+    console.log('');
     return 0;
 }
 
@@ -127,12 +126,16 @@ export async function runCreate(opts?: CreateOptions): Promise<void> {
     });
     if (isCancel(projectType)) bail();
 
-    const styling = await select<Styling>({
-        message: 'Styling',
-        initialValue: options.styling ?? 'none',
-        options: projectType === 'lynx' ? lynxStylingOptions : webStylingOptions,
-    });
-    if (isCancel(styling)) bail();
+    let styling: Styling = 'none';
+    if (projectType !== 'terminal') {
+        const picked = await select<Styling>({
+            message: 'Styling',
+            initialValue: options.styling ?? 'none',
+            options: projectType === 'lynx' ? lynxStylingOptions : webStylingOptions,
+        });
+        if (isCancel(picked)) bail();
+        styling = picked;
+    }
 
     const s = spinner();
     s.start(`Scaffolding ${projectName}`);
@@ -141,12 +144,9 @@ export async function runCreate(opts?: CreateOptions): Promise<void> {
         s.stop(result.error, 'error');
         process.exit(1);
     }
-    s.stop(`Created ${projectName} (${projectType}${styling !== 'none' ? ` + ${styling}` : ''})`);
+    s.stop(`Created ${projectName} (${projectType}${styling !== 'none' ? ` + ${styling}` : ''}, ${result.files} files)`);
 
-    note(
-        `cd ${projectName}\npnpm install\n${projectType === 'lynx' ? 'sigx dev' : 'pnpm dev'}`,
-        'Next steps',
-    );
+    note(result.nextSteps.join('\n'), 'Next steps');
     outro('Happy hacking!');
     process.exit(0);
 }

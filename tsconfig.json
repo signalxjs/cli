@@ -13,7 +13,7 @@
     "paths": {
       "@sigx/cli": ["./packages/cli/src/index.ts"],
       "@sigx/cli/plugin": ["./packages/cli/src/plugin.ts"],
-      "@sigx/cli/create": ["./packages/cli/src/commands/create.tsx"]
+      "@sigx/cli/create": ["./packages/cli/src/commands/create.ts"]
     }
   },
   "exclude": [

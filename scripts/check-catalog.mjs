@@ -8,10 +8,10 @@
  *
  * Wire into ci.yml. Generalises lynx's check-versions.js to the catalog model.
  */
-import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CORE_PACKAGES, findInlineCoreDeps, formatInlineCoreDeps } from './lib/core-deps.mjs';
+import { readCatalog } from './lib/catalog.mjs';
 
 const SINGLE_MINOR = /^\^\d+\.\d+\.0$/; // ^X.Y.0 — one minor
 
@@ -21,28 +21,11 @@ const errors = [];
 // 1. Every core dep in every package.json must be exactly "catalog:".
 errors.push(...formatInlineCoreDeps(findInlineCoreDeps(repoRoot)));
 
-// 2. Catalog core entries must be single-minor caret. Parse pnpm-workspace.yaml
-//    leniently (the entries this cares about are simple `name: ^x.y.z` lines).
-//    A repo with no workspace file has no catalog to police — skip part 2.
-const wsPath = join(repoRoot, 'pnpm-workspace.yaml');
-const ws = existsSync(wsPath) ? readFileSync(wsPath, 'utf8') : '';
-// Value may be quoted (and a quoted value may contain spaces, e.g. a wide range
-// like ">=0.11.0 <0.13.0") or bare. Capture all three forms so wide ranges are
-// caught, not silently skipped.
-const entryRe = /^\s+(["']?)([@a-zA-Z0-9._/-]+)\1\s*:\s*(?:"([^"]*)"|'([^']*)'|([^\s#]+))/;
-let inCatalog = false;
-for (const line of ws.split('\n')) {
-    if (/^(catalog|catalogs)\s*:/.test(line)) { inCatalog = true; continue; }
-    // A column-0 COMMENT does not end the block — it is valid YAML anywhere inside
-    // a mapping, and treating it as the end skipped every entry after it, so a wide
-    // range sitting below a comment passed this guard silently. Same fix as
-    // sync-core.mjs's walk; the two must agree or they disagree about what is aligned.
-    if (inCatalog && line.trim() !== '' && !/^\s*#/.test(line) && /^\S/.test(line)) inCatalog = false;
-    if (!inCatalog) continue;
-    const m = entryRe.exec(line);
-    if (!m) continue;
-    const name = m[2];
-    const ver = m[3] ?? m[4] ?? m[5];
+// 2. Catalog core entries must be single-minor caret. (Parsing lives in
+//    lib/catalog.mjs, shared with gen-versions.mjs so the guard and the
+//    scaffolder read the same entries.) A repo with no workspace file has no
+//    catalog to police — readCatalog returns {} and part 2 is a no-op.
+for (const [name, ver] of Object.entries(readCatalog(repoRoot))) {
     if (CORE_PACKAGES.has(name) && !SINGLE_MINOR.test(ver)) {
         errors.push(`catalog["${name}"] = "${ver}" (must be single-minor ^X.Y.0 to keep one copy hoisted)`);
     }

@@ -1,0 +1,16 @@
+{
+    "//": "Third-party version ranges written into scaffolded projects. Hand-maintained; @sigx/* ranges come from the pnpm catalog instead (scripts/gen-versions.mjs).",
+    "vite": "^8.0.12",
+    "typescript": "^5.9.3",
+    "@types/node": "^22.0.0",
+    "express": "^5.2.1",
+    "@types/express": "^5.0.6",
+    "cross-env": "^10.1.0",
+    "tailwindcss": "^4.1.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "daisyui": "^5.0.0",
+    "tsx": "^4.20.0",
+    "vitest": "^4.1.0",
+    "oxlint": "^1.47.0",
+    "wrangler": "^4.0.0"
+}

@@ -10,7 +10,8 @@
   "packageManager": "pnpm@10.33.4",
   "scripts": {
     "sync:core": "node scripts/sync-core.mjs",
-    "verify:catalog": "node scripts/check-catalog.mjs",
+    "verify:catalog": "node scripts/check-catalog.mjs && node scripts/gen-versions.mjs --check",
+    "gen:versions": "node scripts/gen-versions.mjs",
     "wt": "node scripts/worktree.mjs",
     "build": "pnpm -r run build",
     "test": "vitest run --passWithNoTests",
