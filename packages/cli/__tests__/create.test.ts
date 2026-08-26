@@ -1,17 +1,30 @@
 /**
- * `runCreate` tests. The module parses process.argv and TTY-ness at import
- * time, so each test resets modules and stubs the environment before a
- * dynamic import.
+ * `runCreate` tests — headless flags and the interactive wizard. The module
+ * parses process.argv and TTY-ness at import time, so each test resets
+ * modules and stubs the environment before a dynamic import. Scaffolding
+ * and the post-steps are mocked: the flow is what is under test here
+ * (compose has its own suite).
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setOutputTarget } from '@sigx/terminal';
-import { captureOutput, settle, press, type, stripAnsi, ESC, ENTER } from './harness.js';
+import { captureOutput, settle, press, stripAnsi, ESC, ENTER, DOWN } from './harness.js';
 
-const scaffoldProject = vi.fn();
+const scaffoldSpec = vi.fn();
 vi.mock('../src/commands/scaffold.js', async (importOriginal) => {
     const real = await importOriginal<typeof import('../src/commands/scaffold.js')>();
-    return { ...real, scaffoldProject: (opts: unknown) => scaffoldProject(opts) };
+    return { ...real, scaffoldSpec: (spec: unknown) => scaffoldSpec(spec) };
 });
+const runInstall = vi.fn();
+vi.mock('../src/create/postinstall/install.js', async (importOriginal) => {
+    const real = await importOriginal<typeof import('../src/create/postinstall/install.js')>();
+    return { ...real, runInstall: (o: unknown) => runInstall(o) };
+});
+const initGitRepo = vi.fn();
+vi.mock('../src/create/postinstall/git.js', () => ({
+    gitAvailable: () => true,
+    insideGitRepo: () => false,
+    initGitRepo: (cwd: string) => initGitRepo(cwd),
+}));
 
 const ttyRestores: Array<() => void> = [];
 function stubTty(on: boolean) {
@@ -45,10 +58,14 @@ describe('runCreate', () => {
     let logSpy: ReturnType<typeof vi.spyOn>;
     let errSpy: ReturnType<typeof vi.spyOn>;
     const origArgv = process.argv;
+    const origUa = process.env.npm_config_user_agent;
 
     beforeEach(() => {
         exitCode = undefined;
-        scaffoldProject.mockReset().mockReturnValue({ ok: true, files: 7, nextSteps: ['cd my-app', 'pnpm install', 'pnpm dev'] });
+        scaffoldSpec.mockReset().mockReturnValue({ ok: true, files: 7, nextSteps: ['cd my-app', 'pnpm install', 'pnpm dev'] });
+        runInstall.mockReset().mockResolvedValue({ ok: true, code: 0, output: '' });
+        initGitRepo.mockReset().mockReturnValue({ ok: true, code: 0, output: '' });
+        process.env.npm_config_user_agent = 'pnpm/10.0.0 npm/? node/v22.0.0';
         exitSpy = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
             exitCode = code ?? 0;
             throw new Error('__exit__');
@@ -58,143 +75,217 @@ describe('runCreate', () => {
     });
     afterEach(() => {
         process.argv = origArgv;
-        while (ttyRestores.length) ttyRestores.pop()!();
+        if (origUa === undefined) delete process.env.npm_config_user_agent;
+        else process.env.npm_config_user_agent = origUa;
         exitSpy.mockRestore();
         logSpy.mockRestore();
         errSpy.mockRestore();
+        for (const r of ttyRestores.splice(0)) r();
         setOutputTarget(undefined);
-        vi.restoreAllMocks();
         vi.useRealTimers();
     });
 
-    const run = async (mod: { runCreate: () => Promise<void> }) =>
-        mod.runCreate().catch((e: Error) => { if (e.message !== '__exit__') throw e; });
+    /** Runs runCreate and swallows the synthetic exit. */
+    async function run(mod: typeof import('../src/commands/create.js'), opts?: Parameters<typeof mod.runCreate>[0]) {
+        try {
+            await mod.runCreate(opts);
+        } catch (err) {
+            if (!(err instanceof Error) || err.message !== '__exit__') throw err;
+        }
+    }
+    const transcript = () => logSpy.mock.calls.flat().join('\n');
+    const errors = () => errSpy.mock.calls.flat().join('\n');
 
-    it('headless: flags scaffold without prompting, exit 0', async () => {
-        stubTty(false);
-        const mod = await importCreate(['my-app', '--type', 'ssg', '--styling', 'tailwind']);
-        await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'ssg', styling: 'tailwind' }));
-        expect(exitCode).toBe(0);
-        const transcript = logSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n');
-        expect(transcript).toContain('Creating SignalX app "my-app"');
-        expect(transcript).toContain('cd my-app');
+    describe('headless', () => {
+        beforeEach(() => stubTty(false));
+
+        it('scaffolds from --type/--styling (legacy vocabulary) without prompting', async () => {
+            await run(await importCreate(['my-app', '--type', 'ssg', '--styling', 'tailwind']));
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({ name: 'my-app', kind: 'ssg', styling: 'tailwind', install: false, git: false }));
+            expect(exitCode).toBe(0);
+            expect(transcript()).toContain('Creating SignalX app "my-app"');
+            expect(transcript()).toContain('cd my-app');
+        });
+
+        it('maps basic → spa and ignores package-manager flags (--registry …)', async () => {
+            await run(await importCreate(['--registry', 'https://x', 'my-app', '--type', 'basic']));
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({ name: 'my-app', kind: 'spa' }));
+            expect(exitCode).toBe(0);
+        });
+
+        it('bare shim argv: leading "create" token is dropped, a project may be named create', async () => {
+            await run(await importCreateBare(['--registry', 'create', 'my-app', '--type', 'basic']));
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({ name: 'my-app', kind: 'spa' }));
+            await run(await importCreate(['create', '--type', 'basic']));
+            expect(scaffoldSpec).toHaveBeenLastCalledWith(expect.objectContaining({ name: 'create' }));
+        });
+
+        it('-y alone scaffolds the default SPA', async () => {
+            await run(await importCreate(['-y']));
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({ name: 'my-sigx-app', kind: 'spa', styling: 'none' }));
+            expect(exitCode).toBe(0);
+        });
+
+        it('takes the full flag set', async () => {
+            await run(await importCreate(['shop', '--kind', 'ssr', '--render', 'resume', '--target', 'cloudflare', '--styling', 'daisyui', '--features', 'server-fn,testing', '--pm', 'npm', '--install', '--git', '-y']));
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({
+                name: 'shop', kind: 'ssr', render: 'resume', target: 'cloudflare', styling: 'daisyui', pm: 'npm', install: true, git: true,
+            }));
+            const spec = scaffoldSpec.mock.calls[0][0] as { features: Set<string> };
+            expect([...spec.features]).toEqual(['server-fn', 'testing']);
+            expect(runInstall).toHaveBeenCalledWith(expect.objectContaining({ pm: 'npm', captured: false }));
+            expect(initGitRepo).toHaveBeenCalled();
+            expect(exitCode).toBe(0);
+        });
+
+        it('--preset quick', async () => {
+            await run(await importCreate(['--preset', 'quick', '-y']));
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({ kind: 'spa', styling: 'tailwind' }));
+            const spec = scaffoldSpec.mock.calls[0][0] as { features: Set<string> };
+            expect([...spec.features]).toEqual(['router', 'testing']);
+        });
+
+        it('rejects bad values with exit 2 and names the flag', async () => {
+            await run(await importCreate(['my-app', '--type', 'nope']));
+            expect(exitCode).toBe(2);
+            expect(errors()).toMatch(/--type/);
+            expect(scaffoldSpec).not.toHaveBeenCalled();
+
+            await run(await importCreate(['my-app', '--kind', 'spa', '--type', 'ssr']));
+            expect(exitCode).toBe(2);
+            expect(errors()).toMatch(/disagree/);
+
+            await run(await importCreate(['my-app', '--kind', 'spa', '--target', 'cloudflare']));
+            expect(exitCode).toBe(2);
+            expect(errors()).toMatch(/--kind ssr only/);
+
+            await run(await importCreate(['my-app', '--kind', 'ssg', '--features', 'router']));
+            expect(exitCode).toBe(2);
+            expect(errors()).toMatch(/"router" is not available for ssg/);
+        });
+
+        it('--list prints the matrix and exits 0', async () => {
+            await run(await importCreate(['--list']));
+            expect(exitCode).toBe(0);
+            expect(transcript()).toContain('Kinds (--kind)');
+            expect(transcript()).toContain('cloudflare');
+            expect(scaffoldSpec).not.toHaveBeenCalled();
+        });
+
+        it('a scaffold failure exits 1 with the error', async () => {
+            scaffoldSpec.mockReturnValue({ ok: false, error: 'Directory "my-app" already exists!' });
+            await run(await importCreate(['my-app', '--type', 'basic']));
+            expect(exitCode).toBe(1);
+            expect(errors()).toContain('already exists');
+        });
+
+        it('an install failure does not fail the run', async () => {
+            runInstall.mockResolvedValue({ ok: false, code: 1, output: 'boom' });
+            await run(await importCreate(['my-app', '--kind', 'spa', '--install']));
+            expect(exitCode).toBe(0);
+            expect(transcript()).toContain('Install failed');
+        });
     });
 
-    it('headless: invalid --type exits 2 without scaffolding', async () => {
-        stubTty(false);
-        const mod = await importCreate(['my-app', '--type', 'bogus']);
-        await run(mod);
-        expect(scaffoldProject).not.toHaveBeenCalled();
-        expect(exitCode).toBe(2);
-    });
+    describe('interactive', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            stubTty(true);
+        });
 
-    it('headless: unknown flag values do not leak into positionals', async () => {
-        // `pnpm create @sigx --registry https://x my-app` must scaffold
-        // "my-app", not a project named "https://x".
-        stubTty(false);
-        const mod = await importCreate(['--registry', 'https://x', 'my-app', '--type', 'basic']);
-        await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'basic', styling: 'none' }));
-        expect(exitCode).toBe(0);
-    });
+        it('quick start: name → preset → pm → install → git → confirm, then scaffold + post-steps', async () => {
+            const cap = captureOutput();
+            const done = run(await importCreate([]));
 
-    it('headless: -y short alias skips prompts', async () => {
-        stubTty(false);
-        const mod = await importCreate(['my-app', '-y']);
-        await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'basic', styling: 'none' }));
-        expect(exitCode).toBe(0);
-    });
+            await settle(); // intro + name prompt
+            await press(ENTER); // my-sigx-app
+            await settle();
+            await press(ENTER); // Quick start
+            await settle();
+            await press(ENTER); // package manager: detected (pnpm)
+            await settle();
+            await press(ENTER); // install? yes
+            await settle();
+            await press(ENTER); // git? yes
+            await settle();
+            await press(ENTER); // create? yes
+            await settle(300); // spinners + notes + outro
+            await done;
 
-    it('headless: --type=value equals form parses', async () => {
-        stubTty(false);
-        const mod = await importCreate(['my-app', '--type=ssg', '--styling=tailwind']);
-        await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'ssg', styling: 'tailwind' }));
-        expect(exitCode).toBe(0);
-    });
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({
+                name: 'my-sigx-app', kind: 'spa', styling: 'tailwind', pm: 'pnpm', install: true, git: true,
+            }));
+            expect(runInstall).toHaveBeenCalledWith(expect.objectContaining({ pm: 'pnpm', captured: true }));
+            expect(initGitRepo).toHaveBeenCalled();
+            expect(exitCode).toBe(0);
+            const out = stripAnsi(cap.output());
+            expect(out).toContain('Create SignalX App');
+            expect(out).toContain('Summary');
+            expect(out).toContain('Next steps');
+        });
 
-    it('headless: --type with no value exits 2 with a message', async () => {
-        stubTty(false);
-        const mod = await importCreate(['my-app', '--type']);
-        await run(mod);
-        expect(scaffoldProject).not.toHaveBeenCalled();
-        expect(exitCode).toBe(2);
-        expect(errSpy.mock.calls.flat().join('\n')).toMatch(/--type/);
-    });
+        it('customize: SSR on Cloudflare, styling + extras kept at their defaults', async () => {
+            captureOutput();
+            const done = run(await importCreate(['--no-install', '--no-git']));
 
-    it('headless: a project can literally be named "create"', async () => {
-        // argv is ['create', 'create', ...] — only the first (command) token
-        // is the shim invocation; the second is the project name.
-        stubTty(false);
-        const mod = await importCreate(['create', '--type', 'basic']);
-        await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'create', projectType: 'basic', styling: 'none' }));
-        expect(exitCode).toBe(0);
-    });
+            await settle();
+            await press(ENTER); // name
+            await settle();
+            await press(DOWN); await press(ENTER); // Customize
+            await settle();
+            await press(DOWN); await press(ENTER); // kind: ssr
+            await settle();
+            await press(ENTER); // render: hydrate
+            await settle();
+            await press(DOWN); await press(ENTER); // target: cloudflare
+            await settle();
+            await press(ENTER); // styling: none
+            await settle();
+            await press(ENTER); // extras: none
+            await settle();
+            await press(ENTER); // pm
+            await settle();
+            await press(ENTER); // create? yes
+            await settle(300);
+            await done;
 
-    it('headless: only a LEADING create token is stripped — "create" stays valid as a flag value', async () => {
-        // Without the leading command token, an unknown flag whose value is
-        // literally "create" must keep that value; stripping it would make
-        // --registry swallow the project name instead.
-        stubTty(false);
-        const mod = await importCreateBare(['--registry', 'create', 'my-app', '--type', 'basic']);
-        await run(mod);
-        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({ projectName: 'my-app', projectType: 'basic', styling: 'none' }));
-        expect(exitCode).toBe(0);
-    });
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({
+                kind: 'ssr', render: 'hydrate', target: 'cloudflare', styling: 'none', install: false, git: false,
+            }));
+            expect(runInstall).not.toHaveBeenCalled();
+            expect(initGitRepo).not.toHaveBeenCalled();
+            expect(exitCode).toBe(0);
+        });
 
-    it('headless: scaffold failure exits 1', async () => {
-        stubTty(false);
-        scaffoldProject.mockReturnValue({ ok: false, error: 'Directory "my-app" already exists!' });
-        const mod = await importCreate(['my-app', '--type', 'basic']);
-        await run(mod);
-        expect(exitCode).toBe(1);
-        expect(errSpy.mock.calls.flat().join('\n')).toContain('already exists');
-    });
+        it('flags pre-answer the wizard: no preset question, values used as initials', async () => {
+            captureOutput();
+            const done = run(await importCreate(['--kind', 'terminal', '--no-install', '--no-git']));
 
-    it('interactive: prompts collapse to a transcript and scaffold runs', async () => {
-        vi.useFakeTimers();
-        stubTty(true);
-        const cap = captureOutput();
-        const mod = await importCreate([]);
-        const done = run(mod);
+            await settle();
+            await press(ENTER); // name
+            await settle();
+            await press(ENTER); // kind: terminal (initial from flag; no preset question)
+            await settle();
+            await press(ENTER); // pm  (no styling / extras for terminal)
+            await settle();
+            await press(ENTER); // create? yes
+            await settle(300);
+            await done;
 
-        await settle(); // intro + name prompt ready
-        await press(ENTER); // accept default name my-sigx-app
-        await settle();
-        await press(ENTER); // project type: basic (initial)
-        await settle();
-        await press(ENTER); // styling: none (initial)
-        await settle();
-        await press(ENTER); // extras: none selected
-        await settle(200); // spinner + note + outro
-        await done;
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({ kind: 'terminal', styling: 'none' }));
+            expect(exitCode).toBe(0);
+        });
 
-        expect(scaffoldProject).toHaveBeenCalledWith(expect.objectContaining({
-            projectName: 'my-sigx-app', projectType: 'basic', styling: 'none', features: [],
-        }));
-        expect(exitCode).toBe(0);
-        const out = stripAnsi(cap.output());
-        expect(out).toContain('Create SignalX App');
-        expect(out).toContain('Next steps');
-    });
-
-    it('interactive: Esc cancels with exit 130 and no scaffold', async () => {
-        vi.useFakeTimers();
-        stubTty(true);
-        captureOutput();
-        const mod = await importCreate([]);
-        const done = run(mod);
-
-        await settle();
-        await press(ESC);
-        await settle();
-        await done;
-
-        expect(scaffoldProject).not.toHaveBeenCalled();
-        expect(exitCode).toBe(130);
+        it('Esc cancels with exit 130 and no scaffold', async () => {
+            captureOutput();
+            const done = run(await importCreate([]));
+            await settle();
+            await press(ESC);
+            await settle();
+            await done;
+            expect(scaffoldSpec).not.toHaveBeenCalled();
+            expect(exitCode).toBe(130);
+        });
     });
 });
 

@@ -144,10 +144,23 @@ const createDts = `\
 export interface CreateOptions {
     /** Project name (positional). */
     name?: string;
-    type?: 'basic' | 'ssr' | 'ssg' | 'lynx';
+    kind?: 'spa' | 'ssr' | 'ssg' | 'terminal' | 'lynx';
+    /** Deprecated alias of \`kind\` (\`basic\` = \`spa\`). */
+    type?: string;
+    render?: 'hydrate' | 'islands' | 'resume';
+    target?: 'node' | 'cloudflare' | 'bun' | 'deno' | 'vercel' | 'vercel-edge' | 'netlify';
     styling?: 'none' | 'tailwind' | 'daisyui';
+    /** Comma-separated on the command line (\`--features router,testing\`). */
+    features?: string;
+    pm?: 'pnpm' | 'npm' | 'yarn' | 'bun' | 'deno';
+    install?: boolean;
+    git?: boolean;
+    /** \`quick\`: SPA + Tailwind + router + testing. */
+    preset?: string;
     /** Skip prompts (headless mode). */
     yes?: boolean;
+    /** Print the kinds / render modes / targets / extras and exit. */
+    list?: boolean;
 }
 export declare function runCreate(opts?: CreateOptions): Promise<void>;
 `;

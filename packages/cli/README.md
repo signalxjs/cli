@@ -24,17 +24,17 @@ Run `sigx --help` for the full live list (varies by what plugins are installed i
 
 ## Scaffolding
 
-`sigx create` (and `npm create @sigx`) composes a project from your choices rather than copying a fixed template:
+`sigx create` (and `npm create @sigx`) composes a project from your choices rather than copying a fixed template. Run it with no flags for the wizard — **Quick start** (SPA + Tailwind + router + tests) or **Customize** — which also picks your package manager, installs dependencies and initializes git; or pass flags:
 
-| `--type` | What you get |
+| `--kind` | What you get |
 |---|---|
-| `basic` | Web app (SPA) on Vite |
+| `spa` | Web app (SPA) on Vite |
 | `ssr` | Server-rendered web app — `vite build --app`, Express `server.mjs`, streaming + hydration |
 | `ssg` | Static site with `@sigx/ssg` — file-based routing, MDX, search |
 | `terminal` | Terminal UI with `@sigx/terminal` — HMR via `sigx-terminal-dev` |
 | `lynx` | Native iOS/Android app with SignalX Lynx |
 
-`--styling none|tailwind|daisyui` picks the stylesheet (Tailwind 4 via `@tailwindcss/vite`; daisyUI 5 adds `@sigx/daisyui` components on web apps). `-y` skips the prompts; any non-TTY run is headless too.
+`--styling none|tailwind|daisyui` picks the stylesheet (Tailwind 4 via `@tailwindcss/vite`; daisyUI 5 adds `@sigx/daisyui` components on web apps). `--pm pnpm|npm|yarn|bun|deno` sets the package manager (default: the one running `create`), `--install`/`--no-install` and `--git`/`--no-git` control the post-steps, `--preset quick` is the quick start, `--list` prints everything this build can generate. `-y` skips the prompts (no install, no git unless asked); any non-TTY run is headless too. `--type basic|ssr|ssg|terminal|lynx` still works as an alias of `--kind`.
 
 SSR projects also choose how they render and where they deploy:
 
@@ -65,7 +65,10 @@ Extras (`--features`, comma-separated; the interactive flow offers the ones your
 | `server-fn` | `@sigx/server`, `src/api/hello.server.ts` + a component reading it with `useData` | SSR (any render mode / target) |
 
 ```bash
-sigx create my-app --type ssr --render resume --target cloudflare --styling tailwind --features server-fn,testing -y
+sigx create                      # the wizard
+sigx create my-app --preset quick --install --git -y
+sigx create my-app --kind ssr --render resume --target cloudflare --styling tailwind --features server-fn,testing --pm npm -y
+sigx create --list
 ```
 
 Generated projects pin the `@sigx/*` set this CLI was released against, so a scaffolded app never resolves two copies of `@sigx/reactivity`. Every project ships a README describing its layout and how to deploy.

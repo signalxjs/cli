@@ -9,10 +9,11 @@ yarn create @sigx        my-app
 bunx create @sigx        my-app
 ```
 
-You'll be prompted for a project name, the kind of project (web SPA, SSR, static site, terminal app, or native Lynx) and styling (plain CSS, Tailwind, or Tailwind + daisyUI). Skip the prompts with flags:
+The wizard asks for a project name, then offers **Quick start** (a web app with Tailwind, a router and tests) or **Customize** — kind (web SPA, SSR, static site, terminal app, native Lynx), rendering and deploy target for SSR (Node, Cloudflare Workers, Bun, Deno, Vercel, Netlify), styling (plain CSS, Tailwind, Tailwind + daisyUI) and extras (router, i18n, tests, server functions). It detects your package manager, installs dependencies and initializes git, then prints the next steps. Skip the prompts with flags:
 
 ```bash
-npm create @sigx@latest my-app -- --type ssr --styling tailwind -y
+npm create @sigx@latest my-app -- --kind ssr --target cloudflare --styling tailwind --install --git -y
+npm create @sigx@latest -- --list
 ```
 
 ## 📚 Documentation

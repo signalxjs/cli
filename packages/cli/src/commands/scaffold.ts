@@ -12,29 +12,24 @@ import {
     LEGACY_TYPE_MAP,
     lynxStylingOptions,
     normalizeSpec,
-    renderOptions,
-    targetOptions,
     validateSpec,
     webStylingOptions,
-    featureOptions,
     type Feature,
     type Kind,
     type Option,
+    type ProjectSpec,
     type Render,
     type Styling,
     type Target,
 } from '../create/spec.js';
-import { availableFeatures, availableRenders, availableTargets } from '../create/layers/index.js';
+import { deployTargetOptions, extraOptions, renderModeOptions } from '../create/headless.js';
 import { readOverlay, writeTree } from '../create/tree.js';
 
 export { isTextExtension } from '../create/tree.js';
 export { webStylingOptions, lynxStylingOptions };
 export type { Styling, Render, Target, Feature };
 
-/** Render modes / deploy targets this build can generate, in prompt shape. */
-export const renderModeOptions: Option<Render>[] = renderOptions.filter((o) => availableRenders.includes(o.value));
-export const deployTargetOptions: Option<Target>[] = targetOptions.filter((o) => availableTargets.includes(o.value));
-export const extraOptions: Option<Feature>[] = featureOptions.filter((o) => availableFeatures.includes(o.value));
+export { renderModeOptions, deployTargetOptions, extraOptions };
 
 /** The `--type` vocabulary (`basic` is the pre-0.11 name for `spa`). */
 export type ProjectType = 'basic' | 'ssr' | 'ssg' | 'terminal' | 'lynx';
@@ -89,30 +84,13 @@ export type ScaffoldResult =
     | { ok: true; files: number; nextSteps: string[] }
     | { ok: false; error: string };
 
-export function scaffoldProject(opts: {
-    projectName: string;
-    projectType: ProjectType;
-    styling: Styling;
-    /** SSR only. */
-    render?: Render;
-    /** SSR only. */
-    target?: Target;
-    features?: Iterable<Feature>;
-}): ScaffoldResult {
-    const kind: Kind | undefined = LEGACY_TYPE_MAP[opts.projectType];
-    if (!kind) return { ok: false, error: `Unknown project type "${opts.projectType}"` };
-    const spec = normalizeSpec({
-        name: opts.projectName,
-        kind,
-        styling: opts.styling,
-        features: opts.features,
-        ...(kind === 'ssr' ? { render: opts.render, target: opts.target } : {}),
-    });
+/** Write a validated spec to `<cwd>/<name>`. */
+export function scaffoldSpec(spec: ProjectSpec): ScaffoldResult {
     const problems = validateSpec(spec);
     if (problems.length) return { ok: false, error: problems.join('; ') };
 
-    const targetDir = resolve(process.cwd(), opts.projectName);
-    if (existsSync(targetDir)) return { ok: false, error: `Directory "${opts.projectName}" already exists!` };
+    const targetDir = resolve(process.cwd(), spec.name);
+    if (existsSync(targetDir)) return { ok: false, error: `Directory "${spec.name}" already exists!` };
 
     let composed;
     try {
@@ -126,4 +104,26 @@ export function scaffoldProject(opts: {
     const files = writeTree(composed.tree, targetDir);
     patchWorkspaceDeps(targetDir);
     return { ok: true, files, nextSteps: composed.nextSteps };
+}
+
+/** The `--type`-vocabulary entry point kept for callers of the previous shape. */
+export function scaffoldProject(opts: {
+    projectName: string;
+    projectType: ProjectType;
+    styling: Styling;
+    /** SSR only. */
+    render?: Render;
+    /** SSR only. */
+    target?: Target;
+    features?: Iterable<Feature>;
+}): ScaffoldResult {
+    const kind: Kind | undefined = LEGACY_TYPE_MAP[opts.projectType];
+    if (!kind) return { ok: false, error: `Unknown project type "${opts.projectType}"` };
+    return scaffoldSpec(normalizeSpec({
+        name: opts.projectName,
+        kind,
+        styling: opts.styling,
+        features: opts.features,
+        ...(kind === 'ssr' ? { render: opts.render, target: opts.target } : {}),
+    }));
 }
