@@ -36,8 +36,27 @@ Run `sigx --help` for the full live list (varies by what plugins are installed i
 
 `--styling none|tailwind|daisyui` picks the stylesheet (Tailwind 4 via `@tailwindcss/vite`; daisyUI 5 adds `@sigx/daisyui` components on web apps). `-y` skips the prompts; any non-TTY run is headless too.
 
+SSR projects also choose how they render and where they deploy:
+
+| `--render` | |
+|---|---|
+| `hydrate` | streaming SSR, full client hydration (default) |
+| `islands` | server-only page, components hydrate per `client:*` directive |
+| `resume` | zero JS on load, handlers load on first interaction |
+
+| `--target` | Entry | Deploy |
+|---|---|---|
+| `node` (default) | `server.mjs` (Express) | `node --conditions production server.mjs` |
+| `cloudflare` | `src/entry.cloudflare.ts` + `wrangler.jsonc` | `wrangler deploy` |
+| `bun` | `server.bun.ts` | `bun --conditions=production server.bun.ts` |
+| `deno` | `src/entry.deno.ts` + `deno.json` | `deno deploy` |
+| `vercel` / `vercel-edge` | `src/entry.vercel.ts` | `vercel deploy --prebuilt` |
+| `netlify` | `src/entry.netlify.ts` + `netlify.toml` | `netlify deploy --prod --no-build` |
+
+Every target develops on the same Vite dev server (`dev` runs `server.mjs`); the platform entry is what `build` bundles and `deploy` ships.
+
 ```bash
-sigx create my-app --type ssr --styling tailwind -y
+sigx create my-app --type ssr --render resume --target cloudflare --styling tailwind -y
 ```
 
 Generated projects pin the `@sigx/*` set this CLI was released against, so a scaffolded app never resolves two copies of `@sigx/reactivity`. Every project ships a README describing its layout and how to deploy.

@@ -21,6 +21,17 @@ const MATRIX: Array<[string, Omit<SpecInput, 'name'>]> = [
     ['ssr-node', { kind: 'ssr' }],
     ['ssr-node-tailwind-bun', { kind: 'ssr', styling: 'tailwind', pm: 'bun' }],
     ['ssr-node-daisyui', { kind: 'ssr', styling: 'daisyui' }],
+    ['ssr-node-islands', { kind: 'ssr', render: 'islands' }],
+    ['ssr-node-resume', { kind: 'ssr', render: 'resume' }],
+    ['ssr-cloudflare', { kind: 'ssr', target: 'cloudflare' }],
+    ['ssr-cloudflare-resume-tailwind', { kind: 'ssr', target: 'cloudflare', render: 'resume', styling: 'tailwind' }],
+    ['ssr-bun-islands', { kind: 'ssr', target: 'bun', render: 'islands', pm: 'bun' }],
+    ['ssr-bun-resume', { kind: 'ssr', target: 'bun', render: 'resume' }],
+    ['ssr-deno', { kind: 'ssr', target: 'deno', pm: 'deno' }],
+    ['ssr-deno-resume', { kind: 'ssr', target: 'deno', render: 'resume' }],
+    ['ssr-vercel', { kind: 'ssr', target: 'vercel' }],
+    ['ssr-vercel-edge-resume', { kind: 'ssr', target: 'vercel-edge', render: 'resume' }],
+    ['ssr-netlify-islands', { kind: 'ssr', target: 'netlify', render: 'islands', pm: 'npm' }],
     ['ssg', { kind: 'ssg' }],
     ['ssg-daisyui-yarn', { kind: 'ssg', styling: 'daisyui', pm: 'yarn' }],
     ['terminal', { kind: 'terminal' }],
@@ -113,10 +124,47 @@ describe('composeProject', () => {
         expect(tree.has('README.md')).toBe(true); // shipped by the overlay itself
     });
 
-    it('rejects render modes, targets and features that are not available yet', () => {
-        expect(() => compose({ kind: 'ssr', render: 'resume' })).toThrow(/not available yet/);
-        expect(() => compose({ kind: 'ssr', target: 'cloudflare' })).toThrow(/not available yet/);
+    it('rejects features that are not available yet', () => {
         expect(() => compose({ kind: 'spa', features: ['router'] })).toThrow(/not available yet/);
+    });
+
+    it('wires server functions into every entry only when the build carries a registry', () => {
+        const hydrate = text(compose({ kind: 'ssr', target: 'cloudflare' }).tree.get('src/entry.cloudflare.ts')!)!;
+        const resume = text(compose({ kind: 'ssr', target: 'cloudflare', render: 'resume' }).tree.get('src/entry.cloudflare.ts')!)!;
+        expect(hydrate).not.toContain('matchesServerFn');
+        expect(hydrate).toContain("import { createApp } from './entry-server';");
+        expect(resume).toContain('matchesServerFn(request, serverFnBase)');
+        expect(resume).toContain('renderBoundaries');
+        expect(resume).toContain("import { createApp, refreshComponents } from './entry-server';");
+        expect(resume).not.toContain("import { createApp } from './entry-server';");
+
+        const node = text(compose({ kind: 'ssr', render: 'resume' }).tree.get('server.mjs')!)!;
+        expect(node).toContain('createServerFnHandler');
+        expect(node).toContain('createBoundaryRefresh');
+        expect(text(compose({ kind: 'ssr' }).tree.get('server.mjs')!)).not.toContain('createServerFnHandler');
+    });
+
+    it('renders the adapter into vite.config.ts and the platform config next to it', () => {
+        const cf = compose({ kind: 'ssr', target: 'cloudflare' }).tree;
+        expect(text(cf.get('vite.config.ts')!)).toContain("adapter: cloudflare()");
+        expect(text(cf.get('vite.config.ts')!)).toContain("import { cloudflare } from '@sigx/cloudflare';");
+        expect(text(cf.get('wrangler.jsonc')!)).toContain('"main": "dist/server/entry.cloudflare.js"');
+        expect(text(cf.get('wrangler.jsonc')!)).toContain('"name": "my-app"');
+
+        const edge = compose({ kind: 'ssr', target: 'vercel-edge' }).tree;
+        expect(text(edge.get('vite.config.ts')!)).toContain("adapter: vercel({ runtime: 'edge' })");
+        expect(text(compose({ kind: 'ssr', target: 'netlify' }).tree.get('netlify.toml')!)).toContain('publish = "dist/client"');
+        expect(text(compose({ kind: 'ssr', target: 'deno' }).tree.get('deno.json')!)).toContain('"start"');
+        expect(JSON.parse(text(compose({ kind: 'ssr', target: 'deno' }).tree.get('tsconfig.json')!)!).exclude).toEqual(['src/entry.deno.ts']);
+        expect(JSON.parse(text(compose({ kind: 'ssr', target: 'bun' }).tree.get('tsconfig.json')!)!).include).not.toContain('server.bun.ts');
+    });
+
+    it('keeps express as a dev-only dependency on non-node targets', () => {
+        const pkg = JSON.parse(text(compose({ kind: 'ssr', target: 'cloudflare' }).tree.get('package.json')!)!);
+        expect(pkg.dependencies.express).toBeUndefined();
+        expect(pkg.devDependencies.express).toBeDefined();
+        expect(pkg.scripts.dev).toBe('node server.mjs');
+        expect(pkg.scripts.deploy).toBe('wrangler deploy');
     });
 });
 

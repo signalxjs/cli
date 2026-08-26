@@ -51,6 +51,38 @@ jobs:
       - name: Test
         run: pnpm test
 
+  # Scaffold real projects with the built CLI, install them from npm, and
+  # typecheck + build each — the proof that generated projects work against
+  # the published @sigx packages, not just that the generator's snapshots
+  # match. Network + minutes, so it is its own job and skipped by default
+  # locally (SIGX_E2E=1 enables it).
+  e2e-create:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Scaffold, install, typecheck and build generated projects
+        run: pnpm test -- e2e
+        env:
+          SIGX_E2E: '1'
+
   coverage:
     runs-on: ubuntu-latest
     steps:

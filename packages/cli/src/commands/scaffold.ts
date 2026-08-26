@@ -12,17 +12,26 @@ import {
     LEGACY_TYPE_MAP,
     lynxStylingOptions,
     normalizeSpec,
+    renderOptions,
+    targetOptions,
     validateSpec,
     webStylingOptions,
     type Kind,
     type Option,
+    type Render,
     type Styling,
+    type Target,
 } from '../create/spec.js';
+import { availableRenders, availableTargets } from '../create/layers/index.js';
 import { readOverlay, writeTree } from '../create/tree.js';
 
 export { isTextExtension } from '../create/tree.js';
 export { webStylingOptions, lynxStylingOptions };
-export type { Styling };
+export type { Styling, Render, Target };
+
+/** Render modes / deploy targets this build can generate, in prompt shape. */
+export const renderModeOptions: Option<Render>[] = renderOptions.filter((o) => availableRenders.includes(o.value));
+export const deployTargetOptions: Option<Target>[] = targetOptions.filter((o) => availableTargets.includes(o.value));
 
 /** The `--type` vocabulary (`basic` is the pre-0.11 name for `spa`). */
 export type ProjectType = 'basic' | 'ssr' | 'ssg' | 'terminal' | 'lynx';
@@ -81,10 +90,19 @@ export function scaffoldProject(opts: {
     projectName: string;
     projectType: ProjectType;
     styling: Styling;
+    /** SSR only. */
+    render?: Render;
+    /** SSR only. */
+    target?: Target;
 }): ScaffoldResult {
     const kind: Kind | undefined = LEGACY_TYPE_MAP[opts.projectType];
     if (!kind) return { ok: false, error: `Unknown project type "${opts.projectType}"` };
-    const spec = normalizeSpec({ name: opts.projectName, kind, styling: opts.styling });
+    const spec = normalizeSpec({
+        name: opts.projectName,
+        kind,
+        styling: opts.styling,
+        ...(kind === 'ssr' ? { render: opts.render, target: opts.target } : {}),
+    });
     const problems = validateSpec(spec);
     if (problems.length) return { ok: false, error: problems.join('; ') };
 

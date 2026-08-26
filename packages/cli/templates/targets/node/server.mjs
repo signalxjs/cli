@@ -27,15 +27,46 @@ if (!isProd) {
         server: { middlewareMode: true },
         appType: 'custom'
     });
+    // In dev, Vite's middleware also carries the server-function endpoint.
     app.use(vite.middlewares);
     app.use(await createDevRequestHandler(vite, { entry: '/src/entry-server.tsx', isBot }));
 } else {
     const { createRequestHandler } = await import('@sigx/server-renderer/node');
+    // @sigx:if server-fns
+    const { createServerFnHandler } = await import('@sigx/server/node');
+    // @sigx:endif
+    // @sigx:if resume
+    const { createBoundaryRefresh } = await import('@sigx/resume/server');
+    const { resumePlugin } = await import('@sigx/resume');
+    // @sigx:endif
     // The build materializes the document template and asset links as one module.
+    // @sigx:if resume
+    const { template, assets, resumeManifest } = await import('./dist/server/sigx-app.js');
+    const { createApp, refreshComponents } = await import('./dist/server/entry-server.js');
+    // @sigx:endif
+    // @sigx:if !resume
     const { template, assets } = await import('./dist/server/sigx-app.js');
     const { createApp } = await import('./dist/server/entry-server.js');
+    // @sigx:endif
+    // @sigx:if server-fns
+    // The server-function registry is passed explicitly, never ambient.
+    const { serverFns } = await import('./dist/server/sigx-server-fns.js');
+    // @sigx:endif
 
     app.use(express.static(resolve(__dirname, 'dist/client'), { index: false }));
+    // @sigx:if server-fns
+    app.use(createServerFnHandler({
+        functions: serverFns,
+        // @sigx:if resume
+        // Single-flight boundary refresh: a mutation's response carries the
+        // re-rendered HTML of every boundary whose data it invalidates.
+        renderBoundaries: createBoundaryRefresh({
+            plugins: [resumePlugin({ manifest: resumeManifest })],
+            components: refreshComponents
+        })
+        // @sigx:endif
+    }));
+    // @sigx:endif
     app.use(createRequestHandler({
         template,
         app: (url) => createApp(url),
