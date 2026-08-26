@@ -1,46 +1,16 @@
 /**
- * Scaffolding entry points shared by the interactive and headless `create`
- * paths. The real work is `composeProject` (src/create/compose.ts): this
- * module maps the command's `--type`/`--styling` vocabulary onto a
- * `ProjectSpec`, writes the composed tree, and patches `@sigx/*` deps to
+ * The write side of `sigx create`: `scaffoldSpec` validates a `ProjectSpec`
+ * (built by src/create/headless.ts or the wizard), composes it
+ * (src/create/compose.ts), writes the tree, and patches `@sigx/*` deps to
  * `workspace:*` when scaffolding inside a pnpm workspace.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { composeProject } from '../create/compose.js';
-import {
-    LEGACY_TYPE_MAP,
-    lynxStylingOptions,
-    normalizeSpec,
-    validateSpec,
-    webStylingOptions,
-    type Feature,
-    type Kind,
-    type Option,
-    type ProjectSpec,
-    type Render,
-    type Styling,
-    type Target,
-} from '../create/spec.js';
-import { deployTargetOptions, extraOptions, renderModeOptions } from '../create/headless.js';
+import { validateSpec, type ProjectSpec } from '../create/spec.js';
 import { readOverlay, writeTree } from '../create/tree.js';
 
 export { isTextExtension } from '../create/tree.js';
-export { webStylingOptions, lynxStylingOptions };
-export type { Styling, Render, Target, Feature };
-
-export { renderModeOptions, deployTargetOptions, extraOptions };
-
-/** The `--type` vocabulary (`basic` is the pre-0.11 name for `spa`). */
-export type ProjectType = 'basic' | 'ssr' | 'ssg' | 'terminal' | 'lynx';
-
-export const projectTypeOptions: Option<ProjectType>[] = [
-    { value: 'basic', label: 'Web app (SPA)', description: 'Client-rendered single-page app on Vite' },
-    { value: 'ssr', label: 'Web app (SSR)', description: 'Server-rendered with Express, streaming + hydration' },
-    { value: 'ssg', label: 'Static site (SSG)', description: 'File-based routing, MDX, built-in search' },
-    { value: 'terminal', label: 'Terminal app (TUI)', description: 'Text UI with TSX + signals, HMR dev runner' },
-    { value: 'lynx', label: 'Native mobile (Lynx)', description: 'iOS & Android from one component tree' },
-];
 
 /** Copy a template folder to `dest` with `{{projectName}}` substitution and `gitignore` → `.gitignore`. */
 export function copyDirectory(src: string, dest: string, projectName: string): void {
@@ -104,26 +74,4 @@ export function scaffoldSpec(spec: ProjectSpec): ScaffoldResult {
     const files = writeTree(composed.tree, targetDir);
     patchWorkspaceDeps(targetDir);
     return { ok: true, files, nextSteps: composed.nextSteps };
-}
-
-/** The `--type`-vocabulary entry point kept for callers of the previous shape. */
-export function scaffoldProject(opts: {
-    projectName: string;
-    projectType: ProjectType;
-    styling: Styling;
-    /** SSR only. */
-    render?: Render;
-    /** SSR only. */
-    target?: Target;
-    features?: Iterable<Feature>;
-}): ScaffoldResult {
-    const kind: Kind | undefined = LEGACY_TYPE_MAP[opts.projectType];
-    if (!kind) return { ok: false, error: `Unknown project type "${opts.projectType}"` };
-    return scaffoldSpec(normalizeSpec({
-        name: opts.projectName,
-        kind,
-        styling: opts.styling,
-        features: opts.features,
-        ...(kind === 'ssr' ? { render: opts.render, target: opts.target } : {}),
-    }));
 }

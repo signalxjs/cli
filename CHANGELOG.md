@@ -32,6 +32,8 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ### Removed
 
+- The transitional `--type`-vocabulary scaffold shims (`scaffoldProject`, `ProjectType`, `projectTypeOptions` and the option re-exports in `commands/scaffold.ts`) — part 5 of #100 (#110). The command builds a `ProjectSpec` and writes it with `scaffoldSpec`; `--type` itself remains a documented alias of `--kind`.
+
 - The static `templates/basic*`, `templates/ssr*` and `templates/ssg*` folders (see above). The daisyUI SPA template's demo page is replaced by the shared starter, which uses daisyUI's class names so the plain-CSS, Tailwind and daisyUI variants share one `App.tsx`.
 
 ## [0.10.0] - 2026-08-04
