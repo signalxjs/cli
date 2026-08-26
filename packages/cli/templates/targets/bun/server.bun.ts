@@ -48,7 +48,12 @@ Bun.serve({
         // Static tier: GET/HEAD only, exact file paths only (never index.html —
         // the raw template must not shadow the document render). The resolved
         // prefix check guards ../ traversal.
-        if ((request.method === 'GET' || request.method === 'HEAD') && pathname !== '/' && !pathname.endsWith('/')) {
+        if (
+            (request.method === 'GET' || request.method === 'HEAD') &&
+            pathname !== '/' &&
+            pathname !== '/index.html' &&
+            !pathname.endsWith('/')
+        ) {
             let decoded: string | undefined;
             try {
                 decoded = decodeURIComponent(pathname);
