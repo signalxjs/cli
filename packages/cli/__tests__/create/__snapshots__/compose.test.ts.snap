@@ -2737,7 +2737,7 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
         "@sigx/ssg": "^0.21.0"
     },
     "devDependencies": {
-        "@sigx/cli": "^0.10.0",
+        "@sigx/cli": "^0.11.0",
         "@sigx/vite": "<core>",
         "typescript": "^5.9.3",
         "vite": "^8.0.12"
@@ -3072,7 +3072,7 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
         "@sigx/ssg": "^0.21.0"
     },
     "devDependencies": {
-        "@sigx/cli": "^0.10.0",
+        "@sigx/cli": "^0.11.0",
         "@sigx/vite": "<core>",
         "@tailwindcss/vite": "^4.1.0",
         "daisyui": "^5.0.0",
@@ -3349,7 +3349,7 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
         "@sigx/ssg": "^0.21.0"
     },
     "devDependencies": {
-        "@sigx/cli": "^0.10.0",
+        "@sigx/cli": "^0.11.0",
         "@sigx/vite": "<core>",
         "happy-dom": "^20.0.0",
         "oxlint": "^1.47.0",

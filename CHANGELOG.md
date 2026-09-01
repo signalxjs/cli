@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-01
+
+`@sigx/cli` 0.11.0, `@sigx/create` 0.7.0.
+
 ### Changed
 
 - **`sigx create` composes projects instead of copying template folders** (#101, part 1 of #100). The twelve static `templates/<type>[-<styling>]` directories are replaced by a generator in `packages/cli/src/create/`: a `ProjectSpec` (kind × render mode × deploy target × styling × features) is composed from ordered layers — `base → kind → render → target → styling → features` — into a virtual file tree, and the managed files (`package.json`, `vite.config.ts`, `tsconfig.json`, `src/env.d.ts`, `.gitignore`, `README.md`) are rendered by builders from merged fragments rather than shipped per combination. App files come from small overlay folders under `templates/{base,kinds,targets,styling}` (a later layer's file overrides an earlier one's; `// @sigx:if <condition>` … `// @sigx:endif` markers keep per-combination lines in one file). Lynx keeps its three complete overlays under `templates/lynx/`. Every combination is snapshot-tested (`__tests__/create/compose.test.ts`), and a `--type`/`--styling` pair scaffolds the same *kind* of project it did before — `basic` is the legacy name for `spa`.
