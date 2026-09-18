@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Changed
+
+- **Aligned with core 1.0** (#114). The catalog core line is `^1.0.0`, so every project `sigx create` generates pins `sigx`/`@sigx/*` core packages to `^1.0.0`; the companion pins move to the tier-1 releases built against it — `@sigx/router` `^0.13.0`, `@sigx/store` `^0.14.0`, `@sigx/daisyui` `^0.13.0`, `@sigx/terminal` + `@sigx/terminal-dev` `^0.13.0` (`@sigx/i18n`, `@sigx/ssg*` and `@sigx/actors*` have not shipped against 1.0 yet and are unchanged). `@sigx/cli` itself now depends on `@sigx/args` + `@sigx/terminal` `^0.13.0`. The compose snapshots replace the core range with `<core>` only where it pins a core package, so an unrelated pin that happens to share the range (`jsr:@std/http@^1.0.0`) stays visible.
+
 ## [0.11.0] - 2026-09-01
 
 `@sigx/cli` 0.11.0, `@sigx/create` 0.7.0.

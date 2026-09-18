@@ -7,7 +7,7 @@
  */
 
 /** The core line: every package published from signalxjs/core shares it. */
-export const SIGX_CORE = '^0.15.0';
+export const SIGX_CORE = '^1.0.0';
 
 /** `@sigx/cli`'s own single-minor range, for templates whose scripts run `sigx`. */
 export const SIGX_CLI = '^0.11.0';
@@ -32,14 +32,14 @@ export const SIGX_CORE_PACKAGES: ReadonlySet<string> = new Set([
 
 /** Companion packages with their own release lines. */
 export const SIGX_COMPANIONS: Readonly<Record<string, string>> = {
-    '@sigx/router': '^0.12.0',
+    '@sigx/router': '^0.13.0',
     '@sigx/i18n': '^0.3.0',
-    '@sigx/store': '^0.13.0',
+    '@sigx/store': '^0.14.0',
     '@sigx/ssg': '^0.21.0',
     '@sigx/ssg-theme-daisyui': '^0.21.0',
-    '@sigx/daisyui': '^0.12.0',
-    '@sigx/terminal': '^0.12.0',
-    '@sigx/terminal-dev': '^0.12.0',
+    '@sigx/daisyui': '^0.13.0',
+    '@sigx/terminal': '^0.13.0',
+    '@sigx/terminal-dev': '^0.13.0',
     '@sigx/actors': '^0.9.0',
     '@sigx/actors-cloudflare': '^0.9.0',
 };

@@ -1,8 +1,10 @@
 /**
  * The spec matrix: every combination the generator supports, composed to a
  * virtual tree and snapshotted. Snapshots replace the catalog's core range
- * with `<core>` so `pnpm sync:core` does not churn them; the versions-vs-
- * catalog rule itself lives in versions.test.ts.
+ * with `<core>` — only where it pins a CORE package, so an unrelated pin that
+ * happens to share the range (`jsr:@std/http@^1.0.0`) stays visible — so
+ * `pnpm sync:core` does not churn them; the versions-vs-catalog rule itself
+ * lives in versions.test.ts.
  *
  * Beyond the snapshot, each tree is checked for the things that used to rot
  * silently in static templates (#50, #91): no leaked placeholders or
@@ -12,7 +14,7 @@
 import { describe, it, expect } from 'vitest';
 import { composeProject } from '../../src/create/compose.js';
 import { normalizeSpec, type SpecInput } from '../../src/create/spec.js';
-import { SIGX_CORE } from '../../src/create/versions.js';
+import { SIGX_CORE, SIGX_CORE_PACKAGES } from '../../src/create/versions.js';
 
 const MATRIX: Array<[string, Omit<SpecInput, 'name'>]> = [
     ['spa', { kind: 'spa' }],
@@ -47,6 +49,10 @@ const MATRIX: Array<[string, Omit<SpecInput, 'name'>]> = [
     ['lynx-tailwind', { kind: 'lynx', styling: 'tailwind' }],
 ];
 
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+/** `"<core package>": "<core range>"` — the shape every generated manifest uses. */
+const CORE_DEP = new RegExp(`"(${[...SIGX_CORE_PACKAGES].map(escapeRe).join('|')})": "${escapeRe(SIGX_CORE)}"`, 'g');
+
 function compose(input: Omit<SpecInput, 'name'>) {
     return composeProject(normalizeSpec({ name: 'my-app', ...input }));
 }
@@ -64,7 +70,7 @@ describe('composeProject', () => {
             const snapshot = files.map((path) => {
                 const content = tree.get(path)!;
                 const body = typeof content === 'string'
-                    ? content.split(SIGX_CORE).join('<core>')
+                    ? content.replace(CORE_DEP, '"$1": "<core>"')
                     : `<binary ${content.byteLength} bytes>`;
                 return `==> ${path} <==\n${body}`;
             });

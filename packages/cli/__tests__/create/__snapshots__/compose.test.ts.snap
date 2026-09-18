@@ -1080,7 +1080,7 @@ Tailwind CSS 4 + daisyUI 5. Themes are declared in \`src/styles.css\` (\`@plugin
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/daisyui": "^0.12.0"
+        "@sigx/daisyui": "^0.13.0"
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
@@ -1309,7 +1309,7 @@ Docs: https://sigx.dev/i18n/
     "dependencies": {
         "sigx": "<core>",
         "@sigx/i18n": "^0.3.0",
-        "@sigx/store": "^0.13.0"
+        "@sigx/store": "^0.14.0"
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
@@ -1696,8 +1696,8 @@ Tailwind CSS 4 via \`@tailwindcss/vite\` — no config file needed. \`src/styles
     "dependencies": {
         "sigx": "<core>",
         "@sigx/i18n": "^0.3.0",
-        "@sigx/router": "^0.12.0",
-        "@sigx/store": "^0.13.0"
+        "@sigx/router": "^0.13.0",
+        "@sigx/store": "^0.14.0"
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
@@ -2126,7 +2126,7 @@ Docs: https://sigx.dev/router/
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/router": "^0.12.0"
+        "@sigx/router": "^0.13.0"
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
@@ -2732,7 +2732,7 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/router": "^0.12.0",
+        "@sigx/router": "^0.13.0",
         "@sigx/server-renderer": "<core>",
         "@sigx/ssg": "^0.21.0"
     },
@@ -3067,7 +3067,7 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/router": "^0.12.0",
+        "@sigx/router": "^0.13.0",
         "@sigx/server-renderer": "<core>",
         "@sigx/ssg": "^0.21.0"
     },
@@ -3344,7 +3344,7 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/router": "^0.12.0",
+        "@sigx/router": "^0.13.0",
         "@sigx/server-renderer": "<core>",
         "@sigx/ssg": "^0.21.0"
     },
@@ -8019,10 +8019,10 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     "dependencies": {
         "sigx": "<core>",
         "@sigx/i18n": "^0.3.0",
-        "@sigx/router": "^0.12.0",
+        "@sigx/router": "^0.13.0",
         "@sigx/server": "<core>",
         "@sigx/server-renderer": "<core>",
-        "@sigx/store": "^0.13.0",
+        "@sigx/store": "^0.14.0",
         "express": "^5.2.1"
     },
     "devDependencies": {
@@ -8649,7 +8649,7 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/daisyui": "^0.12.0",
+        "@sigx/daisyui": "^0.13.0",
         "@sigx/server-renderer": "<core>",
         "express": "^5.2.1"
     },
@@ -12037,10 +12037,10 @@ Interactive apps need a real terminal (TTY). Piping the output (\`| cat\`) print
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@sigx/terminal": "^0.12.0"
+        "@sigx/terminal": "^0.13.0"
     },
     "devDependencies": {
-        "@sigx/terminal-dev": "^0.12.0",
+        "@sigx/terminal-dev": "^0.13.0",
         "@types/node": "^22.0.0",
         "tsx": "^4.20.0",
         "typescript": "^5.9.3"
