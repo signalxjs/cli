@@ -44,7 +44,7 @@ Deno.serve({ port: Number(Deno.env.get('PORT')) || 8000 }, async (request: Reque
     if (matchesServerFn(request, serverFnBase)) {
         return handleServerFnRequest(request, {
             base: serverFnBase,
-            resolve: (symbol) => serverFns[symbol]?.() ?? null,
+            functions: serverFns,
             // @sigx:if resume
             renderBoundaries
             // @sigx:endif

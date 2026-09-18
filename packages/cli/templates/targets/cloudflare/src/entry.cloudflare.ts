@@ -43,7 +43,7 @@ export default {
                 // The build's own mount path, so router and handler cannot disagree.
                 base: serverFnBase,
                 // The registry is passed explicitly, never ambient.
-                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                functions: serverFns,
                 // @sigx:if resume
                 renderBoundaries
                 // @sigx:endif
