@@ -4309,7 +4309,7 @@ Bun.serve({
 
         if (matchesServerFn(request)) {
             return handleServerFnRequest(request, {
-                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                functions: serverFns,
                 renderBoundaries
             });
         }
@@ -5441,7 +5441,7 @@ export default {
                 // The build's own mount path, so router and handler cannot disagree.
                 base: serverFnBase,
                 // The registry is passed explicitly, never ambient.
-                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                functions: serverFns,
             });
         }
         return handler(request);
@@ -5975,7 +5975,7 @@ export default {
                 // The build's own mount path, so router and handler cannot disagree.
                 base: serverFnBase,
                 // The registry is passed explicitly, never ambient.
-                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                functions: serverFns,
                 renderBoundaries
             });
         }
@@ -6871,7 +6871,7 @@ Deno.serve({ port: Number(Deno.env.get('PORT')) || 8000 }, async (request: Reque
     if (matchesServerFn(request, serverFnBase)) {
         return handleServerFnRequest(request, {
             base: serverFnBase,
-            resolve: (symbol) => serverFns[symbol]?.() ?? null,
+            functions: serverFns,
             renderBoundaries
         });
     }
@@ -11796,7 +11796,7 @@ export default {
                 // The build's own mount path, so router and handler cannot disagree.
                 base: serverFnBase,
                 // The registry is passed explicitly, never ambient.
-                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                functions: serverFns,
                 renderBoundaries
             });
         }

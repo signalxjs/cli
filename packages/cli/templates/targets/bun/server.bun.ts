@@ -72,7 +72,7 @@ Bun.serve({
         // @sigx:if server-fns
         if (matchesServerFn(request)) {
             return handleServerFnRequest(request, {
-                resolve: (symbol) => serverFns[symbol]?.() ?? null,
+                functions: serverFns,
                 // @sigx:if resume
                 renderBoundaries
                 // @sigx:endif

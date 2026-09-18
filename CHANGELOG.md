@@ -8,6 +8,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 - **Aligned with core 1.0** (#114). The catalog core line is `^1.0.0`, so every project `sigx create` generates pins `sigx`/`@sigx/*` core packages to `^1.0.0`; the companion pins move to the tier-1 releases built against it — `@sigx/router` `^0.13.0`, `@sigx/store` `^0.14.0`, `@sigx/daisyui` `^0.13.0`, `@sigx/terminal` + `@sigx/terminal-dev` `^0.13.0` (`@sigx/i18n`, `@sigx/ssg*` and `@sigx/actors*` have not shipped against 1.0 yet and are unchanged). `@sigx/cli` itself now depends on `@sigx/args` + `@sigx/terminal` `^0.13.0`. The compose snapshots replace the core range with `<core>` only where it pins a core package, so an unrelated pin that happens to share the range (`jsr:@std/http@^1.0.0`) stays visible.
 
+- **The server-function endpoint in the Bun, Cloudflare, Deno, Netlify and Vercel entries passes the registry as `functions: serverFns`** — core 1.0 (`@sigx/server` rfc-server-v5 §1.6) made `functions` the primary endpoint option and turned registry entries into `{ version, load }`, so the old `resolve: (symbol) => serverFns[symbol]?.() ?? null` escape hatch no longer typechecks (`TS2349: This expression is not callable`). The Node `server.mjs` already used `functions`.
+
+  Known issue: a project scaffolded with `--features server-fn,testing` fails its test suite on core 1.0.0 — `@sigx/vite`'s client-stub HMR tail reads `import.meta.hot.data`, which vitest's no-op hot context does not have (signalxjs/core#726). Nothing in the template is wrong; it clears with the core patch.
+
 ## [0.11.0] - 2026-09-01
 
 `@sigx/cli` 0.11.0, `@sigx/create` 0.7.0.
