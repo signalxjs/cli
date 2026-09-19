@@ -10,7 +10,7 @@
 export const SIGX_CORE = '^1.0.0';
 
 /** `@sigx/cli`'s own single-minor range, for templates whose scripts run `sigx`. */
-export const SIGX_CLI = '^0.11.0';
+export const SIGX_CLI = '^0.12.0';
 
 /** Packages on the core line (mirrors scripts/lib/core-deps.mjs). */
 export const SIGX_CORE_PACKAGES: ReadonlySet<string> = new Set([
