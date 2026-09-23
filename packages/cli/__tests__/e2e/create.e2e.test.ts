@@ -82,7 +82,8 @@ function overrideLocalPackages(dir: string, tarballs: Map<string, string>): stri
 
 describe.skipIf(!enabled)('create e2e (SIGX_E2E=1)', () => {
     let root: string;
-    const local = localPackages();
+    // Filled in beforeAll, not at collection: a skipped suite does no fs work.
+    let local = new Map<string, { version: string; dir: string }>();
     const tarballs = new Map<string, string>();
     beforeAll(() => {
         expect(existsSync(cli), 'run `pnpm build` first').toBe(true);
@@ -91,6 +92,7 @@ describe.skipIf(!enabled)('create e2e (SIGX_E2E=1)', () => {
         // makes rolldown compute asset names that escape the root.
         root = realpathSync.native(mkdtempSync(join(tmpdir(), 'sigx-e2e-')));
         // Pack the built in-repo packages once; scaffolds install from these.
+        local = localPackages();
         const packs = join(root, '_packs');
         mkdirSync(packs);
         for (const [name, { dir }] of local) {
