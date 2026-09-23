@@ -54,8 +54,11 @@ jobs:
   # Scaffold real projects with the built CLI, install them from npm, and
   # typecheck + build each — the proof that generated projects work against
   # the published @sigx packages, not just that the generator's snapshots
-  # match. Network + minutes, so it is its own job and skipped by default
-  # locally (SIGX_E2E=1 enables it).
+  # match. In-repo packages a scaffold pins (@sigx/cli) come from local
+  # `pnpm pack` tarballs instead, so a release PR — whose version is not on
+  # npm until the tag publishes — can pass too (#118). Network + minutes,
+  # so it is its own job and skipped by default locally (SIGX_E2E=1
+  # enables it).
   e2e-create:
     runs-on: ${{ matrix.os }}
     strategy:
