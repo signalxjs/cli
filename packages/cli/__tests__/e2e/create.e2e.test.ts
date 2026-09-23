@@ -63,8 +63,8 @@ function localPackages(): Map<string, { version: string; dir: string }> {
  * Point every in-repo package the scaffold pins at its local tarball.
  * `overrides` (not a rewritten dependency range) so a transitive request
  * resolves to it too — @sigx/ssg peer-depends on @sigx/cli. Written to
- * pnpm-workspace.yaml, the settings file generated projects already use
- * and the one pnpm 11 still reads.
+ * pnpm-workspace.yaml (the settings file pnpm 11 still reads): appended
+ * when the scaffold generated one, created when it did not.
  */
 function overrideLocalPackages(dir: string, tarballs: Map<string, string>): string[] {
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
