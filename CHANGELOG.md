@@ -4,9 +4,13 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-26
+
+`@sigx/cli` 0.13.0, `@sigx/create` 0.9.0. Lynx apps now scaffold on the `@sigx/lynx` 0.33 line (Gradle 9.8 / AGP 9.4 Android template, JDK 17–26), and the catalog `@sigx/lynx` line moves to `^0.33.0`.
+
 ### Fixed
 
-Lynx onboarding (#128, companion to signalxjs/lynx#1147). These come from reproducing a new user's failed first run on Windows + Android Studio.
+Lynx onboarding (#128, companion to signalxjs/lynx#1147, implemented in signalxjs/lynx#1148). These come from reproducing a new user's failed first run on Windows + Android Studio.
 
 - **pnpm installs of a Lynx app no longer fail.** The Lynx overlays ship their own `package.json`, and raw overlays never got the generated `pnpm-workspace.yaml` build allow-list. esbuild's and sharp's install scripts were ignored, and pnpm stopped with `ERR_PNPM_IGNORED_BUILDS`. Raw overlays now get the allow-list too, and the Lynx layer declares `esbuild` + `sharp`.
 - **Lynx next steps run as printed.** They said `sigx doctor` / `sigx dev`, but `sigx` is a local devDependency, so that only worked with a global install. They are now `npx sigx doctor` (or the package manager's equivalent) and `npm run run:android` (or the equivalent). The templates gain `run:android` / `run:ios` / `run:web` scripts.
