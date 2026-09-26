@@ -42,7 +42,7 @@ export const SIGX_COMPANIONS: Readonly<Record<string, string>> = {
     '@sigx/terminal-dev': '^0.13.0',
     '@sigx/actors': '^0.9.0',
     '@sigx/actors-cloudflare': '^0.9.0',
-    '@sigx/lynx': '^0.31.0',
+    '@sigx/lynx': '^0.32.0',
 };
 
 /** Third-party pins. */
