@@ -21,11 +21,14 @@ npx sigx doctor
 
 ### Run the app
 
+Build, install and launch on an Android emulator or device:
+
 ```bash
-npm run run:android   # build, install and launch on an emulator or device
-npm run run:ios       # macOS: build and launch on the iOS simulator
-npm run run:web       # run it in the browser
+npm run run:android
 ```
+
+On macOS, `npm run run:ios` runs the app on the iOS simulator. `npm run run:web`
+runs it in the browser.
 
 The first Android build downloads Gradle and dependencies and takes a few
 minutes; later builds are incremental. With nothing connected, `run:android`
@@ -38,9 +41,16 @@ and the device dashboard.
 
 ### Build for production
 
+The JS bundle, written to `dist/`:
+
 ```bash
-npm run build                    # the JS bundle (dist/)
-npx sigx run:android --release   # a release build on the device
+npm run build
+```
+
+A release build on the connected device:
+
+```bash
+npx sigx run:android --release
 ```
 
 ### Trouble?

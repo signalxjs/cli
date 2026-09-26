@@ -18,11 +18,13 @@ export function lynx(styling: Styling): Layer {
         allowBuilds: ['esbuild', 'sharp'],
         // `sigx` is a local devDependency, so a bare `sigx …` only resolves
         // with a global install — go through the package manager instead.
+        // Pure commands, no inline `# …` notes: cmd.exe would pass those on
+        // as arguments when pasted.
         nextSteps: ({ spec, pm }) => [
             `cd ${spec.name}`,
             ...(spec.install ? [] : [pm.install]),
-            `${pm.exec('sigx')} doctor   # checks Node, JDK, Android SDK, emulators`,
-            `${pm.run('run:android')}   # build + launch on an emulator/device (run:ios on macOS, run:web in the browser)`,
+            `${pm.exec('sigx')} doctor`,
+            pm.run('run:android'),
         ],
     };
 }

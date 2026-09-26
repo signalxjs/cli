@@ -247,6 +247,8 @@ describe('lynx onboarding (signalxjs/cli#128)', () => {
         expect(nextSteps.some((s) => s.startsWith('npx sigx doctor'))).toBe(true);
         expect(nextSteps.some((s) => s.startsWith('npm run run:android'))).toBe(true);
         expect(nextSteps.some((s) => /^sigx\b/.test(s))).toBe(false);
+        // Pasteable into cmd.exe: no inline `# …` notes.
+        expect(nextSteps.some((s) => s.includes('#'))).toBe(false);
     });
 
     it.each(['none', 'tailwind', 'daisyui'] as const)('%s template: run scripts, no npm pre-hook on build', (styling) => {

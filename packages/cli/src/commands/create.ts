@@ -49,10 +49,13 @@ function parseArgvFallback(): CreateOptions {
     if (argv.includes('--help') || argv.includes('-h')) {
         const cmd = command('create').describe('Scaffold a new SignalX project').args(shimArgsShape);
         console.log(renderHelp(buildHelpCatalog(cmd, ['create'])));
-        console.log('Examples:');
-        console.log('  npm create @sigx@latest                                   # interactive wizard');
-        console.log('  npm create @sigx@latest my-app -- --kind lynx --styling daisyui --install');
-        console.log('  npm create @sigx@latest -- --list                         # every kind, target and extra');
+        console.log('EXAMPLES');
+        console.log('  Interactive wizard:');
+        console.log('    npm create @sigx@latest');
+        console.log('  A Lynx (iOS/Android) app with daisyUI, dependencies installed:');
+        console.log('    npm create @sigx@latest my-app -- --kind lynx --styling daisyui --install');
+        console.log('  Every kind, render mode, target and extra:');
+        console.log('    npm create @sigx@latest -- --list');
         process.exit(0);
     }
     try {
