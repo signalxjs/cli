@@ -264,7 +264,7 @@ describe('lynx onboarding (signalxjs/cli#128)', () => {
     it.each(['none', 'tailwind', 'daisyui'] as const)('%s template README: current prerequisites and commands', (styling) => {
         const readme = text(compose({ kind: 'lynx', styling }).tree.get('README.md')!)!;
         expect(readme).toContain('Node.js 22+');
-        expect(readme).toContain('JDK 17–23');
+        expect(readme).toContain('JDK 17–26');
         expect(readme).toContain('npx sigx doctor');
         expect(readme).not.toContain('Node.js 18');
         expect(readme).not.toContain('sigx-lynx-go');

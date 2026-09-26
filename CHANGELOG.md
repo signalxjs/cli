@@ -11,6 +11,7 @@ Lynx onboarding (#128, companion to signalxjs/lynx#1147). These come from reprod
 - **pnpm installs of a Lynx app no longer fail.** The Lynx overlays ship their own `package.json`, and raw overlays never got the generated `pnpm-workspace.yaml` build allow-list. esbuild's and sharp's install scripts were ignored, and pnpm stopped with `ERR_PNPM_IGNORED_BUILDS`. Raw overlays now get the allow-list too, and the Lynx layer declares `esbuild` + `sharp`.
 - **Lynx next steps run as printed.** They said `sigx doctor` / `sigx dev`, but `sigx` is a local devDependency, so that only worked with a global install. They are now `npx sigx doctor` (or the package manager's equivalent) and `npm run run:android` (or the equivalent). The templates gain `run:android` / `run:ios` / `run:web` scripts.
 - **`npm run build` in a Lynx app no longer regenerates the native projects.** The template's `prebuild` script ran as npm's pre-hook of `build`. It is now `native:prebuild`.
+- **Lynx template READMEs: JDK 17–26** (#130). signalxjs/lynx#1156 moved the Android template to Gradle 9.8 / AGP 9.4, so JDK 25 and 26 build directly.
 - **Lynx template READMEs are current:**
   - Node.js 22+ (they said 18).
   - JDK 17–23, with Android Studio's JDK picked up automatically.
