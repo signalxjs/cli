@@ -8,6 +8,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dep } from './deps.js';
 
 export type FileContent = string | Uint8Array;
 export type VirtualFileTree = Map<string, FileContent>;
@@ -34,8 +35,16 @@ export function toPosix(path: string): string {
     return path.split(sep).join('/');
 }
 
+/**
+ * Overlay placeholders: `{{projectName}}`, and `{{dep:<name>}}` for a
+ * version range from `dep()` — how raw overlays (Lynx ships a complete
+ * package.json) stay on the generated versions instead of hand-pinning
+ * ranges that drift (signalxjs/cli#122).
+ */
 export function substitute(content: string, projectName: string): string {
-    return content.replace(/\{\{projectName\}\}/g, projectName);
+    return content
+        .replace(/\{\{projectName\}\}/g, projectName)
+        .replace(/\{\{dep:([^}\s]+)\}\}/g, (_m, name: string) => dep(name));
 }
 
 /**

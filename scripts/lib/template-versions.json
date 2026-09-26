@@ -1,5 +1,5 @@
 {
-    "//": "Third-party version ranges written into scaffolded projects. Hand-maintained; @sigx/* ranges come from the pnpm catalog instead (scripts/gen-versions.mjs).",
+    "//": "Third-party version ranges written into scaffolded projects. Hand-maintained; @sigx/* ranges come from the pnpm catalog instead (scripts/gen-versions.mjs). The @lynx-js/* pins track the toolchain lines signalxjs/lynx builds and tests against (its pnpm catalog and lockfile); move them when @sigx/lynx moves. template-webpack-plugin is exact because @sigx/lynx-plugin peers it exactly.",
     "vite": "^8.0.12",
     "typescript": "^5.9.3",
     "@types/node": "^22.0.0",
@@ -15,5 +15,11 @@
     "wrangler": "^4.0.0",
     "@types/bun": "^1.2.0",
     "@cloudflare/workers-types": "^4.20250801.0",
-    "happy-dom": "^20.0.0"
+    "happy-dom": "^20.0.0",
+    "@lynx-js/rspeedy": "^0.16.3",
+    "@lynx-js/css-extract-webpack-plugin": "^0.10.1",
+    "@lynx-js/template-webpack-plugin": "0.15.0",
+    "@lynx-js/runtime-wrapper-webpack-plugin": "^0.2.3",
+    "@lynx-js/webpack-dev-transport": "^0.3.0",
+    "@lynx-js/tailwind-preset": "^0.5.0"
 }

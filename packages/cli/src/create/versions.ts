@@ -42,6 +42,7 @@ export const SIGX_COMPANIONS: Readonly<Record<string, string>> = {
     '@sigx/terminal-dev': '^0.13.0',
     '@sigx/actors': '^0.9.0',
     '@sigx/actors-cloudflare': '^0.9.0',
+    '@sigx/lynx': '^0.31.0',
 };
 
 /** Third-party pins. */
@@ -62,4 +63,10 @@ export const THIRD_PARTY: Readonly<Record<string, string>> = {
     '@types/bun': '^1.2.0',
     '@cloudflare/workers-types': '^4.20250801.0',
     'happy-dom': '^20.0.0',
+    '@lynx-js/rspeedy': '^0.16.3',
+    '@lynx-js/css-extract-webpack-plugin': '^0.10.1',
+    '@lynx-js/template-webpack-plugin': '0.15.0',
+    '@lynx-js/runtime-wrapper-webpack-plugin': '^0.2.3',
+    '@lynx-js/webpack-dev-transport': '^0.3.0',
+    '@lynx-js/tailwind-preset': '^0.5.0',
 };

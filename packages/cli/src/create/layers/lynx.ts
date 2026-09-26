@@ -4,7 +4,8 @@ import type { Styling } from '../spec.js';
 /**
  * Lynx ships a complete overlay per styling (rspeedy config, native
  * assets, its own package.json on the Lynx release line). Nothing is
- * generated; only `{{projectName}}` is substituted.
+ * generated; `{{projectName}}` and `{{dep:<name>}}` (a range from the
+ * generated versions.ts) are substituted.
  */
 export function lynx(styling: Styling): Layer {
     const dir = styling === 'none' ? 'lynx' : `lynx-${styling}`;

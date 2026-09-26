@@ -8,7 +8,10 @@
  *   - a non-Lynx overlay never ships a managed file (it must contribute a
  *     fragment instead, or the builders silently overwrite it);
  *   - Lynx overlays (raw, complete projects) pin real ranges, never
- *     "latest", ship every file their scripts run with node, and ship no
+ *     "latest", take every @sigx/* and @lynx-js/* range from the generated
+ *     versions through a `{{dep:<name>}}` placeholder (hand-pinned ranges
+ *     drifted 19 minors behind — signalxjs/cli#122), ship every file their
+ *     scripts run with node, and ship no
  *     .npmrc (npm strips it anyway; legacy-peer-deps would mask a broken set).
  */
 import { describe, it, expect } from 'vitest';
@@ -67,6 +70,16 @@ describe('lynx templates', () => {
         for (const section of ['dependencies', 'devDependencies'] as const) {
             for (const [dep, range] of Object.entries(pkg[section] ?? {})) {
                 expect(range, `${name} ${section}.${dep} must pin a version range`).not.toBe('latest');
+            }
+        }
+    });
+
+    it.each(lynxTemplates)('%s: takes @sigx/* and @lynx-js/* ranges from dep(), never hand-pinned', (name) => {
+        const pkg = readPkg(name);
+        for (const section of ['dependencies', 'devDependencies'] as const) {
+            for (const [dep, range] of Object.entries(pkg[section] ?? {})) {
+                if (!dep.startsWith('@sigx/') && !dep.startsWith('@lynx-js/')) continue;
+                expect(range, `${name} ${section}.${dep} must be "{{dep:${dep}}}"`).toBe(`{{dep:${dep}}}`);
             }
         }
     });
