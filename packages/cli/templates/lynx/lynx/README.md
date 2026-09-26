@@ -9,7 +9,7 @@ A native mobile app built with [SignalX for Lynx](https://sigx.dev/lynx/).
 - **Node.js 22+**
 - **Android:** [Android Studio](https://developer.android.com/studio). It installs
   the Android SDK and an emulator, and bundles a JDK. Android builds need
-  JDK 17–23. If `JAVA_HOME` points at a newer or older JDK, sigx uses Android
+  JDK 17–26. If `JAVA_HOME` points at a newer or older JDK, sigx uses Android
   Studio's JDK automatically.
 - **iOS (macOS only):** Xcode 15+ and CocoaPods
 
