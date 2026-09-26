@@ -10,7 +10,7 @@
 export const SIGX_CORE = '^1.0.0';
 
 /** `@sigx/cli`'s own single-minor range, for templates whose scripts run `sigx`. */
-export const SIGX_CLI = '^0.12.0';
+export const SIGX_CLI = '^0.13.0';
 
 /** Packages on the core line (mirrors scripts/lib/core-deps.mjs). */
 export const SIGX_CORE_PACKAGES: ReadonlySet<string> = new Set([
@@ -42,7 +42,7 @@ export const SIGX_COMPANIONS: Readonly<Record<string, string>> = {
     '@sigx/terminal-dev': '^0.13.0',
     '@sigx/actors': '^0.9.0',
     '@sigx/actors-cloudflare': '^0.9.0',
-    '@sigx/lynx': '^0.32.0',
+    '@sigx/lynx': '^0.33.0',
 };
 
 /** Third-party pins. */

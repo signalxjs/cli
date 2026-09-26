@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-26
+
+`@sigx/cli` 0.13.0, `@sigx/create` 0.9.0. Lynx apps now scaffold on the `@sigx/lynx` 0.33 line (Gradle 9.8 / AGP 9.4 Android template, JDK 17–26), and the catalog `@sigx/lynx` line moves to `^0.33.0`.
+
 ### Fixed
 
 Lynx onboarding (#128, companion to signalxjs/lynx#1147). These come from reproducing a new user's failed first run on Windows + Android Studio.
