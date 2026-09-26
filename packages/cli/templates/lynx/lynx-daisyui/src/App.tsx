@@ -38,15 +38,15 @@ const App = component(() => {
                 <Card bordered shadow="lg" class="mt-10 w-[300px] bg-base-100">
                     <Card.Body>
                         <view class="flex flex-row items-center justify-center gap-3">
-                            <Badge variant="primary" size="lg">{count.value}</Badge>
+                            <Badge color="primary" size="lg">{count.value}</Badge>
                             <text class="text-base-content/60">×2 =</text>
-                            <Badge variant="secondary" size="lg">{count.value * 2}</Badge>
+                            <Badge color="secondary" size="lg">{count.value * 2}</Badge>
                         </view>
 
                         <Card.Actions class="justify-center mt-4 gap-2">
                             <Button
-                                variant="error"
-                                outline
+                                color="error"
+                                variant="outline"
                                 size="sm"
                                 onPress={() => count.value > 0 && count.value--}
                             >
@@ -60,7 +60,7 @@ const App = component(() => {
                                 Reset
                             </Button>
                             <Button
-                                variant="primary"
+                                color="primary"
                                 size="sm"
                                 onPress={() => count.value++}
                             >
