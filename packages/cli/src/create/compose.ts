@@ -89,10 +89,13 @@ export function composeProject(spec: ProjectSpec, opts: ComposeOptions = {}): Co
         tree.set('tsconfig.json', ts.render());
         if (envTypes.length) tree.set('src/env.d.ts', renderEnvTypes(envTypes));
         tree.set('.gitignore', renderGitignore(gitignore));
-        if (spec.pm === 'pnpm' && allowBuilds.length) {
-            tree.set('pnpm-workspace.yaml', renderPnpmWorkspace(allowBuilds));
-        }
         tree.set('README.md', readme.render({ has: (n) => pkg.hasScript(n) }));
+    }
+    // Raw overlays (Lynx) ship their own package.json but still need build
+    // approval: without it pnpm skips the install scripts (and pnpm 11 fails
+    // the install outright).
+    if (spec.pm === 'pnpm' && allowBuilds.length) {
+        tree.set('pnpm-workspace.yaml', renderPnpmWorkspace(allowBuilds));
     }
 
     return { tree, layers: layers.map((l) => l.name), nextSteps };

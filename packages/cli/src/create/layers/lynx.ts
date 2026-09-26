@@ -13,6 +13,18 @@ export function lynx(styling: Styling): Layer {
         name: `lynx:${dir}`,
         raw: true,
         overlay: `lynx/${dir}`,
-        nextSteps: ({ spec, pm }) => [`cd ${spec.name}`, ...(spec.install ? [] : [pm.install]), 'sigx doctor', 'sigx dev'],
+        // esbuild (signalx.config.ts loading) and sharp (icon/splash
+        // generation) ship native binaries via install scripts.
+        allowBuilds: ['esbuild', 'sharp'],
+        // `sigx` is a local devDependency, so a bare `sigx …` only resolves
+        // with a global install — go through the package manager instead.
+        // Pure commands, no inline `# …` notes: cmd.exe would pass those on
+        // as arguments when pasted.
+        nextSteps: ({ spec, pm }) => [
+            `cd ${spec.name}`,
+            ...(spec.install ? [] : [pm.install]),
+            `${pm.exec('sigx')} doctor`,
+            pm.run('run:android'),
+        ],
     };
 }

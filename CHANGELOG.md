@@ -4,6 +4,28 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Fixed
+
+Lynx onboarding (#128, companion to signalxjs/lynx#1147). These come from reproducing a new user's failed first run on Windows + Android Studio.
+
+- **pnpm installs of a Lynx app no longer fail.** The Lynx overlays ship their own `package.json`, and raw overlays never got the generated `pnpm-workspace.yaml` build allow-list. esbuild's and sharp's install scripts were ignored, and pnpm stopped with `ERR_PNPM_IGNORED_BUILDS`. Raw overlays now get the allow-list too, and the Lynx layer declares `esbuild` + `sharp`.
+- **Lynx next steps run as printed.** They said `sigx doctor` / `sigx dev`, but `sigx` is a local devDependency, so that only worked with a global install. They are now `npx sigx doctor` (or the package manager's equivalent) and `npm run run:android` (or the equivalent). The templates gain `run:android` / `run:ios` / `run:web` scripts.
+- **`npm run build` in a Lynx app no longer regenerates the native projects.** The template's `prebuild` script ran as npm's pre-hook of `build`. It is now `native:prebuild`.
+- **Lynx template READMEs are current:**
+  - Node.js 22+ (they said 18).
+  - JDK 17–23, with Android Studio's JDK picked up automatically.
+  - How to run on an emulator, and a troubleshooting section.
+  - The `sigx-lynx-go` sandbox app is no longer described as required.
+  - Links point to sigx.dev.
+  - The daisyUI template no longer says "Tailwind CSS".
+- **`npm create @sigx -- --help` prints usage.** The shim treated `--help` as an unknown flag and, in a non-TTY, scaffolded `my-sigx-app` into the current directory.
+- **A plugin that fails to load is reported instead of skipped silently.** Before, `sigx dev` just became `Unknown command 'dev'`. Missing-export and module-resolution errors now come with a hint, both at plugin load and when a command throws. The version-mismatch hint covers `does not provide an export named …`: it says `npx sigx upgrade`, and not to use `--force` / `--legacy-peer-deps`.
+
+### Added
+
+- **"Mobile app" in the wizard's first question.** One step to a Lynx + daisyUI project; before, Lynx was only reachable through Customize.
+- **A Lynx e2e.** `create lynx --styling daisyui` → pnpm install → typecheck → `sigx build`, on Ubuntu and Windows. The e2e harness no longer leaks vitest's `NODE_ENV=test` into the scaffolds it builds.
+
 ## [0.12.1] - 2026-09-26
 
 `@sigx/cli` 0.12.1, `@sigx/create` 0.8.1.

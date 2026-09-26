@@ -11,6 +11,7 @@ import {
     deployTargetOptions,
     extraOptions,
     parseFeatures,
+    QUICK_LYNX_PRESET,
     QUICK_PRESET,
     renderModeOptions,
     resolveKind,
@@ -138,16 +139,18 @@ async function askShape(options: CreateOptions): Promise<Shape> {
     const { kind: flagKind } = resolveKind(options);
     if (!hasSpecFlags(options)) {
         const start = unwrap(
-            await select<'quick' | 'custom'>({
+            await select<'quick' | 'quick-lynx' | 'custom'>({
                 message: 'How do you want to start?',
                 initialValue: 'quick',
                 options: [
                     { value: 'quick', label: 'Quick start', description: 'Web app (SPA) + Tailwind + router + tests — a good default' },
+                    { value: 'quick-lynx', label: 'Mobile app', description: 'iOS & Android with Lynx + daisyUI components' },
                     { value: 'custom', label: 'Customize', description: 'Pick the kind, rendering, deploy target, styling and extras' },
                 ],
             }),
         );
         if (start === 'quick') return { ...QUICK_PRESET, features: [...QUICK_PRESET.features] };
+        if (start === 'quick-lynx') return { ...QUICK_LYNX_PRESET, features: [] };
     } else if (options.preset === 'quick') {
         return { ...QUICK_PRESET, features: [...QUICK_PRESET.features] };
     }

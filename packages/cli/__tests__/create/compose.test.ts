@@ -232,4 +232,42 @@ describe('pnpm build allow-list', () => {
         expect(compose({ kind: 'ssg', pm: 'npm' }).tree.has('pnpm-workspace.yaml')).toBe(false);
         expect(compose({ kind: 'spa' }).tree.has('pnpm-workspace.yaml')).toBe(false);
     });
+
+    it('covers raw (lynx) overlays too — esbuild and sharp need their install scripts', () => {
+        const ws = compose({ kind: 'lynx' }).tree.get('pnpm-workspace.yaml');
+        expect(ws).toContain('esbuild: true');
+        expect(ws).toContain('sharp: true');
+        expect(compose({ kind: 'lynx', pm: 'npm' }).tree.has('pnpm-workspace.yaml')).toBe(false);
+    });
+});
+
+describe('lynx onboarding (signalxjs/cli#128)', () => {
+    it('next steps go through the package manager, never a bare `sigx`', () => {
+        const { nextSteps } = compose({ kind: 'lynx', pm: 'npm' });
+        expect(nextSteps.some((s) => s.startsWith('npx sigx doctor'))).toBe(true);
+        expect(nextSteps.some((s) => s.startsWith('npm run run:android'))).toBe(true);
+        expect(nextSteps.some((s) => /^sigx\b/.test(s))).toBe(false);
+        // Pasteable into cmd.exe: no inline `# …` notes.
+        expect(nextSteps.some((s) => s.includes('#'))).toBe(false);
+    });
+
+    it.each(['none', 'tailwind', 'daisyui'] as const)('%s template: run scripts, no npm pre-hook on build', (styling) => {
+        const pkg = JSON.parse(text(compose({ kind: 'lynx', styling }).tree.get('package.json')!)!);
+        expect(pkg.scripts['run:android']).toBe('sigx run:android');
+        expect(pkg.scripts['run:ios']).toBe('sigx run:ios');
+        expect(pkg.scripts['run:web']).toBe('sigx run:web');
+        // `prebuild` would run as a pre-hook of `npm run build` and regenerate
+        // the native projects on every JS build.
+        expect(pkg.scripts.prebuild).toBeUndefined();
+    });
+
+    it.each(['none', 'tailwind', 'daisyui'] as const)('%s template README: current prerequisites and commands', (styling) => {
+        const readme = text(compose({ kind: 'lynx', styling }).tree.get('README.md')!)!;
+        expect(readme).toContain('Node.js 22+');
+        expect(readme).toContain('JDK 17–23');
+        expect(readme).toContain('npx sigx doctor');
+        expect(readme).not.toContain('Node.js 18');
+        expect(readme).not.toContain('sigx-lynx-go');
+        expect(readme).not.toContain('signalxjs/core');
+    });
 });

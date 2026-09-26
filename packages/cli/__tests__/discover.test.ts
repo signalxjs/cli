@@ -82,3 +82,38 @@ describe('discoverPlugins requires check', () => {
         expect(warn).not.toHaveBeenCalled();
     });
 });
+
+describe('discoverPlugins load failures (#128)', () => {
+    let dir: string;
+    const warn = vi.fn();
+    const logger = { log: vi.fn(), warn, error: vi.fn() };
+
+    beforeEach(() => {
+        warn.mockClear();
+        dir = mkdtempSync(join(tmpdir(), 'sigx-discover-fail-'));
+        writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { 'fake-plugin': '1.0.0' } }));
+        const pluginDir = join(dir, 'node_modules', 'fake-plugin');
+        mkdirSync(pluginDir, { recursive: true });
+        writeFileSync(join(pluginDir, 'package.json'), JSON.stringify({ name: 'fake-plugin', 'sigx-cli': { plugin: './plugin.mjs' } }));
+        // A version-mismatch-shaped failure: importing a name the dependency doesn't export.
+        const coreDir = join(dir, 'node_modules', 'fake-core');
+        mkdirSync(coreDir, { recursive: true });
+        writeFileSync(join(coreDir, 'package.json'), JSON.stringify({ name: 'fake-core', type: 'module', main: 'index.js' }));
+        writeFileSync(join(coreDir, 'index.js'), 'export const other = 1;\n');
+        writeFileSync(join(pluginDir, 'plugin.mjs'),
+            "import { declareLiveClient } from 'fake-core';\nexport default { name: 'fake', detect: () => true, commands: {} };\n");
+    });
+    afterEach(() => {
+        rmSync(dir, { recursive: true, force: true });
+    });
+
+    it('reports a declared plugin that fails to import, with a version-mismatch hint', async () => {
+        const plugins = await discoverPlugins(dir, { cliVersion: '0.12.1', logger });
+        expect(plugins).toHaveLength(0);
+        expect(warn).toHaveBeenCalledTimes(1);
+        const msg = warn.mock.calls[0]![0] as string;
+        expect(msg).toContain('fake-plugin');
+        expect(msg).toContain("does not provide an export named 'declareLiveClient'");
+        expect(msg).toContain('mismatched versions');
+    });
+});

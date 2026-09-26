@@ -21,6 +21,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { discoverPlugins } from './discover.js';
 import { createLogger } from './utils/logger.js';
+import { withHint } from './utils/error-hints.js';
 import { buildRootCommand } from './root.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -30,10 +31,14 @@ const logger = createLogger();
 async function main() {
     const cwd = process.cwd();
     const plugins = await discoverPlugins(cwd, { cliVersion: pkg.version, logger });
-    await runMain(buildRootCommand({ plugins, version: pkg.version, logger }));
+    // runMain prints a failing command as `error: <message>`; add a next
+    // step for the errors a message alone doesn't explain.
+    await runMain(buildRootCommand({ plugins, version: pkg.version, logger }), {
+        stderr: (text) => console.error(withHint(text)),
+    });
 }
 
 main().catch((err) => {
-    logger.error(err.message || String(err));
+    logger.error(withHint(err.message || String(err)));
     process.exit(1);
 });

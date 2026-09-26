@@ -55,6 +55,13 @@ export const QUICK_PRESET = {
     features: ['router', 'testing'] as Feature[],
 };
 
+/** The wizard's one-step native-app start: Lynx with daisyUI components. */
+export const QUICK_LYNX_PRESET = {
+    kind: 'lynx' as Kind,
+    styling: 'daisyui' as Styling,
+    features: [] as Feature[],
+};
+
 /** What this build can generate, in prompt shape. */
 export const renderModeOptions: Option<Render>[] = renderOptions.filter((o) => availableRenders.includes(o.value));
 export const deployTargetOptions: Option<Target>[] = targetOptions.filter((o) => availableTargets.includes(o.value));
