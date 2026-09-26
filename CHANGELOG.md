@@ -14,7 +14,7 @@ Lynx onboarding (#128, companion to signalxjs/lynx#1147). These come from reprod
 - **Lynx template READMEs: JDK 17–26** (#130). signalxjs/lynx#1156 moved the Android template to Gradle 9.8 / AGP 9.4, so JDK 25 and 26 build directly.
 - **Lynx template READMEs are current:**
   - Node.js 22+ (they said 18).
-  - JDK 17–23, with Android Studio's JDK picked up automatically.
+  - JDK 17–26, with Android Studio's JDK picked up automatically.
   - How to run on an emulator, and a troubleshooting section.
   - The `sigx-lynx-go` sandbox app is no longer described as required.
   - Links point to sigx.dev.
