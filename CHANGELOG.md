@@ -10,7 +10,7 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ### Fixed
 
-Lynx onboarding (#128, companion to signalxjs/lynx#1147). These come from reproducing a new user's failed first run on Windows + Android Studio.
+Lynx onboarding (#128, companion to signalxjs/lynx#1147, implemented in signalxjs/lynx#1148). These come from reproducing a new user's failed first run on Windows + Android Studio.
 
 - **pnpm installs of a Lynx app no longer fail.** The Lynx overlays ship their own `package.json`, and raw overlays never got the generated `pnpm-workspace.yaml` build allow-list. esbuild's and sharp's install scripts were ignored, and pnpm stopped with `ERR_PNPM_IGNORED_BUILDS`. Raw overlays now get the allow-list too, and the Lynx layer declares `esbuild` + `sharp`.
 - **Lynx next steps run as printed.** They said `sigx doctor` / `sigx dev`, but `sigx` is a local devDependency, so that only worked with a global install. They are now `npx sigx doctor` (or the package manager's equivalent) and `npm run run:android` (or the equivalent). The templates gain `run:android` / `run:ios` / `run:web` scripts.
