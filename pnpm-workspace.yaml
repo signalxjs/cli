@@ -27,3 +27,6 @@ catalog:
   "@sigx/terminal-dev": ^0.13.0
   "@sigx/actors": ^0.9.0
   "@sigx/actors-cloudflare": ^0.9.0
+  # The Lynx release line. Every @sigx/lynx-* package is lockstep-versioned
+  # (signalxjs/lynx), so this one entry pins them all in the Lynx templates.
+  "@sigx/lynx": ^0.31.0

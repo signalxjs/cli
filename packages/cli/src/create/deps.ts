@@ -1,8 +1,10 @@
 /**
  * `dep(name)` — the one way a layer asks for a version range. Core packages
- * share the catalog's core line, companions have their own lines, third
+ * share the catalog's core line, companions have their own lines (every
+ * lockstep `@sigx/lynx-*` package rides the `@sigx/lynx` line), third
  * parties are pinned in scripts/lib/template-versions.json; all three land
- * in the generated versions.ts. An unknown name throws at compose time (and
+ * in the generated versions.ts. Raw overlays reach it through a
+ * `{{dep:<name>}}` placeholder (see tree.ts). An unknown name throws at compose time (and
  * therefore in the snapshot tests), never a silent `undefined` in a
  * scaffolded package.json.
  */
@@ -11,7 +13,7 @@ import { SIGX_CLI, SIGX_COMPANIONS, SIGX_CORE, SIGX_CORE_PACKAGES, THIRD_PARTY }
 export function dep(name: string): string {
     if (name === '@sigx/cli') return SIGX_CLI;
     if (SIGX_CORE_PACKAGES.has(name)) return SIGX_CORE;
-    const companion = SIGX_COMPANIONS[name];
+    const companion = SIGX_COMPANIONS[name] ?? (name.startsWith('@sigx/lynx-') ? SIGX_COMPANIONS['@sigx/lynx'] : undefined);
     if (companion) return companion;
     const third = THIRD_PARTY[name];
     if (third) return third;

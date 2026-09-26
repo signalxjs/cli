@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { composeProject } from '../../src/create/compose.js';
 import { dep } from '../../src/create/deps.js';
 import { normalizeSpec } from '../../src/create/spec.js';
-import { SIGX_CLI, SIGX_COMPANIONS, SIGX_CORE, SIGX_CORE_PACKAGES } from '../../src/create/versions.js';
+import { SIGX_CLI, SIGX_COMPANIONS, SIGX_CORE, SIGX_CORE_PACKAGES, THIRD_PARTY } from '../../src/create/versions.js';
 // The same parser the guard and the generator use, so the three cannot disagree.
 // @ts-expect-error — plain ESM script, no declarations.
 import { readCatalog } from '../../../../scripts/lib/catalog.mjs';
@@ -69,5 +69,20 @@ describe('versions', () => {
             }
         }
         if (input.kind !== 'terminal') expect(core).toBeGreaterThan(0);
+    });
+
+    it.each(['none', 'tailwind', 'daisyui'] as const)('lynx (%s): every dep resolves, @sigx/lynx-* on the Lynx line', (styling) => {
+        const { tree } = composeProject(normalizeSpec({ name: 'x', kind: 'lynx', styling }));
+        const raw = tree.get('package.json') as string;
+        expect(raw).not.toContain('{{');
+        const pkg = JSON.parse(raw);
+        const lynx = SIGX_COMPANIONS['@sigx/lynx'];
+        expect(lynx).toMatch(/^\^\d+\.\d+\.0$/);
+        for (const [name, range] of Object.entries<string>({ ...pkg.dependencies, ...pkg.devDependencies })) {
+            if (name === '@sigx/lynx' || name.startsWith('@sigx/lynx-')) expect(range, name).toBe(lynx);
+            else if (SIGX_CORE_PACKAGES.has(name)) expect(range, name).toBe(SIGX_CORE);
+            else if (name === '@sigx/cli') expect(range, name).toBe(SIGX_CLI);
+            else if (name.startsWith('@lynx-js/')) expect(range, name).toBe(THIRD_PARTY[name]);
+        }
     });
 });

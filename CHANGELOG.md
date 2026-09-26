@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Fixed
+
+- **Scaffolded Lynx apps build again** (#122). The three Lynx overlays hand-pinned `@sigx/lynx-*` `^0.12.1`, `@sigx/reactivity`/`@sigx/runtime-core` `^0.7.0` and `@sigx/cli` `^0.5.0`, and left the `@lynx-js/*` toolchain unbounded (`>=0.1.0`). `npm create @sigx -- --kind lynx` therefore produced an app whose first `sigx build` failed: rspeedy resolved to 0.18 (Rsbuild 2), which lynx-plugin 0.12 cannot drive (`` `env` and `jsc.target` cannot be used together ``). The overlays now write `{{dep:<name>}}` placeholders that `sigx create` resolves through `dep()`, so their versions come from the generated `versions.ts` like every other template's. The Lynx release line (`@sigx/lynx` `^0.31.0`, shared by every lockstep `@sigx/lynx-*` package) is in the catalog. The `@lynx-js/*` pins in `template-versions.json` follow the toolchain signalxjs/lynx tests against: rspeedy `^0.16.3`, and `template-webpack-plugin` exactly `0.15.0` because lynx-plugin peers it exactly. A test fails if a Lynx overlay hand-pins a `@sigx/*` or `@lynx-js/*` range again.
+
 ## [0.12.0] - 2026-09-19
 
 ### Changed
