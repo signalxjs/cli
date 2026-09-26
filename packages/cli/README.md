@@ -34,7 +34,7 @@ Run `sigx --help` for the full live list (varies by what plugins are installed i
 | `terminal` | Terminal UI with `@sigx/terminal` — HMR via `sigx-terminal-dev` |
 | `lynx` | Native iOS/Android app with SignalX Lynx |
 
-`--styling none|tailwind|daisyui` picks the stylesheet (Tailwind 4 via `@tailwindcss/vite`; daisyUI 5 adds `@sigx/daisyui` components on web apps). `--pm pnpm|npm|yarn|bun|deno` sets the package manager (default: the one running `create`), `--install`/`--no-install` and `--git`/`--no-git` control the post-steps, `--preset quick` is the quick start, `--list` prints everything this build can generate. `-y` skips the prompts (no install, no git unless asked); any non-TTY run is headless too. `--type basic|ssr|ssg|terminal|lynx` still works as an alias of `--kind`.
+`--styling none|tailwind|daisyui` picks the stylesheet (Tailwind 4 via `@tailwindcss/vite`; daisyUI 5 adds `@sigx/daisyui` components on web apps). `--pm pnpm|npm|yarn|bun|deno` sets the package manager (default: the one running `create`), `--install`/`--no-install` and `--git`/`--no-git` control the post-steps, `--preset quick` is the quick start (the wizard also offers a one-step **Mobile app** start, equivalent to `--kind lynx --styling daisyui`), `--list` prints everything this build can generate. `-y` skips the prompts (no install, no git unless asked); any non-TTY run is headless too. `--type basic|ssr|ssg|terminal|lynx` still works as an alias of `--kind`.
 
 SSR projects also choose how they render and where they deploy:
 

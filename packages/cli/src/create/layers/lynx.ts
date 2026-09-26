@@ -13,6 +13,16 @@ export function lynx(styling: Styling): Layer {
         name: `lynx:${dir}`,
         raw: true,
         overlay: `lynx/${dir}`,
-        nextSteps: ({ spec, pm }) => [`cd ${spec.name}`, ...(spec.install ? [] : [pm.install]), 'sigx doctor', 'sigx dev'],
+        // esbuild (signalx.config.ts loading) and sharp (icon/splash
+        // generation) ship native binaries via install scripts.
+        allowBuilds: ['esbuild', 'sharp'],
+        // `sigx` is a local devDependency, so a bare `sigx …` only resolves
+        // with a global install — go through the package manager instead.
+        nextSteps: ({ spec, pm }) => [
+            `cd ${spec.name}`,
+            ...(spec.install ? [] : [pm.install]),
+            `${pm.exec('sigx')} doctor   # checks Node, JDK, Android SDK, emulators`,
+            `${pm.run('run:android')}   # build + launch on an emulator/device (run:ios on macOS, run:web in the browser)`,
+        ],
     };
 }

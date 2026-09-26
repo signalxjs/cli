@@ -8,7 +8,7 @@
  * falls back to parsing `process.argv` itself.
  */
 import { resolve } from 'node:path';
-import { a, parseArgs, ParseError } from '@sigx/args';
+import { a, buildHelpCatalog, command, parseArgs, ParseError, renderHelp } from '@sigx/args';
 import { intro, note, outro, spinner } from '@sigx/terminal';
 import { renderList, specFromOptions, type CreateOptions } from '../create/headless.js';
 import { gitAvailable, initGitRepo, insideGitRepo } from '../create/postinstall/git.js';
@@ -43,6 +43,18 @@ function parseArgvFallback(): CreateOptions {
     // (npx @sigx/create create …); drop only that leading token so
     // "create" stays valid as a project name or flag value elsewhere.
     const argv = raw[0] === 'create' ? raw.slice(1) : raw;
+    // The shim has no command router to answer --help, and allowUnknownFlags
+    // below would otherwise swallow it — scaffolding a default project
+    // instead of explaining the flags.
+    if (argv.includes('--help') || argv.includes('-h')) {
+        const cmd = command('create').describe('Scaffold a new SignalX project').args(shimArgsShape);
+        console.log(renderHelp(buildHelpCatalog(cmd, ['create'])));
+        console.log('Examples:');
+        console.log('  npm create @sigx@latest                                   # interactive wizard');
+        console.log('  npm create @sigx@latest my-app -- --kind lynx --styling daisyui --install');
+        console.log('  npm create @sigx@latest -- --list                         # every kind, target and extra');
+        process.exit(0);
+    }
     try {
         // allowUnknownFlags: package managers may append flags of their own
         // (--registry, …) — collect them instead of failing the scaffold.

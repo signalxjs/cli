@@ -21,6 +21,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { SigxPlugin, Logger } from './plugin.js';
+import { withHint } from './utils/error-hints.js';
 
 interface DepPackageJson {
     'sigx-cli'?: {
@@ -117,7 +118,17 @@ export async function discoverPlugins(cwd: string, opts: DiscoverOptions = {}): 
                 );
             }
 
-            const mod = await import(pathToFileURL(pluginPath).href);
+            // A declared plugin that fails to import is a broken install, not
+            // "not a plugin": say so, or its commands just vanish ("Unknown
+            // command dev") with no reason given.
+            let mod: { default?: SigxPlugin } & SigxPlugin;
+            try {
+                mod = await import(pathToFileURL(pluginPath).href);
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                opts.logger?.warn(withHint(`Could not load the sigx plugin from ${depName} — its commands are unavailable.\n${message}`));
+                continue;
+            }
             const plugin: SigxPlugin = mod.default || mod;
 
             if (typeof plugin.detect === 'function' && plugin.detect(cwd)) {

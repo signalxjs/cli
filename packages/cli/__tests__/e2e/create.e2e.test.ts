@@ -36,10 +36,17 @@ const SPECS: Array<[string, string[], { build?: boolean; test?: boolean; artifac
     ['ssr-cloudflare-resume', ['--type', 'ssr', '--target', 'cloudflare', '--render', 'resume'], { build: true, artifacts: ['dist/server/entry.cloudflare.js', 'dist/client/index.html'] }],
     ['ssg', ['--type', 'ssg', '--features', 'testing'], { build: true, test: true, artifacts: ['dist/index.html', 'dist/sitemap.xml'] }],
     ['terminal', ['--type', 'terminal'], { build: false, artifacts: [] }],
+    // Lynx: the JS bundle only — native builds need an Android SDK / Xcode.
+    // Guards the template's version pins (signalxjs/lynx#1147: a stale
+    // @sigx/runtime-core pin broke every new app at startup).
+    ['lynx-daisyui', ['--kind', 'lynx', '--styling', 'daisyui'], { build: true, artifacts: ['dist/main.lynx.bundle'] }],
 ];
 
 function run(cmd: string, args: string[], cwd: string): string {
-    const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', shell: isWin, env: { ...process.env, CI: '1' } });
+    // Drop vitest's NODE_ENV=test: tools that key off NODE_ENV (rspeedy's
+    // build mode) would otherwise build the scaffold in development mode.
+    const { NODE_ENV: _vitestNodeEnv, ...env } = process.env;
+    const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', shell: isWin, env: { ...env, CI: '1' } });
     if (r.status !== 0) {
         throw new Error(`${cmd} ${args.join(' ')} failed (${r.status})\n${r.stdout}\n${r.stderr}`);
     }

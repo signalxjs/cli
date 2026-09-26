@@ -224,6 +224,25 @@ describe('runCreate', () => {
             expect(out).toContain('Next steps');
         });
 
+        it('mobile app: one step to a Lynx + daisyUI project (wizard → Lynx spec)', async () => {
+            captureOutput();
+            const done = run(await importCreate(['--no-install', '--no-git']));
+
+            await settle();
+            await press(ENTER); // name
+            await settle();
+            await press(DOWN); await press(ENTER); // Mobile app
+            await settle();
+            await press(ENTER); // pm
+            await settle();
+            await press(ENTER); // create? yes
+            await settle(300);
+            await done;
+
+            expect(scaffoldSpec).toHaveBeenCalledWith(expect.objectContaining({ kind: 'lynx', styling: 'daisyui' }));
+            expect(exitCode).toBe(0);
+        });
+
         it('customize: SSR on Cloudflare, styling + extras kept at their defaults', async () => {
             captureOutput();
             const done = run(await importCreate(['--no-install', '--no-git']));
@@ -231,7 +250,7 @@ describe('runCreate', () => {
             await settle();
             await press(ENTER); // name
             await settle();
-            await press(DOWN); await press(ENTER); // Customize
+            await press(DOWN); await press(DOWN); await press(ENTER); // Customize
             await settle();
             await press(DOWN); await press(ENTER); // kind: ssr
             await settle();
