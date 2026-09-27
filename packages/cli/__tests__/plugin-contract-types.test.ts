@@ -1,6 +1,6 @@
 /**
  * Compile-time contract tests for the typed plugin API. These are enforced
- * by `pnpm typecheck` (tsgo covers __tests__) — the expectTypeOf assertions
+ * by `pnpm typecheck` (tsc covers __tests__) — the expectTypeOf assertions
  * and @ts-expect-error markers fail the build on contract drift; the single
  * runtime test just keeps vitest from reporting an empty suite.
  */

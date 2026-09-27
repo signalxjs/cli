@@ -161,7 +161,7 @@ pnpm build
 pnpm test         # vitest run
 pnpm test:watch   
 pnpm test:coverage
-pnpm typecheck    # tsgo --noEmit
+pnpm typecheck    # tsc --noEmit (TypeScript 7)
 pnpm lint         # oxlint
 pnpm lint:fix     
 pnpm verify:pack  # verify npm pack output is sane
