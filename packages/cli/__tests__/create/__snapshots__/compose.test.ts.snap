@@ -181,7 +181,7 @@ export default defineConfig({
         "@lynx-js/template-webpack-plugin": "0.15.0",
         "@lynx-js/runtime-wrapper-webpack-plugin": "^0.2.3",
         "@lynx-js/webpack-dev-transport": "^0.3.0",
-        "typescript": "^5.9.3"
+        "typescript": "^6.0.3"
     }
 }
 ",
@@ -610,7 +610,7 @@ export default defineConfig({
         "tailwindcss": "^3.4.0",
         "postcss": "^8.4.0",
         "autoprefixer": "^10.4.0",
-        "typescript": "^5.9.3"
+        "typescript": "^6.0.3"
     }
 }
 ",
@@ -875,8 +875,8 @@ pnpm dev
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -1162,11 +1162,11 @@ Tailwind CSS 4 + daisyUI 5. Themes are declared in \`src/styles.css\` (\`@plugin
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "@tailwindcss/vite": "^4.1.0",
-        "daisyui": "^5.0.0",
-        "tailwindcss": "^4.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "@tailwindcss/vite": "^4.3.0",
+        "daisyui": "^5.7.0",
+        "tailwindcss": "^4.3.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -1386,13 +1386,13 @@ Docs: https://sigx.dev/i18n/
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/i18n": "^0.3.0",
+        "@sigx/i18n": "^0.4.0",
         "@sigx/store": "^0.14.0"
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -1773,19 +1773,19 @@ Tailwind CSS 4 via \`@tailwindcss/vite\` — no config file needed. \`src/styles
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/i18n": "^0.3.0",
+        "@sigx/i18n": "^0.4.0",
         "@sigx/router": "^0.13.0",
         "@sigx/store": "^0.14.0"
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "@tailwindcss/vite": "^4.1.0",
-        "happy-dom": "^20.0.0",
-        "oxlint": "^1.47.0",
-        "tailwindcss": "^4.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12",
-        "vitest": "^4.1.0"
+        "@tailwindcss/vite": "^4.3.0",
+        "happy-dom": "^20.14.0",
+        "oxlint": "^1.85.0",
+        "tailwindcss": "^4.3.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1",
+        "vitest": "^5.0.2"
     }
 }
 ",
@@ -2208,11 +2208,11 @@ Docs: https://sigx.dev/router/
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "happy-dom": "^20.0.0",
-        "oxlint": "^1.47.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12",
-        "vitest": "^4.1.0"
+        "happy-dom": "^20.14.0",
+        "oxlint": "^1.85.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1",
+        "vitest": "^5.0.2"
     }
 }
 ",
@@ -2599,10 +2599,10 @@ Tailwind CSS 4 via \`@tailwindcss/vite\` — no config file needed. \`src/styles
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "@tailwindcss/vite": "^4.1.0",
-        "tailwindcss": "^4.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "@tailwindcss/vite": "^4.3.0",
+        "tailwindcss": "^4.3.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -2812,13 +2812,13 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
         "sigx": "<core>",
         "@sigx/router": "^0.13.0",
         "@sigx/server-renderer": "<core>",
-        "@sigx/ssg": "^0.21.0"
+        "@sigx/ssg": "^0.22.0"
     },
     "devDependencies": {
         "@sigx/cli": "^0.13.0",
         "@sigx/vite": "<core>",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -3147,16 +3147,16 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
         "sigx": "<core>",
         "@sigx/router": "^0.13.0",
         "@sigx/server-renderer": "<core>",
-        "@sigx/ssg": "^0.21.0"
+        "@sigx/ssg": "^0.22.0"
     },
     "devDependencies": {
         "@sigx/cli": "^0.13.0",
         "@sigx/vite": "<core>",
-        "@tailwindcss/vite": "^4.1.0",
-        "daisyui": "^5.0.0",
-        "tailwindcss": "^4.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "@tailwindcss/vite": "^4.3.0",
+        "daisyui": "^5.7.0",
+        "tailwindcss": "^4.3.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -3424,16 +3424,16 @@ The build renders every route to \`dist/\` as static HTML (plus \`sitemap.xml\`,
         "sigx": "<core>",
         "@sigx/router": "^0.13.0",
         "@sigx/server-renderer": "<core>",
-        "@sigx/ssg": "^0.21.0"
+        "@sigx/ssg": "^0.22.0"
     },
     "devDependencies": {
         "@sigx/cli": "^0.13.0",
         "@sigx/vite": "<core>",
-        "happy-dom": "^20.0.0",
-        "oxlint": "^1.47.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12",
-        "vitest": "^4.1.0"
+        "happy-dom": "^20.14.0",
+        "oxlint": "^1.85.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1",
+        "vitest": "^5.0.2"
     }
 }
 ",
@@ -3838,12 +3838,12 @@ Bun runs the same \`dist/\` build Node would (it resolves \`node_modules\` and h
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "@types/bun": "^1.2.0",
+        "@types/bun": "^1.4.0",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -4311,12 +4311,12 @@ Bun runs the same \`dist/\` build Node would (it resolves \`node_modules\` and h
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "@types/bun": "^1.2.0",
+        "@types/bun": "^1.4.0",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -4829,13 +4829,13 @@ pnpm deploy     # wrangler deploy (run \`pnpm exec wrangler login\` once)
     "devDependencies": {
         "@sigx/cloudflare": "<core>",
         "@sigx/vite": "<core>",
-        "@cloudflare/workers-types": "^4.20250801.0",
+        "@cloudflare/workers-types": "^5.20260927.0",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12",
-        "wrangler": "^4.0.0"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1",
+        "wrangler": "^4.141.0"
     }
 }
 ",
@@ -5291,13 +5291,13 @@ pnpm deploy     # wrangler deploy (run \`pnpm exec wrangler login\` once)
     "devDependencies": {
         "@sigx/cloudflare": "<core>",
         "@sigx/vite": "<core>",
-        "@cloudflare/workers-types": "^4.20250801.0",
+        "@cloudflare/workers-types": "^5.20260927.0",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12",
-        "wrangler": "^4.0.0"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1",
+        "wrangler": "^4.141.0"
     }
 }
 ",
@@ -5830,15 +5830,15 @@ pnpm deploy     # wrangler deploy (run \`pnpm exec wrangler login\` once)
     "devDependencies": {
         "@sigx/cloudflare": "<core>",
         "@sigx/vite": "<core>",
-        "@cloudflare/workers-types": "^4.20250801.0",
-        "@tailwindcss/vite": "^4.1.0",
+        "@cloudflare/workers-types": "^5.20260927.0",
+        "@tailwindcss/vite": "^4.3.0",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "tailwindcss": "^4.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12",
-        "wrangler": "^4.0.0"
+        "tailwindcss": "^4.3.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1",
+        "wrangler": "^4.141.0"
     }
 }
 ",
@@ -6295,10 +6295,10 @@ The server build is fully bundled with the \`deno\` condition; only \`jsr:\` imp
     "devDependencies": {
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -6742,10 +6742,10 @@ The server build is fully bundled with the \`deno\` condition; only \`jsr:\` imp
     "devDependencies": {
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -7263,10 +7263,10 @@ Or connect the repository in Netlify — \`netlify.toml\` already sets the build
         "@sigx/netlify": "<core>",
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -7689,10 +7689,10 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     "devDependencies": {
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "cross-env": "^10.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -8096,7 +8096,7 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     },
     "dependencies": {
         "sigx": "<core>",
-        "@sigx/i18n": "^0.3.0",
+        "@sigx/i18n": "^0.4.0",
         "@sigx/router": "^0.13.0",
         "@sigx/server": "<core>",
         "@sigx/server-renderer": "<core>",
@@ -8106,13 +8106,13 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     "devDependencies": {
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "cross-env": "^10.1.0",
-        "happy-dom": "^20.0.0",
-        "oxlint": "^1.47.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12",
-        "vitest": "^4.1.0"
+        "happy-dom": "^20.14.0",
+        "oxlint": "^1.85.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1",
+        "vitest": "^5.0.2"
     }
 }
 ",
@@ -8733,14 +8733,14 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "@tailwindcss/vite": "^4.1.0",
+        "@tailwindcss/vite": "^4.3.0",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "cross-env": "^10.1.0",
-        "daisyui": "^5.0.0",
-        "tailwindcss": "^4.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "daisyui": "^5.7.0",
+        "tailwindcss": "^4.3.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -9070,10 +9070,10 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     "devDependencies": {
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "cross-env": "^10.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -9484,10 +9484,10 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     "devDependencies": {
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "cross-env": "^10.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -9953,13 +9953,13 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     "devDependencies": {
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "cross-env": "^10.1.0",
-        "happy-dom": "^20.0.0",
-        "oxlint": "^1.47.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12",
-        "vitest": "^4.1.0"
+        "happy-dom": "^20.14.0",
+        "oxlint": "^1.85.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1",
+        "vitest": "^5.0.2"
     }
 }
 ",
@@ -10488,10 +10488,10 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     "devDependencies": {
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "cross-env": "^10.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -10921,13 +10921,13 @@ Any host that runs Node works — copy \`dist/\`, \`server.mjs\`, \`package.json
     },
     "devDependencies": {
         "@sigx/vite": "<core>",
-        "@tailwindcss/vite": "^4.1.0",
+        "@tailwindcss/vite": "^4.3.0",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "cross-env": "^10.1.0",
-        "tailwindcss": "^4.1.0",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "tailwindcss": "^4.3.0",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -11248,10 +11248,10 @@ Day-to-day development runs on the Vite dev server (\`pnpm dev\`).
         "@sigx/vercel": "<core>",
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -11668,10 +11668,10 @@ Day-to-day development runs on the Vite dev server (\`pnpm dev\`).
         "@sigx/vercel": "<core>",
         "@sigx/vite": "<core>",
         "@types/express": "^5.0.6",
-        "@types/node": "^22.0.0",
+        "@types/node": "^24.0.0",
         "express": "^5.2.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.0.12"
+        "typescript": "^7.0.2",
+        "vite": "^8.3.1"
     }
 }
 ",
@@ -12119,9 +12119,9 @@ Interactive apps need a real terminal (TTY). Piping the output (\`| cat\`) print
     },
     "devDependencies": {
         "@sigx/terminal-dev": "^0.13.0",
-        "@types/node": "^22.0.0",
-        "tsx": "^4.20.0",
-        "typescript": "^5.9.3"
+        "@types/node": "^24.0.0",
+        "tsx": "^4.23.0",
+        "typescript": "^7.0.2"
     }
 }
 ",

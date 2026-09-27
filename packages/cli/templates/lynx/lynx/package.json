@@ -35,6 +35,6 @@
         "@lynx-js/template-webpack-plugin": "{{dep:@lynx-js/template-webpack-plugin}}",
         "@lynx-js/runtime-wrapper-webpack-plugin": "{{dep:@lynx-js/runtime-wrapper-webpack-plugin}}",
         "@lynx-js/webpack-dev-transport": "{{dep:@lynx-js/webpack-dev-transport}}",
-        "typescript": "{{dep:typescript}}"
+        "typescript": "{{dep:typescript-lynx}}"
     }
 }

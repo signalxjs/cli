@@ -16,7 +16,7 @@
     "build": "pnpm -r run build",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "oxlint packages/cli/src packages/create/src",
     "lint:fix": "oxlint --fix packages/cli/src packages/create/src",
     "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules pnpm-lock.yaml",
@@ -32,10 +32,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@typescript/native-preview": "7.0.0-dev.20260511.1",
     "@vitest/coverage-v8": "^4.1.5",
     "oxlint": "^1.47.0",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "vite": "^8.0.12",
     "vitest": "^4.1.6"
   },
