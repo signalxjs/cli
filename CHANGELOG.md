@@ -4,6 +4,13 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+### Changed
+
+- **Web and terminal projects scaffold on TypeScript 7** (`typescript ^7.0.2`, the native `tsc`) (#134).
+- **Lynx projects stay on TypeScript 6** (`^6.0.3`, matching signalxjs/lynx). `@lynx-js/rspeedy` (through 0.18) supports only `typescript 5.1.6 - 6.0.x`, and it loads `lynx.config.ts` through the TypeScript JS API, which TS 7 no longer ships. Lynx moves to TS 7 once rspeedy supports it.
+- **Scaffolded dependency refresh:** `@sigx/i18n` ^0.4, `@sigx/ssg` / `@sigx/ssg-theme-daisyui` ^0.22, `@sigx/actors` / `@sigx/actors-cloudflare` ^0.11, `vitest` ^5, `@cloudflare/workers-types` ^5, `@types/node` ^24. The floors of `vite`, `tailwindcss`, `daisyui`, `tsx`, `oxlint`, `wrangler`, `@types/bun` and `happy-dom` move to their current releases.
+- **This repo builds with TypeScript 7.** `@typescript/native-preview` is gone, and `pnpm typecheck` runs `tsc`.
+
 ## [0.13.0] - 2026-09-26
 
 `@sigx/cli` 0.13.0, `@sigx/create` 0.9.0. Lynx apps now scaffold on the `@sigx/lynx` 0.33 line (Gradle 9.8 / AGP 9.4 Android template, JDK 17–26), and the catalog `@sigx/lynx` line moves to `^0.33.0`.
