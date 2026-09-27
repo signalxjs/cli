@@ -21,7 +21,7 @@ const tscBin = join(dirname(createRequire(import.meta.url).resolve('typescript/p
 
 // Lives inside the package dir so @sigx/args resolves through the normal
 // node_modules chain; removed after the run.
-let consumerDir: string;
+let consumerDir: string | undefined;
 
 const consumerSource = `
 import { a, definePlugin, defineCommand, type CommandContext, type SigxPlugin } from '../dist/plugin.js';
@@ -76,9 +76,9 @@ const handBuilt: SigxPlugin = {
 void handBuilt;
 `;
 
-function typecheckConsumer(): string {
-    writeFileSync(join(consumerDir, 'consumer.ts'), consumerSource);
-    writeFileSync(join(consumerDir, 'tsconfig.json'), JSON.stringify({
+function typecheckConsumer(dir: string): string {
+    writeFileSync(join(dir, 'consumer.ts'), consumerSource);
+    writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify({
         compilerOptions: {
             strict: true,
             noEmit: true,
@@ -90,7 +90,7 @@ function typecheckConsumer(): string {
         },
         files: ['consumer.ts'],
     }));
-    const r = spawnSync(process.execPath, [tscBin, '-p', join(consumerDir, 'tsconfig.json'), '--pretty', 'false'], { encoding: 'utf8' });
+    const r = spawnSync(process.execPath, [tscBin, '-p', join(dir, 'tsconfig.json'), '--pretty', 'false'], { encoding: 'utf8' });
     return r.status === 0 ? '' : `${r.stdout}${r.stderr}` || `tsc exited with ${r.status}`;
 }
 
@@ -100,11 +100,11 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-    rmSync(consumerDir, { recursive: true, force: true });
+    if (consumerDir) rmSync(consumerDir, { recursive: true, force: true });
 });
 
 describe('published plugin.d.ts semantics', () => {
     it('a typed consumer of dist/plugin.d.ts type-checks with zero diagnostics', () => {
-        expect(typecheckConsumer()).toBe('');
+        expect(typecheckConsumer(consumerDir!)).toBe('');
     });
 });
