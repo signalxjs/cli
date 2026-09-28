@@ -4,8 +4,13 @@ All notable changes to this repository are documented here. Per-package changelo
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-28
+
+`@sigx/cli` 0.14.0, `@sigx/create` 0.10.0. Lynx apps now scaffold on the `@sigx/lynx` 0.34 line, and the catalog `@sigx/lynx` line moves to `^0.34.0`.
+
 ### Changed
 
+- **Lynx apps scaffold on `@sigx/lynx` ^0.34.0.** lynx v0.34.0 adds the typed app env in `signalx.config.ts` (per-variant `env`, `.env` files, `readEnv()` / `requireEnv()`) and checks the build variant before `sigx updates:publish` (signalxjs/lynx#1245). The `@lynx-js/*` toolchain pins are unchanged; they match what lynx v0.34.0 tests against.
 - **Web and terminal projects scaffold on TypeScript 7** (`typescript ^7.0.2`, the native `tsc`) (#134).
 - **Lynx projects stay on TypeScript 6** (`^6.0.3`, matching signalxjs/lynx). `@lynx-js/rspeedy` (through 0.18) supports only `typescript 5.1.6 - 6.0.x`, and it loads `lynx.config.ts` through the TypeScript JS API, which TS 7 no longer ships. Lynx moves to TS 7 once rspeedy supports it (lynx-family/lynx-stack#4060).
 - **Scaffolded dependency refresh:** `@sigx/i18n` ^0.4, `@sigx/ssg` / `@sigx/ssg-theme-daisyui` ^0.22, `@sigx/actors` / `@sigx/actors-cloudflare` ^0.11, `vitest` ^5, `@cloudflare/workers-types` ^5, `@types/node` ^24. The floors of `vite`, `tailwindcss`, `daisyui`, `tsx`, `oxlint`, `wrangler`, `@types/bun` and `happy-dom` move to their current releases.
